@@ -22,11 +22,10 @@ type exchange struct {
 }
 
 // CheckTx 实现自定义检验交易接口，供框架调用
-func (e *exchange) CheckTx(tx *types.Transaction, index int) error {
+func SpotCheckTx(cfg *types.Chain33Config, tx *types.Transaction, index int) error {
 	//发送交易的时候就检查payload,做严格的参数检查
 	var exchange exchangetypes.ExchangeAction
 	types.Decode(tx.GetPayload(), &exchange)
-	cfg := e.GetAPI().GetConfig()
 	if exchange.Ty == exchangetypes.TyLimitOrderAction {
 		limitOrder := exchange.GetLimitOrder()
 		left := limitOrder.GetLeftAsset()
@@ -51,9 +50,4 @@ func (e *exchange) CheckTx(tx *types.Transaction, index int) error {
 		return types.ErrActionNotSupport
 	}
 	return nil
-}
-
-//ExecutorOrder Exec 的时候 同时执行 ExecLocal
-func (e *exchange) ExecutorOrder() int64 {
-	return drivers.ExecLocalSameTime
 }

@@ -73,9 +73,6 @@ const (
 )
 
 var (
-	//ExchangeX 执行器名称定义
-	ExchangeX = "exchange"
-
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	//ForkFix Forks
 	//ForkFix1 = "ForkFix1"

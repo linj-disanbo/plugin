@@ -96,7 +96,8 @@ func (z *zkspot) CheckTx(tx *types.Transaction, index int) error {
 		signature = action.GetFullExit().GetSignature()
 		msg = wallet.GetFullExitMsg(action.GetFullExit())
 	default:
-		return nil
+		cfg := z.GetAPI().GetConfig()
+		return SpotCheckTx(cfg, tx, index)
 	}
 
 	pubKey := eddsa.PublicKey{}
