@@ -258,7 +258,8 @@ func (policy *zksyncPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Tra
 	txdetail.Txhash = tx.Hash()
 
 	pubkey := block.Block.Txs[index].Signature.GetPubkey()
-	addr := address.PubKeyToAddress(pubkey)
+	// 先编译过
+	addr := address.BytesToBtcAddress(0, pubkey)
 	txdetail.Fromaddr = addr.String()
 
 	txdetailbyte := types.Encode(txdetail)
