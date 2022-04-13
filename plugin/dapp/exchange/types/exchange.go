@@ -38,7 +38,7 @@ const (
 
 // log类型id值
 const (
-	TyUnknownLog = iota + 200
+	TyUnknowLog = iota + 200
 	TyLimitOrderLog
 	TyMarketOrderLog
 	TyRevokeOrderLog
