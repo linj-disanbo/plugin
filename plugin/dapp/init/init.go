@@ -36,5 +36,6 @@ import (
 	_ "github.com/33cn/plugin/plugin/dapp/valnode"        //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/vote"           //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/wasm"           //auto gen
+	_ "github.com/33cn/plugin/plugin/dapp/zkspot"         //auto gen
 	_ "github.com/33cn/plugin/plugin/dapp/zksync"         //auto gen
 )
