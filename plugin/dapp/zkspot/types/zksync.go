@@ -72,10 +72,6 @@ const (
 )
 
 const (
-	ListDESC = int32(0)
-	ListASC  = int32(1)
-	ListSeek = int32(2)
-
 	Add = int32(0)
 	Sub = int32(1)
 )
@@ -136,6 +132,7 @@ var (
 
 	//定义actionMap
 	actionMap = map[string]int32{
+		// zk
 		//NameNoopAction:           TyNoopAction,
 		NameDepositAction:        TyDepositAction,
 		NameWithdrawAction:       TyWithdrawAction,
@@ -150,9 +147,17 @@ var (
 		NameSetVerifyKeyAction:   TySetVerifyKeyAction,
 		NameCommitProofAction:    TyCommitProofAction,
 		NameSetVerifierAction:    TySetVerifierAction,
+		// spot
+		NameLimitOrderAction:         TyLimitOrderAction,
+		NameMarketOrderAction:        TyMarketOrderAction,
+		NameRevokeOrderAction:        TyRevokeOrderAction,
+		NameExchangeBindAction:       TyExchangeBindAction,
+		NameEntrustOrderAction:       TyEntrustOrderAction,
+		NameEntrustRevokeOrderAction: TyEntrustRevokeOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
+		// zk
 		//TyNoopLog:           {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyNoopLog"},
 		TyDepositLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyDepositLog"},
 		TyWithdrawLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawLog"},
@@ -169,6 +174,12 @@ var (
 		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
 		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
 		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
+
+		// spot
+		TyLimitOrderLog:   {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyLimitOrderLog"},
+		TyMarketOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyMarketOrderLog"},
+		TyRevokeOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyRevokeOrderLog"},
+		TyExchangeBindLog: {Ty: reflect.TypeOf(ReceiptExchangeBind{}), Name: "TyExchangeBindLog"},
 	}
 
 	FeeMap = map[int64]string{
@@ -191,6 +202,7 @@ func init() {
 
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
+	SpotInitFork(cfg)
 	cfg.RegisterDappFork(Zksync, "Enable", 0)
 }
 
