@@ -23,7 +23,7 @@ var (
 	zlog = log.New("module", "zksync.executor")
 )
 
-var driverName = zt.Zksync
+var driverName = "zk-spot"
 
 // Init register dapp
 func Init(name string, cfg *types.Chain33Config, sub []byte) {

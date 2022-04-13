@@ -2,7 +2,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	zk "github.com/33cn/plugin/plugin/dapp/zkspot/exec/zk"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/executor/zk"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 

@@ -2,10 +2,10 @@ package wasm
 
 import (
 	"github.com/33cn/chain33/pluginmgr"
-	"github.com/33cn/plugin/plugin/dapp/zksync/commands"
-	"github.com/33cn/plugin/plugin/dapp/zksync/executor"
-	"github.com/33cn/plugin/plugin/dapp/zksync/rpc"
-	"github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/commands"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/executor"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/rpc"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 func init() {
