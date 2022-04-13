@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "spot.proto";
 import "witness.proto";
 import "common.proto";
 
@@ -20,9 +21,17 @@ message ZksyncAction {
     ZkVerifyKey         setVerifyKey = 11;
     ZkCommitProof         commitProof  = 12;
     ZkVerifier  setVerifier = 13;
+
+    // spot
+    LimitOrder  limitOrder = 101;
+    MarketOrder marketOrder = 102;
+    RevokeOrder revokeOrder = 103;
+    ExchangeBind exchangeBind = 104;
+    EntrustOrder entrustOrder = 105;
+    EntrustRevokeOrder entrustRevokeOrder = 107;
   }
 
-  int32 ty = 14;
+  int32 ty = 1000;
 }
 
 
