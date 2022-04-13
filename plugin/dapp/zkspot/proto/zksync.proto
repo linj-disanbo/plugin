@@ -7,8 +7,9 @@ package types;
 option go_package = "github.com/33cn/plugin/plugin/dapp/zkspot/types";
 
 message ZksyncAction {
+  int32 ty = 1;
   oneof value {
-    ZkDeposit  deposit = 1;
+    // zk
     ZkWithdraw withdraw = 2;
     ZkContractToTree contractToTree = 3;
     ZkTreeToContract treeToContract = 4;
@@ -21,6 +22,7 @@ message ZksyncAction {
     ZkVerifyKey         setVerifyKey = 11;
     ZkCommitProof         commitProof  = 12;
     ZkVerifier  setVerifier = 13;
+    ZkDeposit  deposit = 14;
 
     // spot
     LimitOrder  limitOrder = 101;
@@ -31,7 +33,7 @@ message ZksyncAction {
     EntrustRevokeOrder entrustRevokeOrder = 107;
   }
 
-  int32 ty = 1000;
+  
 }
 
 
