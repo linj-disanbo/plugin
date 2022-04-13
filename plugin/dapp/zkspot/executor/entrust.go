@@ -4,7 +4,7 @@ import (
 	"github.com/33cn/chain33/common/address"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
-	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
+	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 var (

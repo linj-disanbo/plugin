@@ -2,7 +2,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	exchangetypes "github.com/33cn/plugin/plugin/dapp/exchange/types"
+	exchangetypes "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 /*

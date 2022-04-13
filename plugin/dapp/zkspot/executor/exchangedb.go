@@ -12,7 +12,7 @@ import (
 	tab "github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
+	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 // Action action struct

@@ -14,7 +14,7 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/crypto"
 	"github.com/33cn/chain33/queue"
-	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
+	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	"github.com/stretchr/testify/assert"
 )
 

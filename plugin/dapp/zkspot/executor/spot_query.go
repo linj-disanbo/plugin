@@ -2,7 +2,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/types"
-	et "github.com/33cn/plugin/plugin/dapp/exchange/types"
+	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 //查询市场深度
