@@ -14,8 +14,8 @@ import (
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
-	"github.com/33cn/plugin/plugin/dapp/zksopt/wallet"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/wallet"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/pkg/errors"
@@ -26,11 +26,11 @@ import (
  * 实现合约对应客户端
  */
 
-// ZksyncCmd zksopt client command
+// ZksyncCmd zkspot client command
 func ZksyncCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "zksopt",
-		Short: "zksopt command",
+		Use:   "zkspot",
+		Short: "zkspot command",
 		Args:  cobra.MinimumNArgs(1),
 	}
 	cmd.AddCommand(
@@ -627,7 +627,7 @@ func getTxProofCmd() *cobra.Command {
 }
 
 func getTxProofFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "", 0, "zksopt proof height")
+	cmd.Flags().Uint64P("height", "", 0, "zkspot proof height")
 	cmd.MarkFlagRequired("height")
 	cmd.Flags().Uint32P("index", "i", 0, "tx index")
 	cmd.MarkFlagRequired("index")
@@ -665,7 +665,7 @@ func getTxProofByHeightCmd() *cobra.Command {
 }
 
 func getTxProofByHeightFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "", 0, "zksopt proof height")
+	cmd.Flags().Uint64P("height", "", 0, "zkspot proof height")
 	cmd.MarkFlagRequired("height")
 }
 
@@ -716,7 +716,7 @@ func getLastCommitProof(cmd *cobra.Command, args []string) {
 func getAccountByIdCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "account",
-		Short: "get zksopt account by id",
+		Short: "get zkspot account by id",
 		Run:   getAccountById,
 	}
 	getAccountByIdFlag(cmd)
@@ -724,7 +724,7 @@ func getAccountByIdCmd() *cobra.Command {
 }
 
 func getAccountByIdFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("accountId", "a", 0, "zksopt accountId")
+	cmd.Flags().Uint64P("accountId", "a", 0, "zkspot accountId")
 	cmd.MarkFlagRequired("accountId")
 }
 
@@ -750,7 +750,7 @@ func getAccountById(cmd *cobra.Command, args []string) {
 func getAccountByEthCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "accountE",
-		Short: "get zksopt account by ethAddress",
+		Short: "get zkspot account by ethAddress",
 		Run:   getAccountByEth,
 	}
 	getAccountByEthFlag(cmd)
@@ -758,7 +758,7 @@ func getAccountByEthCmd() *cobra.Command {
 }
 
 func getAccountByEthFlag(cmd *cobra.Command) {
-	cmd.Flags().StringP("ethAddress", "e", " ", "zksopt account ethAddress")
+	cmd.Flags().StringP("ethAddress", "e", " ", "zkspot account ethAddress")
 	cmd.MarkFlagRequired("ethAddress")
 }
 
@@ -784,7 +784,7 @@ func getAccountByEth(cmd *cobra.Command, args []string) {
 func getAccountByChain33Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "accountC",
-		Short: "get zksopt account by chain33Addr",
+		Short: "get zkspot account by chain33Addr",
 		Run:   getAccountByChain33,
 	}
 	getAccountByChain33Flag(cmd)
@@ -792,7 +792,7 @@ func getAccountByChain33Cmd() *cobra.Command {
 }
 
 func getAccountByChain33Flag(cmd *cobra.Command) {
-	cmd.Flags().StringP("chain33Addr", "c", "", "zksopt account chain33Addr")
+	cmd.Flags().StringP("chain33Addr", "c", "", "zkspot account chain33Addr")
 	cmd.MarkFlagRequired("chain33Addr")
 }
 
@@ -818,7 +818,7 @@ func getAccountByChain33(cmd *cobra.Command, args []string) {
 func getContractAccountCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "contractAccount",
-		Short: "get zksopt contractAccount by chain33WalletAddr and token symbol",
+		Short: "get zkspot contractAccount by chain33WalletAddr and token symbol",
 		Run:   getContractAccount,
 	}
 	getContractAccountFlag(cmd)
@@ -856,7 +856,7 @@ func getContractAccount(cmd *cobra.Command, args []string) {
 func getTokenBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
-		Short: "get zksopt tokenBalance by accountId and tokenId",
+		Short: "get zkspot tokenBalance by accountId and tokenId",
 		Run:   getTokenBalance,
 	}
 	getTokenBalanceFlag(cmd)
@@ -864,9 +864,9 @@ func getTokenBalanceCmd() *cobra.Command {
 }
 
 func getTokenBalanceFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("accountId", "a", 0, "zksopt account id")
+	cmd.Flags().Uint64P("accountId", "a", 0, "zkspot account id")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().Uint64P("token", "t", 1, "zksopt token id")
+	cmd.Flags().Uint64P("token", "t", 1, "zkspot token id")
 	cmd.MarkFlagRequired("token")
 }
 

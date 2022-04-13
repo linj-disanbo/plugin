@@ -13,13 +13,13 @@ import (
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 )
 
 var (
-	bizlog = log15.New("module", "wallet.zksopt")
+	bizlog = log15.New("module", "wallet.zkspot")
 	// maxTxNumPerBlock 单个区块最大数
 	maxTxNumPerBlock int64 = types.MaxTxsPerBlock
 )
@@ -30,76 +30,76 @@ func init() {
 
 // New 创建一盒钱包业务策略
 func New() wcom.WalletBizPolicy {
-	return &zksoptPolicy{
+	return &zkspotPolicy{
 		mtx: &sync.Mutex{},
 	}
 }
 
-type zksoptPolicy struct {
+type zkspotPolicy struct {
 	mtx           *sync.Mutex
 	walletOperate wcom.WalletOperate
 }
 
-func (policy *zksoptPolicy) setWalletOperate(walletBiz wcom.WalletOperate) {
+func (policy *zkspotPolicy) setWalletOperate(walletBiz wcom.WalletOperate) {
 	policy.mtx.Lock()
 	defer policy.mtx.Unlock()
 	policy.walletOperate = walletBiz
 }
 
-func (policy *zksoptPolicy) getWalletOperate() wcom.WalletOperate {
+func (policy *zkspotPolicy) getWalletOperate() wcom.WalletOperate {
 	policy.mtx.Lock()
 	defer policy.mtx.Unlock()
 	return policy.walletOperate
 }
 
 // Init 初始化处理
-func (policy *zksoptPolicy) Init(walletOperate wcom.WalletOperate, sub []byte) {
+func (policy *zkspotPolicy) Init(walletOperate wcom.WalletOperate, sub []byte) {
 	policy.setWalletOperate(walletOperate)
 }
 
 // OnCreateNewAccount 在账号创建时做一些处理
-func (policy *zksoptPolicy) OnCreateNewAccount(acc *types.Account) {
+func (policy *zkspotPolicy) OnCreateNewAccount(acc *types.Account) {
 }
 
 // OnImportPrivateKey 在私钥导入时做一些处理
-func (policy *zksoptPolicy) OnImportPrivateKey(acc *types.Account) {
+func (policy *zkspotPolicy) OnImportPrivateKey(acc *types.Account) {
 }
 
 // OnAddBlockFinish 在区块被添加成功时做一些处理
-func (policy *zksoptPolicy) OnAddBlockFinish(block *types.BlockDetail) {
+func (policy *zkspotPolicy) OnAddBlockFinish(block *types.BlockDetail) {
 
 }
 
 // OnDeleteBlockFinish 在区块被删除成功时做一些处理
-func (policy *zksoptPolicy) OnDeleteBlockFinish(block *types.BlockDetail) {
+func (policy *zkspotPolicy) OnDeleteBlockFinish(block *types.BlockDetail) {
 
 }
 
 // OnClose 在钱包关闭时做一些处理
-func (policy *zksoptPolicy) OnClose() {
+func (policy *zkspotPolicy) OnClose() {
 
 }
 
 // OnSetQueueClient 在钱包消息队列初始化时做一些处理
-func (policy *zksoptPolicy) OnSetQueueClient() {
+func (policy *zkspotPolicy) OnSetQueueClient() {
 }
 
 // OnWalletLocked 在钱包加锁时做一些处理
-func (policy *zksoptPolicy) OnWalletLocked() {
+func (policy *zkspotPolicy) OnWalletLocked() {
 }
 
 // OnWalletUnlocked 在钱包解锁时做一些处理
-func (policy *zksoptPolicy) OnWalletUnlocked(WalletUnLock *types.WalletUnLock) {
+func (policy *zkspotPolicy) OnWalletUnlocked(WalletUnLock *types.WalletUnLock) {
 }
 
 // Call 调用隐私的方法
-func (policy *zksoptPolicy) Call(funName string, in types.Message) (ret types.Message, err error) {
+func (policy *zkspotPolicy) Call(funName string, in types.Message) (ret types.Message, err error) {
 	err = types.ErrNotSupport
 	return
 }
 
-// SignTransaction 对zksopt交易进行签名
-func (policy *zksoptPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSignRawTx) (needSysSign bool, signtxhex string, err error) {
+// SignTransaction 对zkspot交易进行签名
+func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSignRawTx) (needSysSign bool, signtxhex string, err error) {
 	needSysSign = false
 	bytesVal, err := common.FromHex(req.GetTxHex())
 	if err != nil {
@@ -241,7 +241,7 @@ func SignTx(msg *zt.ZkMsg, privateKey eddsa.PrivateKey) (*zt.ZkSignature, error)
 }
 
 // OnAddBlockTx 响应区块交易添加的处理
-func (policy *zksoptPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Transaction, index int32, dbbatch db.Batch) *types.WalletTxDetail {
+func (policy *zkspotPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Transaction, index int32, dbbatch db.Batch) *types.WalletTxDetail {
 	txdetail := &types.WalletTxDetail{}
 
 	blockheight := block.Block.Height*maxTxNumPerBlock + int64(index)
@@ -269,7 +269,7 @@ func (policy *zksoptPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Tra
 }
 
 // OnDeleteBlockTx 响应删除区块交易的处理
-func (policy *zksoptPolicy) OnDeleteBlockTx(block *types.BlockDetail, tx *types.Transaction, index int32, dbbatch db.Batch) *types.WalletTxDetail {
+func (policy *zkspotPolicy) OnDeleteBlockTx(block *types.BlockDetail, tx *types.Transaction, index int32, dbbatch db.Batch) *types.WalletTxDetail {
 	blockheight := block.Block.Height*maxTxNumPerBlock + int64(index)
 	heightstr := fmt.Sprintf("%018d", blockheight)
 	dbbatch.Delete(wcom.CalcTxKey(heightstr))

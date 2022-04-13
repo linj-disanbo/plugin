@@ -6,14 +6,14 @@ import (
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 const (
 	//KeyPrefixStateDB state db key必须前缀
-	KeyPrefixStateDB = "mavl-zksopt-"
+	KeyPrefixStateDB = "mavl-zkspot-"
 	//KeyPrefixLocalDB local db的key必须前缀
-	KeyPrefixLocalDB = "LODB-zksopt"
+	KeyPrefixLocalDB = "LODB-zkspot"
 )
 
 var opt_account_tree = &table.Option{
@@ -68,9 +68,9 @@ func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-var opt_zksopt_info = &table.Option{
+var opt_zkspot_info = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
-	Name:    "zksopt",
+	Name:    "zkspot",
 	Primary: "height_index_opIndex",
 	Index:   []string{"height", "txHash"},
 }
@@ -78,7 +78,7 @@ var opt_zksopt_info = &table.Option{
 // NewZksyncInfoTable ...
 func NewZksyncInfoTable(kvdb db.KV) *table.Table {
 	rowmeta := NewZksyncInfoRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_zksopt_info)
+	table, err := table.NewTable(rowmeta, kvdb, opt_zkspot_info)
 	if err != nil {
 		panic(err)
 	}

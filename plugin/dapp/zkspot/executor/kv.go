@@ -2,7 +2,7 @@ package executor
 
 import (
 	"fmt"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 func GetAccountIdPrimaryKey(accountId uint64) []byte {

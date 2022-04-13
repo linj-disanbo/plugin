@@ -8,7 +8,7 @@ import (
 	"testing"
 
 	"github.com/33cn/chain33/util"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/stretchr/testify/assert"

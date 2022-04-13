@@ -81,7 +81,7 @@ const (
 )
 
 //Zksync 执行器名称定义
-const Zksync = "zksopt"
+const Zksync = "zkspot"
 const ZkManagerKey = "manager"
 const ZkMimcHashSeed = "seed"
 const ZkVerifierKey = "verifier"

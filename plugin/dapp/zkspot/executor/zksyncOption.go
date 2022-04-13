@@ -12,13 +12,13 @@ import (
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/pkg/errors"
 )
 
 var (
-	zklog = log15.New("module", "exec.zksopt")
+	zklog = log15.New("module", "exec.zkspot")
 )
 
 // Action action struct
@@ -35,7 +35,7 @@ type Action struct {
 }
 
 //NewAction ...
-func NewAction(z *zksopt, tx *types.Transaction, index int) *Action {
+func NewAction(z *zkspot, tx *types.Transaction, index int) *Action {
 	hash := tx.Hash()
 	fromaddr := tx.From()
 	return &Action{
@@ -67,7 +67,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
 
-	zklog.Info("start zksopt deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
+	zklog.Info("start zkspot deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
@@ -105,7 +105,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getAccountTree")
 	}
-	zklog.Info("zksopt deposit", "tree", tree)
+	zklog.Info("zkspot deposit", "tree", tree)
 
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
@@ -118,7 +118,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 	//leaf不存在就添加
 	if leaf == nil {
-		zklog.Info("zksopt deposit add leaf")
+		zklog.Info("zkspot deposit add leaf")
 		operationInfo.AccountID = tree.GetTotalIndex() + 1
 		//添加之前先计算证明
 		receipt, err := calProof(a.statedb, info, operationInfo.AccountID, payload.TokenId)
@@ -466,11 +466,11 @@ func (a *Action) ContractToTree(payload *zt.ZkContractToTree) (*types.Receipt, e
 	}
 	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
 
-	zksoptlog := &zt.ZkReceiptLog{
+	zkspotlog := &zt.ZkReceiptLog{
 		OperationInfo: operationInfo,
 		LocalKvs:      localKvs,
 	}
-	receiptLog := &types.ReceiptLog{Ty: zt.TyContractToTreeLog, Log: types.Encode(zksoptlog)}
+	receiptLog := &types.ReceiptLog{Ty: zt.TyContractToTreeLog, Log: types.Encode(zkspotlog)}
 	logs = append(logs, receiptLog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
@@ -585,7 +585,7 @@ func (a *Action) UpdateContractAccount(addr string, amount string, tokenId uint6
 	}
 
 	kvs := accountdb.GetKVSet(contractAccount)
-	zlog.Info("zksopt UpdateContractAccount", "key", string(kvs[0].GetKey()), "account", contractAccount)
+	zlog.Info("zkspot UpdateContractAccount", "key", string(kvs[0].GetKey()), "account", contractAccount)
 	return kvs, nil
 }
 

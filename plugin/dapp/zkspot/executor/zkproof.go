@@ -6,14 +6,14 @@ import (
 	"github.com/33cn/chain33/common"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/merkletree"
-	"github.com/33cn/plugin/plugin/dapp/zksopt/wallet"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/wallet"
 	"math/big"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	"github.com/consensys/gnark-crypto/ecc"
 
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 
 	"github.com/33cn/plugin/plugin/dapp/mix/executor/zksnark"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"

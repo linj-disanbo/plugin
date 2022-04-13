@@ -3,10 +3,10 @@ package executor
 import (
 	"encoding/hex"
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
-func (z *zksopt) execAutoLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zkspot) execAutoLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if receiptData.Ty != types.ExecOk {
 		return nil, types.ErrInvalidParam
 	}
@@ -19,7 +19,7 @@ func (z *zksopt) execAutoLocalZksync(tx *types.Transaction, receiptData *types.R
 	return dbSet, nil
 }
 
-func (z *zksopt) execLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zkspot) execLocalZksync(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	infoTable := NewZksyncInfoTable(z.GetLocalDB())
 	proofTable := NewCommitProofTable(z.GetLocalDB())
 
@@ -74,7 +74,7 @@ func (z *zksopt) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 	return dbSet, nil
 }
 
-func (z *zksopt) execAutoDelLocal(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
+func (z *zkspot) execAutoDelLocal(tx *types.Transaction, receiptData *types.ReceiptData) (*types.LocalDBSet, error) {
 	kvs, err := z.DelRollbackKV(tx, tx.Execer)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (z *zksopt) execAutoDelLocal(tx *types.Transaction, receiptData *types.Rece
 	return dbSet, nil
 }
 
-func (z *zksopt) execCommitProofLocal(payload *zt.ZkCommitProof, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zkspot) execCommitProofLocal(payload *zt.ZkCommitProof, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	if receiptData.Ty != types.ExecOk {
 		return nil, types.ErrInvalidParam
 	}

@@ -2,7 +2,7 @@ package executor
 
 import (
 	"github.com/33cn/chain33/util"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )

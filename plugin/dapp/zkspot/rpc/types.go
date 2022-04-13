@@ -2,7 +2,7 @@ package rpc
 
 import (
 	rpctypes "github.com/33cn/chain33/rpc/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 /*

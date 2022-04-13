@@ -7,8 +7,8 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
-	"github.com/33cn/plugin/plugin/dapp/zksopt/wallet"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/wallet"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 )
@@ -20,7 +20,7 @@ import (
 
 var (
 	//日志
-	zlog = log.New("module", "zksopt.executor")
+	zlog = log.New("module", "zkspot.executor")
 )
 
 var driverName = zt.Zksync
@@ -34,16 +34,16 @@ func Init(name string, cfg *types.Chain33Config, sub []byte) {
 // InitExecType Init Exec Type
 func InitExecType() {
 	ety := types.LoadExecutorType(driverName)
-	ety.InitFuncList(types.ListMethod(&zksopt{}))
+	ety.InitFuncList(types.ListMethod(&zkspot{}))
 }
 
-type zksopt struct {
+type zkspot struct {
 	drivers.DriverBase
 }
 
 //NewExchange ...
 func NewZksync() drivers.Driver {
-	t := &zksopt{}
+	t := &zkspot{}
 	t.SetChild(t)
 	t.SetExecutorType(types.LoadExecutorType(driverName))
 	return t
@@ -55,12 +55,12 @@ func GetName() string {
 }
 
 //GetDriverName ...
-func (z *zksopt) GetDriverName() string {
+func (z *zkspot) GetDriverName() string {
 	return driverName
 }
 
 // CheckTx 实现自定义检验交易接口，供框架调用
-func (z *zksopt) CheckTx(tx *types.Transaction, index int) error {
+func (z *zkspot) CheckTx(tx *types.Transaction, index int) error {
 	action := new(zt.ZksyncAction)
 	if err := types.Decode(tx.Payload, action); err != nil {
 		return err
@@ -117,11 +117,11 @@ func (z *zksopt) CheckTx(tx *types.Transaction, index int) error {
 }
 
 //ExecutorOrder Exec 的时候 同时执行 ExecLocal
-func (z *zksopt) ExecutorOrder() int64 {
+func (z *zkspot) ExecutorOrder() int64 {
 	return drivers.ExecLocalSameTime
 }
 
 // GetPayloadValue get payload value
-func (z *zksopt) GetPayloadValue() types.Message {
+func (z *zkspot) GetPayloadValue() types.Message {
 	return &zt.ZksyncAction{}
 }

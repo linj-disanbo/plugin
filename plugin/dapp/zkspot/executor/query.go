@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zksopt/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 // Query_GetAccountTree 获取当前的树
-func (z *zksopt) Query_GetAccountTree(in *types.ReqNil) (types.Message, error) {
+func (z *zkspot) Query_GetAccountTree(in *types.ReqNil) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -25,7 +25,7 @@ func (z *zksopt) Query_GetAccountTree(in *types.ReqNil) (types.Message, error) {
 }
 
 // Query_GetTxProof 获取交易证明
-func (z *zksopt) Query_GetTxProof(in *zt.ZkQueryReq) (types.Message, error) {
+func (z *zkspot) Query_GetTxProof(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -39,7 +39,7 @@ func (z *zksopt) Query_GetTxProof(in *zt.ZkQueryReq) (types.Message, error) {
 }
 
 // Query_GetTxProof 批量获取交易证明
-func (z *zksopt) Query_GetTxProofByHeight(in *zt.ZkQueryReq) (types.Message, error) {
+func (z *zkspot) Query_GetTxProofByHeight(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -59,7 +59,7 @@ func (z *zksopt) Query_GetTxProofByHeight(in *zt.ZkQueryReq) (types.Message, err
 }
 
 // Query_GetAccountById  通过accountId查询account
-func (z *zksopt) Query_GetAccountById(in *zt.ZkQueryReq) (types.Message, error) {
+func (z *zkspot) Query_GetAccountById(in *zt.ZkQueryReq) (types.Message, error) {
 	var leaf zt.Leaf
 	val, err := z.GetStateDB().Get(GetAccountIdPrimaryKey(in.AccountId))
 	if err != nil {
@@ -76,7 +76,7 @@ func (z *zksopt) Query_GetAccountById(in *zt.ZkQueryReq) (types.Message, error) 
 }
 
 // Query_GetAccountByEth  通过eth地址查询account
-func (z *zksopt) Query_GetAccountByEth(in *zt.ZkQueryReq) (types.Message, error) {
+func (z *zkspot) Query_GetAccountByEth(in *zt.ZkQueryReq) (types.Message, error) {
 	res := new(zt.ZkQueryResp)
 	in.EthAddress = zt.HexAddr2Decimal(in.EthAddress)
 	leaves, err := GetLeafByEthAddress(z.GetLocalDB(), in.EthAddress)
@@ -88,7 +88,7 @@ func (z *zksopt) Query_GetAccountByEth(in *zt.ZkQueryReq) (types.Message, error)
 }
 
 // Query_GetAccountByChain33  通过chain33地址查询account
-func (z *zksopt) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, error) {
+func (z *zkspot) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, error) {
 	res := new(zt.ZkQueryResp)
 	in.Chain33Addr = zt.HexAddr2Decimal(in.Chain33Addr)
 	leaves, err := GetLeafByChain33Address(z.GetLocalDB(), in.Chain33Addr)
@@ -100,12 +100,12 @@ func (z *zksopt) Query_GetAccountByChain33(in *zt.ZkQueryReq) (types.Message, er
 }
 
 // Query_GetLastCommitProof 获取最新proof信息
-func (z *zksopt) Query_GetLastCommitProof(in *types.ReqNil) (types.Message, error) {
+func (z *zkspot) Query_GetLastCommitProof(in *types.ReqNil) (types.Message, error) {
 	return getLastCommitProofData(z.GetStateDB())
 }
 
 // Query_GetLastPriorityQueueId 获取最后的eth priority queue id
-func (z *zksopt) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, error) {
+func (z *zkspot) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -113,7 +113,7 @@ func (z *zksopt) Query_GetLastPriorityQueueId(in *types.Int64) (types.Message, e
 }
 
 // Query_GetTxProofByHeights 根据多个高度批量获取交易证明
-func (z *zksopt) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Message, error) {
+func (z *zkspot) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -152,7 +152,7 @@ func (z *zksopt) Query_GetTxProofByHeights(in *zt.ZkQueryProofReq) (types.Messag
 }
 
 // Query_GetZkContractAccount 批量获取交易证明
-func (z *zksopt) Query_GetZkContractAccount(in *zt.ZkQueryReq) (types.Message, error) {
+func (z *zkspot) Query_GetZkContractAccount(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -162,7 +162,7 @@ func (z *zksopt) Query_GetZkContractAccount(in *zt.ZkQueryReq) (types.Message, e
 }
 
 // Query_GetTokenBalance 根据token和account获取balance
-func (z *zksopt) Query_GetTokenBalance(in *zt.ZkQueryReq) (types.Message, error) {
+func (z *zkspot) Query_GetTokenBalance(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -176,7 +176,7 @@ func (z *zksopt) Query_GetTokenBalance(in *zt.ZkQueryReq) (types.Message, error)
 }
 
 // Query_GetProofByTxHash 根据txhash获取proof信息
-func (z *zksopt) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error) {
+func (z *zkspot) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
@@ -196,7 +196,7 @@ func (z *zksopt) Query_GetProofByTxHash(in *zt.ZkQueryReq) (types.Message, error
 }
 
 // Query_GetCommitProodByProofId 根据proofId获取commitProof信息
-func (z *zksopt) Query_GetCommitProodByProofId(in *zt.ZkQueryReq) (types.Message, error) {
+func (z *zkspot) Query_GetCommitProodByProofId(in *zt.ZkQueryReq) (types.Message, error) {
 	if in == nil {
 		return nil, types.ErrInvalidParam
 	}
