@@ -208,4 +208,19 @@ message ReceiptExchangeBind {
   string oldEntrustAddress = 3;
 }
 
+// 每种代币的数量
+message DexAccountBalance {
+  uint64 id = 1;
+  uint64 balance = 2;
+  uint64 frozen = 3;
+}
+
+// 用户代币的数量
+message DexAccount {
+  uint64 accountId = 1;
+  uint64 addr = 2;
+  repeated DexAccountBalance balance = 3; 
+}
+
+
 service exchange {}
