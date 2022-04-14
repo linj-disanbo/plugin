@@ -217,8 +217,8 @@ message DexAccountBalance {
 
 // 用户代币的数量
 message DexAccount {
-  uint64 accountId = 1;
-  uint64 addr = 2;
+  uint64 id = 1;
+  string addr = 2;
   repeated DexAccountBalance balance = 3; 
 }
 
