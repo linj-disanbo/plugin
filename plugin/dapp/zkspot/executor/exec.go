@@ -12,7 +12,11 @@ func (z *zkspot) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, inde
 		return r, err
 	}
 	action2 := NewSpotAction2(z, tx, index)
-	return action2.Deposit(payload)
+	r2, err := action2.Deposit(payload)
+	if err != nil {
+		return r, err
+	}
+	return mergeReceipt(r, r2), nil
 }
 
 func (z *zkspot) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
