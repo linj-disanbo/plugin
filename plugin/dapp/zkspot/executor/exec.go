@@ -7,7 +7,12 @@ import (
 
 func (z *zkspot) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	return action.Deposit(payload)
+	r, err := action.Deposit(payload)
+	if err != nil {
+		return r, err
+	}
+	action2 := NewSpotAction2(z, tx, index)
+	return action2.Deposit(payload)
 }
 
 func (z *zkspot) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {

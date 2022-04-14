@@ -48,6 +48,25 @@ func NewSpotAction(e *exchange, tx *types.Transaction, index int) *SpotAction {
 	}
 }
 
+//NewAction ...
+func NewSpotAction2(e *zkspot, tx *types.Transaction, index int) *SpotAction {
+	hash := tx.Hash()
+	fromaddr := tx.From()
+	toaddr := tx.GetTo()
+	return &SpotAction{
+		statedb:   e.GetStateDB(),
+		txhash:    hash,
+		fromaddr:  fromaddr,
+		toaddr:    toaddr,
+		blocktime: e.GetBlockTime(),
+		height:    e.GetHeight(),
+		execaddr:  dapp.ExecAddress(string(tx.Execer)),
+		localDB:   e.GetLocalDB(),
+		index:     index,
+		api:       e.GetAPI(),
+	}
+}
+
 //GetIndex get index
 func (a *SpotAction) GetIndex() int64 {
 	// Add four zeros to match multiple MatchOrder indexes
@@ -921,4 +940,51 @@ func formatInterface(data interface{}) int64 {
 	default:
 		return 0
 	}
+}
+
+// 使用 chain33 地址为key
+// 同样提供: account 基本和 token 级别的信息
+
+// 现在为了实现简单: 只有一个交易所,
+// 所以 资金帐号和现货交易所帐号是同一个
+
+// 存款交易是系统代为存入的, 存到指定帐号上, 不是签名帐号中
+
+// 用户帐号定义
+// dex1 -> accountid -> tokenids 是一个对象
+//  理论上, 对象越小越快, 但交易涉及两个资产. 如果一个资产是一个对象的. 要处理两个对象.
+//  先实现再说
+func (a *SpotAction) Deposit(payload *et.ZkDeposit) (*types.Receipt, error) {
+
+	chain33Addr := payload.GetChain33Addr()
+	tid := payload.GetTokenId()
+	amount := payload.GetAmount()
+
+	// TODO tid 哪里定义, 里面不需要知道tid 是什么, 在合约里 id1 换 id2
+
+	acc, err := a.LoadDexAccount(chain33Addr)
+	if err != nil {
+		return nil, err
+	}
+	amount2, ok := big.NewInt(0).SetString(amount, 10)
+	if !ok {
+		return nil, et.ErrAssetBalance
+	}
+	acc.Mint(tid, amount2.Uint64())
+	return nil, nil
+}
+
+func (a *SpotAction) LoadDexAccount(chain33addr string) (*dexAccount, error) {
+	key := fmt.Sprintf("dexAccountKey%s", chain33addr)
+	v, err := a.statedb.Get([]byte(key))
+	if err != nil {
+		return nil, err
+	}
+	var val et.DexAccount
+	err = types.Decode(v, &val)
+	if err != nil {
+		return nil, err
+	}
+	acc := GetDexAccount(&val)
+	return acc, nil
 }

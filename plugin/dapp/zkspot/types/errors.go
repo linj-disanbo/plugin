@@ -18,4 +18,7 @@ var (
 
 	ErrCfgFmt   = fmt.Errorf("%s", "ErrCfgFmt")
 	ErrBindAddr = fmt.Errorf("%s", "The address is not bound")
+
+	// 资产处理
+	ErrDexNotEnough = fmt.Errorf("%s", "token balance not enough")
 )
