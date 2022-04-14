@@ -68,6 +68,11 @@ type TMatchPkg struct {
 	f1, f2 TFee
 }
 
+// 结算后状态
+//          A    B  feesysacc
+// BTY     -1    +1
+// USDT    +99   -101  +2
+
 // 是否需要将清单合并成帐号变化
 // BTY-id = 2, USDT-id = 1
 func SampleSpotMatch() TodoList {
