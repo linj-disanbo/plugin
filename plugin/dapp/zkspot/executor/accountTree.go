@@ -2,8 +2,9 @@ package executor
 
 import (
 	"fmt"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"math/big"
+
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
@@ -383,6 +384,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 	if err != nil {
 		return kvs, localKvs, errors.Wrapf(err, "db.getAccountTree")
 	}
+	// TODO 逻辑实现调整下: 上面support 没做, 下面 sub 过大没判断
 	if token == nil {
 		if option == zt.Sub {
 			return kvs, localKvs, errors.New("token not exist")
