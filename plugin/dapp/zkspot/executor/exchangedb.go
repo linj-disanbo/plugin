@@ -970,6 +970,7 @@ func (a *SpotAction) Deposit(payload *et.ZkDeposit) (*types.Receipt, error) {
 	if !ok {
 		return nil, et.ErrAssetBalance
 	}
+	// TODO 未处理 receipt kv log 等
 	acc.Mint(tid, amount2.Uint64())
 	return nil, nil
 }
