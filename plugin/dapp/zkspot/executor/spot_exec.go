@@ -11,9 +11,20 @@ import (
  */
 
 // 限价交易
-func (e *exchange) Exec_LimitOrder(payload *exchangetypes.LimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := NewSpotAction(e, tx, index)
-	return action.LimitOrder(payload, "")
+func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.LimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewSpotAction2(e, tx, index)
+	r, err := action.LimitOrder(payload, "")
+	if err != nil {
+		return r, err
+	}
+	// 构造 LimitOrder 的结算清单
+	list := SampleSpotMatch( /* r *types.Receipt */ )
+	action2 := NewAction(e, tx, index)
+	r2, err := action2.SpotMatch(payload, &list)
+	if err != nil {
+		return r, err
+	}
+	return mergeReceipt(r, r2), nil
 }
 
 //市价交易

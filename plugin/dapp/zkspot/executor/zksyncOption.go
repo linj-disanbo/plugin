@@ -2,10 +2,11 @@ package executor
 
 import (
 	"fmt"
-	"github.com/33cn/chain33/common/log/log15"
 	"math/big"
 	"strconv"
 	"strings"
+
+	"github.com/33cn/chain33/common/log/log15"
 
 	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
@@ -1329,4 +1330,16 @@ func (a *Action) MakeFeeLog(amount string, info *TreeUpdateInfo, tokenId uint64,
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
+}
+
+// 处理撮合结果
+//  如果是 按不同的交易类型来处理的话, 零知识证明部分的代码, 会随交易的多样化, 需要也写很多函数来支持.
+//  所以结果最好以 结算的形式作为参数.
+//  不同交易的结果, 转化为有限的几种结算
+//    主动结算: (用户地址发起的交易)    如: 撮合
+//    被动结算: (系统特定帐号发起的交易) 如: 永续中暴仓, 和资金费
+//  结算的列表以结果的形式提现帐号的变化, 和具体的业务无关
+func (a *Action) SpotMatch(payload *zt.LimitOrder, list *TodoList) (*types.Receipt, error) {
+	// TODO impl
+	return nil, nil
 }

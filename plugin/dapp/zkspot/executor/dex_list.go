@@ -33,6 +33,7 @@ type TodoList struct {
 	items []TodoItem
 }
 
+// A (accountid = 1) 存入 1000 usdt (id = 1)
 func SampleDeposit() TodoList {
 	b := et.DexAccountBalance{
 		Id:      1,    // USDT
@@ -64,9 +65,28 @@ type TFee struct {
 }
 
 type TMatchPkg struct {
-	match  TMatch
-	f1, f2 TFee
+	tx1, tx2 string // tx hash
+	match    TMatch
+	f1, f2   TFee
 }
+
+// 相关的交易为 A签名发送的 tx1(卖bty), B签名发送的tx2(买bty)
+// 撮合 100usdt 交易 1bty, 并且收取 A B 各 1usdt的手续费
+
+// 撮合
+//          A    B  feesysacc
+// BTY     -1    +1
+// USDT    +100   -100
+
+// 手续费1
+//          A    B  feesysacc
+// BTY     0    0     0
+// USDT    -1   0     +1
+
+// 手续费1
+//          A    B  feesysacc
+// BTY     0     0        0
+// USDT    0     -1       +1
 
 // 结算后状态
 //          A    B  feesysacc
