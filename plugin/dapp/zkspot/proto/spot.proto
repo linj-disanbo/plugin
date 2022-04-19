@@ -1,5 +1,6 @@
 syntax = "proto3";
 package types;
+import "witness.proto";
 option go_package = "github.com/33cn/plugin/plugin/dapp/zkspot/types";
 
 message Exchange {}
@@ -16,18 +17,33 @@ message ExchangeAction {
   int32 ty = 6;
 }
 
+message ZkOrder {
+  uint64 accountID = 1;
+  string ethAddress = 2;
+  uint64 nonce = 3;
+  uint32 tokenSell = 4;
+  uint32 tokenBuy = 5;
+  uint64 amount = 6;
+  uint32 ratio1 = 7;
+  uint32 ratio2 = 8;
+  uint64 validFrom = 9;
+  uint64 validUntil = 10;
+  ZkSignature signature = 20;
+}
+
 //限价订单
 message LimitOrder {
   //交易对
-  asset leftAsset = 1;
+  uint32 leftAsset = 1;
   //交易对
-  asset rightAsset = 2;
+  uint32 rightAsset = 2;
   //价格
   int64 price = 3;
   //总量
   int64 amount = 4;
   //操作， 1为买，2为卖
   int32 op = 5;
+  ZkOrder order = 6;
 }
 
 //市价委托
@@ -52,9 +68,9 @@ message ExchangeBind {
 //委托限价订单
 message EntrustOrder {
   //交易对
-  asset leftAsset = 1;
+  uint32 leftAsset = 1;
   //交易对
-  asset rightAsset = 2;
+  uint32 rightAsset = 2;
   //价格
   int64 price = 3;
   //总量
@@ -63,6 +79,7 @@ message EntrustOrder {
   int32 op = 5;
   //交易地址
   string addr = 6;
+  ZkOrder order = 7;
 }
 
 //委托撤回订单
@@ -210,9 +227,12 @@ message ReceiptExchangeBind {
 
 // 每种代币的数量
 message DexAccountBalance {
-  uint64 id = 1;
+  // token id
+  uint64 id = 1; 
   uint64 balance = 2;
   uint64 frozen = 3;
+  string addr = 4;
+  string dexName = 5;
 }
 
 // 用户代币的数量
@@ -220,6 +240,7 @@ message DexAccount {
   uint64 id = 1;
   string addr = 2;
   repeated DexAccountBalance balance = 3; 
+  string dexName = 4;
 }
 
 
