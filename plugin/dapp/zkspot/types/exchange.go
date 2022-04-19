@@ -139,8 +139,9 @@ func (f *Econfig) GetCoinName(asset *Asset) string {
 	return asset.Symbol
 }
 
-func (f *Econfig) GetSymbol(left, right *Asset) string {
-	return fmt.Sprintf("%v_%v", f.GetCoinName(left), f.GetCoinName(right))
+// TODO
+func (f *Econfig) GetSymbol(left, right uint32) string {
+	return fmt.Sprintf("%v_%v", left, right)
 }
 
 func (f *Econfig) GetTrade(or *LimitOrder) *Trade {

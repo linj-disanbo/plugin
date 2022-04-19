@@ -1,6 +1,10 @@
 package executor
 
 import (
+	"fmt"
+
+	dbm "github.com/33cn/chain33/common/db"
+	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
@@ -8,21 +12,67 @@ var (
 	// mavl-zkspot-dex-   资金帐号
 	// mavl-zkspot-spot-  现货帐号
 	// 先都用现货帐号
-	dexAccountKey = []byte("mavl-zkspot-spot-")
+	spotAccountKey = []byte("mavl-zkspot-spot-")
+	spotDexName    = "spot"
+	dexAccountKey  = []byte("mavl-zkspot-dex-")
+	//spotAccountKey =
+	//spot           = []byte("spot")
 )
 
+type Dex struct {
+	dexName   string
+	keyPrefix []byte
+}
+
+type SpotDex struct {
+	Dex
+}
+
+func newSpotDex() *SpotDex {
+	return &SpotDex{
+		Dex: Dex{
+			dexName:   spotDexName,
+			keyPrefix: spotAccountKey,
+		},
+	}
+}
+func genAccountKey(dexType []byte, id uint64) []byte {
+	return []byte(fmt.Sprintf("%s:016%d:%016d", dexType, id))
+}
+
+func LoadSpotAccount(addr string, id uint64, db dbm.KV) (*dexAccount, error) {
+	return newSpotDex().LoadAccount(addr, id, db)
+}
+
+func (dex *Dex) LoadAccount(addr string, id uint64, db dbm.KV) (*dexAccount, error) {
+	key := genAccountKey(dex.keyPrefix, id)
+	v, err := db.Get(key)
+	if err == types.ErrNotFound {
+		return NewDexAccount(dex.dexName, id, addr), nil
+	}
+	var acc et.DexAccount
+	err = types.Decode(v, &acc)
+	if err != nil {
+		return nil, err
+	}
+
+	return GetDexAccount(&acc), nil
+}
+
 type dexAccount struct {
+	ty  string // spot, future, asset
 	acc *et.DexAccount
 }
 
 // 先写逻辑
 // TODO 需要增加 kv , receipt的处理
-
-func NewDexAccount(id uint64, addr string) *dexAccount {
+func NewDexAccount(ty string, id uint64, addr string) *dexAccount {
 	return &dexAccount{
+		ty: ty,
 		acc: &et.DexAccount{
-			Id:   id,
-			Addr: addr,
+			Id:      id,
+			Addr:    addr,
+			DexName: ty,
 		},
 	}
 }
@@ -31,7 +81,7 @@ func GetDexAccount(acc *et.DexAccount) *dexAccount {
 	return &dexAccount{acc: acc}
 }
 
-func (acc *dexAccount) findTokenIndex(tid uint64) int {
+func (acc *dexAccount) findTokenIndex(tid uint32) int {
 	for i, token := range acc.acc.Balance {
 		if token.Id == tid {
 			return i
@@ -40,7 +90,7 @@ func (acc *dexAccount) findTokenIndex(tid uint64) int {
 	return -1
 }
 
-func (acc *dexAccount) newToken(tid uint64, amount uint64) int {
+func (acc *dexAccount) newToken(tid uint32, amount uint64) int {
 	acc.acc.Balance = append(acc.acc.Balance, &et.DexAccountBalance{
 		Id:      tid,
 		Balance: amount,
@@ -48,7 +98,7 @@ func (acc *dexAccount) newToken(tid uint64, amount uint64) int {
 	return len(acc.acc.Balance) - 1
 }
 
-func (acc *dexAccount) Mint(tid uint64, amount uint64) {
+func (acc *dexAccount) Mint(tid uint32, amount uint64) {
 	idx := acc.findTokenIndex(tid)
 	if idx == -1 {
 		acc.acc.Balance = append(acc.acc.Balance, &et.DexAccountBalance{
@@ -60,7 +110,7 @@ func (acc *dexAccount) Mint(tid uint64, amount uint64) {
 	}
 }
 
-func (acc *dexAccount) Burn(tid uint64, amount uint64) error {
+func (acc *dexAccount) Burn(tid uint32, amount uint64) error {
 	idx := acc.findTokenIndex(tid)
 	if idx == -1 {
 		return et.ErrDexNotEnough
@@ -114,4 +164,38 @@ func (acc *dexAccount) Tranfer(accTo *dexAccount, b *et.DexAccountBalance) error
 
 func (acc *dexAccount) Withdraw(accTo *dexAccount, b *et.DexAccountBalance) error {
 	return accTo.Tranfer(acc, b)
+}
+
+func (acc *dexAccount) Frozen(token uint32, amount uint64) error {
+	idx := acc.findTokenIndex(token)
+	if idx < 0 {
+		return et.ErrDexNotEnough
+	}
+	if acc.acc.Balance[idx].Balance < amount {
+		return et.ErrDexNotEnough
+	}
+	acc.acc.Balance[idx].Balance -= amount
+	acc.acc.Balance[idx].Frozen += amount
+	return nil
+}
+
+func (acc *dexAccount) Active(token uint32, amount uint64) error {
+	idx := acc.findTokenIndex(token)
+	if idx < 0 {
+		return et.ErrDexNotEnough
+	}
+	if acc.acc.Balance[idx].Frozen < amount {
+		return et.ErrDexNotEnough
+	}
+	acc.acc.Balance[idx].Balance += amount
+	acc.acc.Balance[idx].Frozen -= amount
+	return nil
+}
+
+func (acc *dexAccount) FrozenTranfer(accTo *dexAccount, tid uint32, amount uint64) error {
+	b := et.DexAccountBalance{
+		Id:     tid,
+		Frozen: amount,
+	}
+	return acc.Tranfer(accTo, &b)
 }
