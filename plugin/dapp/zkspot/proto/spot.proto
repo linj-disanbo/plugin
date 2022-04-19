@@ -138,6 +138,8 @@ message Order {
   int64 createTime = 17;
   //委托地址
   string entrustAddr = 18;
+  // frozen fee
+  int64 feeBalance = 19;
 }
 
 //查询接口
@@ -228,7 +230,7 @@ message ReceiptExchangeBind {
 // 每种代币的数量
 message DexAccountBalance {
   // token id
-  uint64 id = 1; 
+  uint32 id = 1; 
   uint64 balance = 2;
   uint64 frozen = 3;
   string addr = 4;
