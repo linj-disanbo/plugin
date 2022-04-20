@@ -195,7 +195,6 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 			elog.Error("limit check right balance", "addr", a.fromaddr, "avail", acc.acc.Balance, "need", amount)
 			return nil, et.ErrAssetBalance
 		}
-		return a.matchLimitOrder(payload, acc, acc, entrustAddr)
 	} else {
 		/* if payload.GetOp() == et.OpSell */
 		amount := payload.GetAmount()
