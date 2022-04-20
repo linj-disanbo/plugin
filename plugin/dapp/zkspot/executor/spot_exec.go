@@ -16,11 +16,8 @@ func checkZkSignature() error {
 
 // 限价交易
 func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.LimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	// TODO
-	err := checkZkSignature()
-	if err != nil {
-		return &types.Receipt{}, err
-	}
+	// checkTx will check payload and zk Signature
+
 	action := NewSpotAction2(e, tx, index)
 	r, err := action.LimitOrder(payload, "")
 	if err != nil {

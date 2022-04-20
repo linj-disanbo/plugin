@@ -95,6 +95,14 @@ func (z *zkspot) CheckTx(tx *types.Transaction, index int) error {
 	case zt.TyFullExitAction:
 		signature = action.GetFullExit().GetSignature()
 		msg = wallet.GetFullExitMsg(action.GetFullExit())
+	case zt.TyLimitOrderAction:
+		cfg := z.GetAPI().GetConfig()
+		err := SpotCheckTx(cfg, tx, index)
+		if err != nil {
+			return err
+		}
+		signature = action.GetLimitOrder().GetOrder().GetSignature()
+		msg = wallet.GetLimitOrderMsg(action.GetLimitOrder())
 	default:
 		cfg := z.GetAPI().GetConfig()
 		return SpotCheckTx(cfg, tx, index)

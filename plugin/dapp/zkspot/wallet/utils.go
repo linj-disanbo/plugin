@@ -80,7 +80,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 		payload = types.MustPBToJSON(fullExit)
 	case zt.TySetVerifierAction:
 		fullExit := &zt.ZkVerifier{
-			Verifiers:   strings.Split(chain33Addr, ","),
+			Verifiers: strings.Split(chain33Addr, ","),
 		}
 		payload = types.MustPBToJSON(fullExit)
 	default:
@@ -126,13 +126,12 @@ func StringToByte(s string) []byte {
 	return byteArray[:]
 }
 
-
 func ChunkStringToByte(s string) []byte {
 	f := new(fr.Element).SetString(s)
 	chunk := f.Bytes()
 	bits := Byte2Bit(chunk[22:])
 	for i := 0; i < len(bits)/2; i++ {
-		bits[i], bits[len(bits) - 1 - i] = bits[len(bits) - 1 - i], bits[i]
+		bits[i], bits[len(bits)-1-i] = bits[len(bits)-1-i], bits[i]
 	}
 
 	return Bit2Byte(bits)
@@ -150,7 +149,7 @@ func Byte2Bit(data []byte) []uint {
 
 func Bit2Byte(bits []uint) []byte {
 	data := make([]byte, 0)
-	for i := 0; i < len(bits) / 8; i++ {
+	for i := 0; i < len(bits)/8; i++ {
 		num := uint(0)
 		for j, v := range bits[8*i : 8*(i+1)] {
 			num = num + (v << uint(7-j))
@@ -351,6 +350,37 @@ func GetFullExitMsg(payload *zt.ZkFullExit) *zt.ZkMsg {
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyFullExitAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
+
+	copy(binaryData, pubData)
+
+	return &zt.ZkMsg{
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	}
+
+}
+
+// TODO need Gen all kind of market action
+func GetLimitOrderMsg(payload *zt.LimitOrder) *zt.ZkMsg {
+	var pubData []uint
+
+	binaryData := make([]uint, zt.MsgWidth)
+
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyLimitOrderAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.AccountID), zt.TokenBitWidth)...)
+	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.Order.EthAddress), 16)
+	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.Nonce), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.TokenSell)), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.TokenBuy)), zt.AccountBitWidth)...)
+
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.Amount), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio1)), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio2)), zt.AccountBitWidth)...)
+
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.ValidFrom), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.ValidUntil), zt.AccountBitWidth)...)
 
 	copy(binaryData, pubData)
 
