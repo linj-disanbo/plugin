@@ -17,6 +17,7 @@ var (
 	dexAccountKey  = []byte("mavl-zkspot-dex-")
 	//spotAccountKey =
 	//spot           = []byte("spot")
+	spotFeeAccountKey = []byte("zkspot-spotfeeaccount") // mavl-manager-{here}
 )
 
 type Dex struct {
