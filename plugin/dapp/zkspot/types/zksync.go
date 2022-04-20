@@ -180,6 +180,7 @@ var (
 		TyMarketOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyMarketOrderLog"},
 		TyRevokeOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyRevokeOrderLog"},
 		TyExchangeBindLog: {Ty: reflect.TypeOf(ReceiptExchangeBind{}), Name: "TyExchangeBindLog"},
+		TxSpotTradeLog:    {Ty: reflect.TypeOf(ReceiptSpotTrade{}), Name: "TySpotTradeLog"},
 	}
 
 	FeeMap = map[int64]string{

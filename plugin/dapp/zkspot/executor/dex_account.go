@@ -36,8 +36,9 @@ func newSpotDex() *SpotDex {
 		},
 	}
 }
-func genAccountKey(dexType []byte, id uint64) []byte {
-	return []byte(fmt.Sprintf("%s:016%d:%016d", dexType, id))
+
+func genAccountKey(dexType []byte, addr string, id uint64) []byte {
+	return []byte(fmt.Sprintf("%s:016%d:%s", dexType, addr))
 }
 
 func LoadSpotAccount(addr string, id uint64, db dbm.KV) (*dexAccount, error) {
@@ -45,7 +46,7 @@ func LoadSpotAccount(addr string, id uint64, db dbm.KV) (*dexAccount, error) {
 }
 
 func (dex *Dex) LoadAccount(addr string, id uint64, db dbm.KV) (*dexAccount, error) {
-	key := genAccountKey(dex.keyPrefix, id)
+	key := genAccountKey(dex.keyPrefix, addr, id)
 	v, err := db.Get(key)
 	if err == types.ErrNotFound {
 		return NewDexAccount(dex.dexName, id, addr), nil
@@ -127,7 +128,7 @@ func (acc *dexAccount) Burn(tid uint32, amount uint64) error {
 // 撮合 包含 1个交换, 和两个手续费
 // 币的源头是是从balance/frozen 中转 看balance 的中值是否为frozen
 // 币的目的一般到 balance即可, 如果有到frozen的 提供额外的函数或参数
-
+/*
 func (acc *dexAccount) Swap(accTo *dexAccount, got, gave *et.DexAccountBalance) error {
 	err := acc.Tranfer(accTo, gave)
 	if err != nil {
@@ -135,8 +136,9 @@ func (acc *dexAccount) Swap(accTo *dexAccount, got, gave *et.DexAccountBalance) 
 	}
 	return acc.Withdraw(accTo, got)
 }
+*/
 
-func (acc *dexAccount) Tranfer(accTo *dexAccount, b *et.DexAccountBalance) error {
+func (acc *dexAccount) Tranfer1(accTo *dexAccount, b *et.DexAccountBalance) error {
 	idx := acc.findTokenIndex(b.Id)
 	if idx < 0 {
 		return et.ErrDexNotEnough
@@ -162,8 +164,31 @@ func (acc *dexAccount) Tranfer(accTo *dexAccount, b *et.DexAccountBalance) error
 	return nil
 }
 
+func (acc *dexAccount) Tranfer(accTo *dexAccount, token uint32, balance uint64) error {
+	idx := acc.findTokenIndex(token)
+	if idx < 0 {
+		return et.ErrDexNotEnough
+	}
+	idxTo := accTo.findTokenIndex(token)
+	if idxTo < 0 {
+		idxTo = acc.newToken(token, 0)
+	}
+
+	if acc.acc.Balance[idx].Balance < balance {
+		return et.ErrDexNotEnough
+	}
+
+	//copyAcc := dupAccount(acc.acc)
+	//copyAccTo := dupAccount(accTo.acc)
+
+	acc.acc.Balance[idx].Balance -= balance
+	accTo.acc.Balance[idxTo].Balance += balance
+
+	return nil
+}
+
 func (acc *dexAccount) Withdraw(accTo *dexAccount, b *et.DexAccountBalance) error {
-	return accTo.Tranfer(acc, b)
+	return accTo.Tranfer1(acc, b)
 }
 
 func (acc *dexAccount) Frozen(token uint32, amount uint64) error {
@@ -197,5 +222,27 @@ func (acc *dexAccount) FrozenTranfer(accTo *dexAccount, tid uint32, amount uint6
 		Id:     tid,
 		Frozen: amount,
 	}
-	return acc.Tranfer(accTo, &b)
+	return acc.Tranfer1(accTo, &b)
+}
+
+func dupAccount(acc *et.DexAccount) *et.DexAccount {
+	copyAcc := *acc
+	var bs []*et.DexAccountBalance
+	for _, b := range acc.Balance {
+		copyB := *b
+		bs = append(bs, &copyB)
+	}
+	copyAcc.Balance = bs
+	return &copyAcc
+}
+
+// GetKVSet account to statdb kv
+func (acc *dexAccount) GetKVSet() (kvset []*types.KeyValue) {
+	value := types.Encode(acc.acc)
+	kvset = make([]*types.KeyValue, 1)
+	kvset[0] = &types.KeyValue{
+		Key:   genAccountKey(spotAccountKey, acc.acc.Addr, acc.acc.Id),
+		Value: value,
+	}
+	return kvset
 }

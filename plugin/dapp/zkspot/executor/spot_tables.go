@@ -102,7 +102,7 @@ func (r *OrderRow) Get(key string) ([]byte, error) {
 	if key == "orderID" {
 		return []byte(fmt.Sprintf("%022d", r.OrderID)), nil
 	} else if key == "market_order" {
-		return []byte(fmt.Sprintf("%s:%s:%d:%016d", r.GetLimitOrder().LeftAsset.GetSymbol(), r.GetLimitOrder().RightAsset.GetSymbol(), r.GetLimitOrder().Op, r.GetLimitOrder().Price)), nil
+		return []byte(fmt.Sprintf("%08d:%08d:%d:%016d", r.GetLimitOrder().LeftAsset, r.GetLimitOrder().RightAsset, r.GetLimitOrder().Op, r.GetLimitOrder().Price)), nil
 	} else if key == "addr_status" {
 		return []byte(fmt.Sprintf("%s:%d", r.Addr, r.Status)), nil
 	}
@@ -138,7 +138,7 @@ func (m *HistoryOrderRow) Get(key string) ([]byte, error) {
 	if key == "index" {
 		return []byte(fmt.Sprintf("%022d", m.Index)), nil
 	} else if key == "name" {
-		return []byte(fmt.Sprintf("%s:%s", m.GetLimitOrder().LeftAsset.GetSymbol(), m.GetLimitOrder().RightAsset.GetSymbol())), nil
+		return []byte(fmt.Sprintf("%08d:%08d", m.GetLimitOrder().LeftAsset, m.GetLimitOrder().RightAsset)), nil
 	} else if key == "addr_status" {
 		return []byte(fmt.Sprintf("%s:%d", m.Addr, m.Status)), nil
 	}
@@ -172,7 +172,7 @@ func (m *MarketDepthRow) SetPayload(data types.Message) error {
 //Get 按照indexName 查询 indexValue
 func (m *MarketDepthRow) Get(key string) ([]byte, error) {
 	if key == "price" {
-		return []byte(fmt.Sprintf("%s:%s:%d:%016d", m.LeftAsset.GetSymbol(), m.RightAsset.GetSymbol(), m.Op, m.Price)), nil
+		return []byte(fmt.Sprintf("%08d:%08d:%d:%016d", m.LeftAsset, m.RightAsset, m.Op, m.Price)), nil
 	}
 	return nil, types.ErrNotFound
 }

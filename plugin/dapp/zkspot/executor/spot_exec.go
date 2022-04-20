@@ -10,8 +10,17 @@ import (
  * 关键数据上链（statedb）并生成交易回执（log）
  */
 
+func checkZkSignature() error {
+	return types.ErrAccountNotExist
+}
+
 // 限价交易
 func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.LimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	// TODO
+	err := checkZkSignature()
+	if err != nil {
+		return &types.Receipt{}, err
+	}
 	action := NewSpotAction2(e, tx, index)
 	r, err := action.LimitOrder(payload, "")
 	if err != nil {

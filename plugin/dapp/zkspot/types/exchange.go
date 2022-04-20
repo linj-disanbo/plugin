@@ -43,6 +43,7 @@ const (
 	TyRevokeOrderLog
 
 	TyExchangeBindLog
+	TxSpotTradeLog
 )
 
 // OP

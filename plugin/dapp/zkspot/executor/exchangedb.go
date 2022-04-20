@@ -6,7 +6,6 @@ import (
 	"math/big"
 	"reflect"
 
-	"github.com/33cn/chain33/account"
 	"github.com/33cn/chain33/client"
 	dbm "github.com/33cn/chain33/common/db"
 	tab "github.com/33cn/chain33/common/db/table"
@@ -75,6 +74,10 @@ func (a *SpotAction) GetIndex() int64 {
 
 //GetKVSet get kv set
 func (a *SpotAction) GetKVSet(order *et.Order) (kvset []*types.KeyValue) {
+	return GetOrderKvSet(order)
+}
+
+func GetOrderKvSet(order *et.Order) (kvset []*types.KeyValue) {
 	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(order.OrderID), Value: types.Encode(order)})
 	return kvset
 }
@@ -141,14 +144,17 @@ func CheckStatus(status int32) bool {
 }
 
 //CheckExchangeAsset
-func CheckExchangeAsset(coinExec string, left, right *et.Asset) bool {
-	if left.Execer == "" || left.Symbol == "" || right.Execer == "" || right.Symbol == "" {
-		return false
-	}
-	if (left.Execer == coinExec && right.Execer == coinExec) || (left.Symbol == right.Symbol) {
+func CheckExchangeAsset(coinExec string, left, right uint32) bool {
+	if left == right {
 		return false
 	}
 	return true
+}
+
+//  千分之一的手续费  实际数值是  1e8 * 0.1% = 1e5
+// 4 / 100000
+func getFeeRate(acc *dexAccount) uint64 {
+	return 1e5
 }
 
 //LimitOrder ...
@@ -169,33 +175,31 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 		return nil, et.ErrAssetOp
 	}
 
-	leftAssetDB, err := account.NewAccountDB(cfg, leftAsset.GetExecer(), leftAsset.GetSymbol(), a.statedb)
+	acc, err := LoadSpotAccount(a.fromaddr, payload.Order.AccountID, a.statedb)
 	if err != nil {
 		return nil, err
 	}
-	rightAssetDB, err := account.NewAccountDB(cfg, rightAsset.GetExecer(), rightAsset.GetSymbol(), a.statedb)
-	if err != nil {
-		return nil, err
-	}
+
 	//Check your account balance first
 	if payload.GetOp() == et.OpBuy {
 		amount := SafeMul(payload.GetAmount(), payload.GetPrice(), cfg.GetCoinPrecision())
-		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
-		if rightAccount.Balance < amount {
-			elog.Error("limit check right balance", "addr", a.fromaddr, "avail", rightAccount.Balance, "need", amount)
+		fee := calcMtfFee(amount, int32(getFeeRate(acc)))
+		total := SafeAdd(amount, int64(fee))
+		err = acc.Frozen(payload.RightAsset, uint64(total))
+		if err != nil {
+			elog.Error("limit check right balance", "addr", a.fromaddr, "avail", acc.acc.Balance, "need", amount)
 			return nil, et.ErrAssetBalance
 		}
-		return a.matchLimitOrder(payload, leftAssetDB, rightAssetDB, entrustAddr)
-
+		return a.matchLimitOrder(payload, acc, acc, entrustAddr)
 	}
 	if payload.GetOp() == et.OpSell {
 		amount := payload.GetAmount()
-		leftAccount := leftAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
-		if leftAccount.Balance < amount {
-			elog.Error("limit check left balance", "addr", a.fromaddr, "avail", leftAccount.Balance, "need", amount)
+		err = acc.Frozen(payload.LeftAsset, payload.Order.GetAmount())
+		if err != nil {
+			elog.Error("limit check left balance", "addr", a.fromaddr, "avail", acc.acc.Balance, "need", amount)
 			return nil, et.ErrAssetBalance
 		}
-		return a.matchLimitOrder(payload, leftAssetDB, rightAssetDB, entrustAddr)
+		return a.matchLimitOrder(payload, acc, acc, entrustAddr)
 	}
 	return nil, fmt.Errorf("unknow op")
 }
@@ -216,49 +220,44 @@ func (a *SpotAction) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error
 		elog.Error("RevokeOrder.OrderCheck", "addr", a.fromaddr, "order.addr", order.Addr, "order.status", order.Status)
 		return nil, et.ErrOrderSatus
 	}
-	leftAsset := order.GetLimitOrder().GetLeftAsset()
-	rightAsset := order.GetLimitOrder().GetRightAsset()
+
 	price := order.GetLimitOrder().GetPrice()
 	balance := order.GetBalance()
 	cfg := a.api.GetConfig()
 
 	if order.GetLimitOrder().GetOp() == et.OpBuy {
-		rightAssetDB, err := account.NewAccountDB(cfg, rightAsset.GetExecer(), rightAsset.GetSymbol(), a.statedb)
+		// TODO id
+		accX, err := LoadSpotAccount(order.Addr, uint64(order.GetLimitOrder().RightAsset), a.statedb)
 		if err != nil {
 			return nil, err
 		}
 		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
-		rightAccount := rightAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
-		if rightAccount.Frozen < amount {
-			elog.Error("revoke check right frozen", "addr", a.fromaddr, "avail", rightAccount.Frozen, "amount", amount)
-			return nil, et.ErrAssetBalance
-		}
-		receipt, err := rightAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
+		amount += order.FeeBalance
+
+		/*receipt,*/
+		err = accX.Active(order.GetLimitOrder().RightAsset, uint64(amount))
 		if err != nil {
 			elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
 			return nil, err
 		}
-		logs = append(logs, receipt.Logs...)
-		kvs = append(kvs, receipt.KV...)
+		//logs = append(logs, receipt.Logs...)
+		//kvs = append(kvs, receipt.KV...)
 	}
 	if order.GetLimitOrder().GetOp() == et.OpSell {
-		leftAssetDB, err := account.NewAccountDB(cfg, leftAsset.GetExecer(), leftAsset.GetSymbol(), a.statedb)
+		// TODO id
+		accX, err := LoadSpotAccount(order.Addr, uint64(order.GetLimitOrder().RightAsset), a.statedb)
 		if err != nil {
 			return nil, err
 		}
-		amount := CalcActualCost(et.OpSell, balance, price, cfg.GetCoinPrecision())
-		leftAccount := leftAssetDB.LoadExecAccount(a.fromaddr, a.execaddr)
-		if leftAccount.Frozen < amount {
-			elog.Error("revoke check left frozen", "addr", a.fromaddr, "avail", leftAccount.Frozen, "amount", amount)
-			return nil, et.ErrAssetBalance
-		}
-		receipt, err := leftAssetDB.ExecActive(a.fromaddr, a.execaddr, amount)
+
+		/*receipt,*/
+		err = accX.Active(order.GetLimitOrder().RightAsset, uint64(balance))
 		if err != nil {
-			elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
+			elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", balance, "err", err.Error())
 			return nil, err
 		}
-		logs = append(logs, receipt.Logs...)
-		kvs = append(kvs, receipt.KV...)
+		//logs = append(logs, receipt.Logs...)
+		//kvs = append(kvs, receipt.KV...)
 	}
 
 	order.Status = et.Revoked
@@ -280,13 +279,13 @@ func (a *SpotAction) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error
 //1. The purchase price is higher than the market price, and the price is matched from low to high.
 //2. Sell orders are matched at prices lower than market prices.
 //3. Match the same prices on a first-in, first-out basis
-func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *account.DB, entrustAddr string) (*types.Receipt, error) {
+func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *dexAccount, entrustAddr string) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var priceKey string
 	var count int
 
-	cfg := a.api.GetConfig()
+	//cfg := a.api.GetConfig()
 	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
 	if err != nil {
 		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
@@ -361,9 +360,10 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, righ
 					if err == types.ErrNotFound {
 						break
 					}
-					elog.Error("findOrderIDListByPrice error", "height", a.height, "symbol", payload.GetLeftAsset().Symbol, "price", marketDepth.Price, "op", a.OpSwap(payload.Op), "error", err)
+					elog.Error("findOrderIDListByPrice error", "height", a.height, "symbol", payload.GetLeftAsset(), "price", marketDepth.Price, "op", a.OpSwap(payload.Op), "error", err)
 					return nil, err
 				}
+				// got orderlist to trade
 				for _, matchorder := range orderList.List {
 					if count >= et.MaxMatchCount {
 						done = true
@@ -377,7 +377,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, righ
 						}
 						continue
 					}
-					log, kv, err := a.matchModel(leftAccountDB, rightAccountDB, payload, order, or, re, tCfg.GetFeeAddr(), trade.GetTaker()) // payload, or redundant
+					log, kv, err := a.matchModel2(leftAccountDB, rightAccountDB, payload, order, or, re, tCfg.GetFeeAddr(), trade.GetTaker()) // payload, or redundant
 					if err != nil {
 						if err == types.ErrNoBalance {
 							elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)
@@ -419,27 +419,6 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, righ
 		priceKey = marketDepthList.PrimaryKey
 	}
 
-	//Outstanding orders require freezing of the remaining unclosed funds
-	if payload.Op == et.OpBuy {
-		amount := CalcActualCost(et.OpBuy, or.Balance, payload.Price, cfg.GetCoinPrecision())
-		receipt, err := rightAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
-		if err != nil {
-			elog.Error("LimitOrder.ExecFrozen OpBuy", "addr", a.fromaddr, "amount", amount, "err", err.Error())
-			return nil, err
-		}
-		logs = append(logs, receipt.Logs...)
-		kvs = append(kvs, receipt.KV...)
-	}
-	if payload.Op == et.OpSell {
-		amount := CalcActualCost(et.OpSell, or.Balance, payload.Price, cfg.GetCoinPrecision())
-		receipt, err := leftAccountDB.ExecFrozen(a.fromaddr, a.execaddr, amount)
-		if err != nil {
-			elog.Error("LimitOrder.ExecFrozen OpSell", "addr", a.fromaddr, "amount", amount, "err", err.Error())
-			return nil, err
-		}
-		logs = append(logs, receipt.Logs...)
-		kvs = append(kvs, receipt.KV...)
-	}
 	kvs = append(kvs, a.GetKVSet(or)...)
 	re.Order = or
 	receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
@@ -448,7 +427,8 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, righ
 	return receipts, nil
 }
 
-func (a *SpotAction) matchModel(leftAccountDB, rightAccountDB *account.DB, payload *et.LimitOrder, matchorder *et.Order, or *et.Order, re *et.ReceiptExchange, feeAddr string, taker int32) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+/*
+func (a *SpotAction) matchModel(leftAccountDB, rightAccountDB *dexAccount, payload *et.LimitOrder, matchorder *et.Order, or *et.Order, re *et.ReceiptExchange, feeAddr string, taker int32) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var matched int64
@@ -465,13 +445,18 @@ func (a *SpotAction) matchModel(leftAccountDB, rightAccountDB *account.DB, paylo
 	cfg := a.api.GetConfig()
 	var receipt *types.Receipt
 	var err error
+
+	accMatch, err := LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, a.statedb)
+	if err != nil {
+		return nil, nil, err
+	}
 	if payload.Op == et.OpSell {
 		//Transfer of frozen assets
 		amount := CalcActualCost(matchorder.GetLimitOrder().Op, matched, matchorder.GetLimitOrder().Price, cfg.GetCoinPrecision())
 		if matchorder.Addr != a.fromaddr {
-			receipt, err = rightAccountDB.ExecTransferFrozen(matchorder.Addr, a.fromaddr, a.execaddr, amount)
+			/ *receipt,* / err = rightAccountDB.FrozenTranfer(accMatch, matchorder.GetLimitOrder().LeftAsset, uint64(amount))
 		} else {
-			receipt, err = rightAccountDB.ExecActive(a.fromaddr, a.execaddr, amount)
+			/ *receipt,* / err = rightAccountDB.Active(matchorder.GetLimitOrder().LeftAsset, uint64(amount))
 		}
 		if err != nil {
 			elog.Error("matchModel.ExecTransferFrozen", "from", matchorder.Addr, "to", a.fromaddr, "amount", amount, "err", err)
@@ -480,10 +465,12 @@ func (a *SpotAction) matchModel(leftAccountDB, rightAccountDB *account.DB, paylo
 		logs = append(logs, receipt.Logs...)
 		kvs = append(kvs, receipt.KV...)
 
+		// TODO if taker and maker is the same
+		// not take seller fee
 		//Charge fee
 		activeFee := calcMtfFee(amount, taker) //Transaction fee of the active party
 		if activeFee != 0 {
-			receipt, err = rightAccountDB.ExecTransfer(a.fromaddr, feeAddr, a.execaddr, activeFee)
+			receipt, err = rightAccountDB.FrozenTranfer(feeAddr, activeFee)
 			if err != nil {
 				elog.Error("matchModel.ExecTransfer sell", "from", a.fromaddr, "to", feeAddr,
 					"amount", amount, "rate", taker, "activeFee", activeFee, "err", err.Error())
@@ -614,6 +601,7 @@ func (a *SpotAction) matchModel(leftAccountDB, rightAccountDB *account.DB, paylo
 	re.MatchOrders = append(re.MatchOrders, matchorder)
 	return logs, kvs, nil
 }
+*/
 
 // Query the status database according to the order number
 // Localdb deletion sequence: delete the cache in real time first, and modify the DB uniformly during block generation.
@@ -634,9 +622,9 @@ func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.Orde
 	return &order, nil
 }
 
-func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price int64, op, direction int32, primaryKey string) (*et.OrderList, error) {
+func findOrderIDListByPrice(localdb dbm.KV, left, right uint32, price int64, op, direction int32, primaryKey string) (*et.OrderList, error) {
 	table := NewMarketOrderTable(localdb)
-	prefix := []byte(fmt.Sprintf("%s:%s:%d:%016d", left.GetSymbol(), right.GetSymbol(), op, price))
+	prefix := []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
 
 	var rows []*tab.Row
 	var err error
@@ -647,7 +635,7 @@ func findOrderIDListByPrice(localdb dbm.KV, left, right *et.Asset, price int64, 
 	}
 	if err != nil {
 		if primaryKey == "" {
-			elog.Error("findOrderIDListByPrice.", "left", left.Symbol, "right", right.Symbol, "price", price, "err", err.Error())
+			elog.Error("findOrderIDListByPrice.", "left", left, "right", right, "price", price, "err", err.Error())
 		}
 		return nil, err
 	}
@@ -676,9 +664,9 @@ func Direction(op int32) int32 {
 
 //QueryMarketDepth 这里primaryKey当作主键索引来用，
 //The first query does not need to fill in the value, pay according to the price from high to low, selling orders according to the price from low to high query
-func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKey string, count int32) (*et.MarketDepthList, error) {
+func QueryMarketDepth(localdb dbm.KV, left, right uint32, op int32, primaryKey string, count int32) (*et.MarketDepthList, error) {
 	table := NewMarketDepthTable(localdb)
-	prefix := []byte(fmt.Sprintf("%s:%s:%d", left.GetSymbol(), right.GetSymbol(), op))
+	prefix := []byte(fmt.Sprintf("%08d:%08d:%d", left, right, op))
 	if count == 0 {
 		count = et.Count
 	}
@@ -705,9 +693,9 @@ func QueryMarketDepth(localdb dbm.KV, left, right *et.Asset, op int32, primaryKe
 }
 
 //QueryHistoryOrderList Only the order information is returned
-func QueryHistoryOrderList(localdb dbm.KV, left, right *et.Asset, primaryKey string, count, direction int32) (types.Message, error) {
+func QueryHistoryOrderList(localdb dbm.KV, left, right uint32, primaryKey string, count, direction int32) (types.Message, error) {
 	table := NewHistoryOrderTable(localdb)
-	prefix := []byte(fmt.Sprintf("%s:%s", left.Symbol, right.Symbol))
+	prefix := []byte(fmt.Sprintf("%08d:%08d", left, right))
 	indexName := "name"
 	if count == 0 {
 		count = et.Count
@@ -785,8 +773,8 @@ func QueryOrderList(localdb dbm.KV, addr string, status, count, direction int32,
 	return &orderList, nil
 }
 
-func queryMarketDepth(marketTable *tab.Table, left, right *et.Asset, op int32, price int64) (*et.MarketDepth, error) {
-	primaryKey := []byte(fmt.Sprintf("%s:%s:%d:%016d", left.GetSymbol(), right.GetSymbol(), op, price))
+func queryMarketDepth(marketTable *tab.Table, left, right uint32, op int32, price int64) (*et.MarketDepth, error) {
+	primaryKey := []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
 	row, err := marketTable.GetData(primaryKey)
 	if err != nil {
 		// In localDB, delete is set to nil first and deleted last
@@ -802,6 +790,12 @@ func queryMarketDepth(marketTable *tab.Table, left, right *et.Asset, op int32, p
 func SafeMul(x, y, coinPrecision int64) int64 {
 	res := big.NewInt(0).Mul(big.NewInt(x), big.NewInt(y))
 	res = big.NewInt(0).Div(res, big.NewInt(coinPrecision))
+	return res.Int64()
+}
+
+//SafeAdd Safe add
+func SafeAdd(x, y int64) int64 {
+	res := big.NewInt(0).Add(big.NewInt(x), big.NewInt(y))
 	return res.Int64()
 }
 
@@ -957,7 +951,6 @@ func formatInterface(data interface{}) int64 {
 func (a *SpotAction) Deposit(payload *et.ZkDeposit) (*types.Receipt, error) {
 
 	chain33Addr := payload.GetChain33Addr()
-	tid := payload.GetTokenId()
 	amount := payload.GetAmount()
 
 	// TODO tid 哪里定义, 里面不需要知道tid 是什么, 在合约里 id1 换 id2
@@ -971,7 +964,7 @@ func (a *SpotAction) Deposit(payload *et.ZkDeposit) (*types.Receipt, error) {
 		return nil, et.ErrAssetBalance
 	}
 	// TODO 未处理 receipt kv log 等
-	acc.Mint(tid, amount2.Uint64())
+	acc.Mint(uint32(payload.TokenId), amount2.Uint64())
 	return nil, nil
 }
 
