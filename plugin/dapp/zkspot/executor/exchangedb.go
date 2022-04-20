@@ -162,6 +162,8 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 	leftAsset := payload.GetLeftAsset()
 	rightAsset := payload.GetRightAsset()
 	cfg := a.api.GetConfig()
+
+	// checks
 	if !CheckExchangeAsset(cfg.GetCoinExec(), leftAsset, rightAsset) {
 		return nil, et.ErrAsset
 	}
@@ -175,33 +177,35 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 		return nil, et.ErrAssetOp
 	}
 
+	// gen order
 	acc, err := LoadSpotAccount(a.fromaddr, payload.Order.AccountID, a.statedb)
 	if err != nil {
 		return nil, err
 	}
 
 	//Check your account balance first
+	// TODO frozen receipt and kv
 	if payload.GetOp() == et.OpBuy {
 		amount := SafeMul(payload.GetAmount(), payload.GetPrice(), cfg.GetCoinPrecision())
 		fee := calcMtfFee(amount, int32(getFeeRate(acc)))
 		total := SafeAdd(amount, int64(fee))
+
 		err = acc.Frozen(payload.RightAsset, uint64(total))
 		if err != nil {
 			elog.Error("limit check right balance", "addr", a.fromaddr, "avail", acc.acc.Balance, "need", amount)
 			return nil, et.ErrAssetBalance
 		}
 		return a.matchLimitOrder(payload, acc, acc, entrustAddr)
-	}
-	if payload.GetOp() == et.OpSell {
+	} else {
+		/* if payload.GetOp() == et.OpSell */
 		amount := payload.GetAmount()
 		err = acc.Frozen(payload.LeftAsset, payload.Order.GetAmount())
 		if err != nil {
 			elog.Error("limit check left balance", "addr", a.fromaddr, "avail", acc.acc.Balance, "need", amount)
 			return nil, et.ErrAssetBalance
 		}
-		return a.matchLimitOrder(payload, acc, acc, entrustAddr)
 	}
-	return nil, fmt.Errorf("unknow op")
+	return a.matchLimitOrder(payload, acc, acc, entrustAddr)
 }
 
 //RevokeOrder ...
