@@ -224,7 +224,7 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 		return nil, et.ErrAssetOp
 	}
 
-	fees, err := a.getFees(a.fromaddr, payload, payload.LeftAsset, payload.RightAsset)
+	fees, err := a.getFees(a.fromaddr, payload.LeftAsset, payload.RightAsset)
 	if err != nil {
 		elog.Error("executor/exchangedb getFees", "err", err)
 		return nil, err

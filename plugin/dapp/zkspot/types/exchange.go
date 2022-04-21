@@ -145,8 +145,8 @@ func (f *Econfig) GetSymbol(left, right uint32) string {
 	return fmt.Sprintf("%v_%v", left, right)
 }
 
-func (f *Econfig) GetTrade(or *LimitOrder) *Trade {
-	symbol := f.GetSymbol(or.LeftAsset, or.RightAsset)
+func (f *Econfig) GetTrade(left, right uint32) *Trade {
+	symbol := f.GetSymbol(left, right)
 	c, ok := f.Exchanges[symbol]
 	if !ok {
 		return nil
