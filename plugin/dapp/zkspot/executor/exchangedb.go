@@ -185,14 +185,14 @@ type feeDetail struct {
 	maker uint64
 }
 
-func (a *SpotAction) getFees(fromaddr string, payload *et.LimitOrder, left, right uint32) (*feeDetail, error) {
+func (a *SpotAction) getFees(fromaddr string, left, right uint32) (*feeDetail, error) {
 	// TODO Payload args to left/right
 	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
 	if err != nil {
 		elog.Error("executor/exchangedb ParseConfig", "err", err)
 		return nil, err
 	}
-	trade := tCfg.GetTrade(payload)
+	trade := tCfg.GetTrade(left, right)
 
 	// Taker/Maker fee may relate to user (fromaddr ) level in dex
 
@@ -346,7 +346,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
 		return nil, err
 	}
-	trade := tCfg.GetTrade(payload)
+	trade := tCfg.GetTrade(payload.LeftAsset, payload.RightAsset)
 
 	or := taker.order
 	re := &et.ReceiptExchange{
