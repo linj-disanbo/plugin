@@ -327,14 +327,6 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 	var priceKey string
 	var count int
 
-	//cfg := a.api.GetConfig()
-	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
-	if err != nil {
-		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
-		return nil, err
-	}
-	trade := tCfg.GetTrade(payload.LeftAsset, payload.RightAsset)
-
 	or := taker.order
 	re := &et.ReceiptExchange{
 		Order: or,
@@ -403,7 +395,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 						}
 						continue
 					}
-					log, kv, err := a.matchModel2(payload, order, or, re, trade.GetTaker(), taker) // payload, or redundant
+					log, kv, err := a.matchModel2(payload, order, or, re, taker) // payload, or redundant
 					if err != nil {
 						if err == types.ErrNoBalance {
 							elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)
