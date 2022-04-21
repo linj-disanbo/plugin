@@ -325,7 +325,6 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var priceKey string
-	var count int
 
 	or := taker.order
 	re := &et.ReceiptExchange{
@@ -347,7 +346,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 		}
 		for _, marketDepth := range marketDepthList.List {
 			elog.Info("LimitOrder debug find depth", "height", a.height, "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", a.OpSwap(payload.Op), "index", a.GetIndex())
-			if count >= et.MaxMatchCount {
+			if matcher1.matchCount >= et.MaxMatchCount {
 				matcher1.done = true
 				break
 			}
@@ -363,7 +362,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 			var hasOrder = false
 			var orderKey string
 			for {
-				if count >= et.MaxMatchCount {
+				if matcher1.matchCount >= et.MaxMatchCount {
 					matcher1.done = true
 					break
 				}
@@ -380,7 +379,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 				}
 				// got orderlist to trade
 				for _, matchorder := range orderList.List {
-					if count >= et.MaxMatchCount {
+					if matcher1.matchCount >= et.MaxMatchCount {
 						matcher1.done = true
 						break
 					}
@@ -409,7 +408,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 						return receipts, nil
 					}
 					// match depth count
-					count = count + 1
+					matcher1.recordMatchCount()
 				}
 				if orderList.PrimaryKey == "" {
 					break
@@ -464,6 +463,13 @@ func newMatcher(localdb dbm.KV) *matcher {
 }
 func (m *matcher) isDone() bool {
 	return (m.done || m.matchCount >= m.maxMatch)
+}
+
+func (m *matcher) recordMatchCount() {
+	m.matchCount = m.matchCount + 1
+	if m.matchCount >= m.maxMatch {
+		m.done = true
+	}
 }
 
 func (m *matcher) QueryMarketDepth(payload *et.LimitOrder) (*et.MarketDepthList, error) {
