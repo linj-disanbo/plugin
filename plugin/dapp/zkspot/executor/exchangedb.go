@@ -157,7 +157,7 @@ func getFeeRate(acc *dexAccount) uint64 {
 	return 1e5
 }
 
-func (a *SpotAction) createLimitOrder(payload *et.LimitOrder, entrustAddr string, trade *et.Trade) *et.Order {
+func (a *SpotAction) createLimitOrder(payload *et.LimitOrder, entrustAddr string, trade *feeDetail) *et.Order {
 	or := &et.Order{
 		OrderID:     a.GetIndex(),
 		Value:       &et.Order_LimitOrder{LimitOrder: payload},
@@ -170,12 +170,38 @@ func (a *SpotAction) createLimitOrder(payload *et.LimitOrder, entrustAddr string
 		Addr:        a.fromaddr,
 		UpdateTime:  a.blocktime,
 		Index:       a.GetIndex(),
-		Rate:        trade.GetMaker(),
-		MinFee:      trade.GetMinFee(),
-		Hash:        hex.EncodeToString(a.txhash),
-		CreateTime:  a.blocktime,
+		Rate:        int32(trade.maker),
+		//MinFee:      trade.GetMinFee(),
+		Hash:       hex.EncodeToString(a.txhash),
+		CreateTime: a.blocktime,
 	}
 	return or
+}
+
+type feeDetail struct {
+	addr  string
+	id    uint64
+	taker uint64
+	maker uint64
+}
+
+func (a *SpotAction) getFees(fromaddr string, payload *et.LimitOrder, left, right uint32) (*feeDetail, error) {
+	// TODO Payload args to left/right
+	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
+	if err != nil {
+		elog.Error("executor/exchangedb ParseConfig", "err", err)
+		return nil, err
+	}
+	trade := tCfg.GetTrade(payload)
+
+	// Taker/Maker fee may relate to user (fromaddr ) level in dex
+
+	return &feeDetail{
+		addr:  tCfg.GetFeeAddr(),
+		id:    uint64(3), // TODO get from zk by chain33-addr
+		taker: uint64(trade.Taker),
+		maker: uint64(trade.Maker),
+	}, nil
 }
 
 //LimitOrder ...
@@ -198,29 +224,30 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 		return nil, et.ErrAssetOp
 	}
 
+	fees, err := a.getFees(a.fromaddr, payload, payload.LeftAsset, payload.RightAsset)
+	if err != nil {
+		elog.Error("executor/exchangedb getFees", "err", err)
+		return nil, err
+	}
+
 	// gen order
 	acc, err := LoadSpotAccount(a.fromaddr, payload.Order.AccountID, a.statedb)
 	if err != nil {
 		return nil, err
 	}
 
-	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
+	or := a.createLimitOrder(payload, entrustAddr, fees)
+
+	accFee, err := LoadSpotAccount(fees.addr, fees.id, a.statedb)
 	if err != nil {
-		elog.Error("executor/exchangedb matchLimitOrder.ParseConfig", "err", err)
+		elog.Error("executor/exchangedb LoadSpotAccount load fee account", "err", err)
 		return nil, err
 	}
-	trade := tCfg.GetTrade(payload)
-	or := a.createLimitOrder(payload, entrustAddr, trade)
-
-	var feeAccID = uint64(3)
-	var feeAddr = tCfg.GetFeeAddr()
-	accFee, err := LoadSpotAccount(feeAddr, feeAccID, a.statedb)
-
 	taker := spotTaker{
 		spotTrader: spotTrader{
 			acc:     acc,
 			order:   or,
-			feeRate: trade.GetTaker(),
+			feeRate: int32(fees.taker),
 			cfg:     a.api.GetConfig(),
 		},
 		accFee: accFee,
@@ -229,7 +256,7 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 	//Check your account balance first
 	receipt1, kvs1, err := taker.FrozenTokenForLimitOrder()
 	_, _ = receipt1, kvs1
-	return a.matchLimitOrder(payload, acc, acc, entrustAddr, &taker)
+	return a.matchLimitOrder(payload, entrustAddr, &taker)
 }
 
 //RevokeOrder ...
@@ -307,7 +334,7 @@ func (a *SpotAction) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error
 //1. The purchase price is higher than the market price, and the price is matched from low to high.
 //2. Sell orders are matched at prices lower than market prices.
 //3. Match the same prices on a first-in, first-out basis
-func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, rightAccountDB *dexAccount, entrustAddr string, taker *spotTaker) (*types.Receipt, error) {
+func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string, taker *spotTaker) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var priceKey string
@@ -389,7 +416,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, leftAccountDB, righ
 						}
 						continue
 					}
-					log, kv, err := a.matchModel2(leftAccountDB, rightAccountDB, payload, order, or, re, trade.GetTaker(), taker) // payload, or redundant
+					log, kv, err := a.matchModel2(payload, order, or, re, trade.GetTaker(), taker) // payload, or redundant
 					if err != nil {
 						if err == types.ErrNoBalance {
 							elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)

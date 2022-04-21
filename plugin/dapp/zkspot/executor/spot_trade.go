@@ -242,7 +242,7 @@ func (m *spotMaker) orderTraded(matchDetail matchInfo) ([]*types.ReceiptLog, []*
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (a *SpotAction) matchModel2(leftAccountDB, rightAccountDB *dexAccount, payload *et.LimitOrder, matchorder *et.Order, or *et.Order, re *et.ReceiptExchange, takerFee int32, taker *spotTaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (a *SpotAction) matchModel2(payload *et.LimitOrder, matchorder *et.Order, or *et.Order, re *et.ReceiptExchange, takerFee int32, taker *spotTaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var matched int64
