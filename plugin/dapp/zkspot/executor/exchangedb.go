@@ -395,7 +395,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 						}
 						continue
 					}
-					log, kv, err := a.matchModel2(payload, order, or, re, taker) // payload, or redundant
+					log, kv, err := a.matchModel2(order, or, re, taker)
 					if err != nil {
 						if err == types.ErrNoBalance {
 							elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)
