@@ -346,8 +346,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 		}
 		for _, marketDepth := range marketDepthList.List {
 			elog.Info("LimitOrder debug find depth", "height", a.height, "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", a.OpSwap(payload.Op), "index", a.GetIndex())
-			if matcher1.matchCount >= et.MaxMatchCount {
-				matcher1.done = true
+			if matcher1.isDone() {
 				break
 			}
 			if payload.Op == et.OpBuy && marketDepth.Price > payload.GetPrice() {
@@ -362,8 +361,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 			var hasOrder = false
 			var orderKey string
 			for {
-				if matcher1.matchCount >= et.MaxMatchCount {
-					matcher1.done = true
+				if matcher1.isDone() {
 					break
 				}
 				orderList, err := findOrderIDListByPrice(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), marketDepth.Price, a.OpSwap(payload.Op), et.ListASC, orderKey)
@@ -379,8 +377,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 				}
 				// got orderlist to trade
 				for _, matchorder := range orderList.List {
-					if matcher1.matchCount >= et.MaxMatchCount {
-						matcher1.done = true
+					if matcher1.isDone() {
 						break
 					}
 					// Check the order status
