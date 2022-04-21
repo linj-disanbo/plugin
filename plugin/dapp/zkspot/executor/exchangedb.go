@@ -218,13 +218,12 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 		return nil, err
 	}
 
-	// gen order
+	order := a.createLimitOrder(payload, entrustAddr, fees)
 	acc, err := LoadSpotAccount(a.fromaddr, payload.Order.AccountID, a.statedb)
 	if err != nil {
+		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
 		return nil, err
 	}
-
-	or := a.createLimitOrder(payload, entrustAddr, fees)
 
 	accFee, err := LoadSpotAccount(fees.addr, fees.id, a.statedb)
 	if err != nil {
@@ -234,7 +233,7 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 	taker := spotTaker{
 		spotTrader: spotTrader{
 			acc:     acc,
-			order:   or,
+			order:   order,
 			feeRate: int32(fees.taker),
 			cfg:     a.api.GetConfig(),
 		},
