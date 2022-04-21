@@ -345,15 +345,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 		}
 		for _, marketDepth := range marketDepthList.List {
 			elog.Info("LimitOrder debug find depth", "height", a.height, "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", a.OpSwap(payload.Op), "index", a.GetIndex())
-			if matcher1.isDone() {
-				break
-			}
-			if payload.Op == et.OpBuy && marketDepth.Price > payload.GetPrice() {
-				matcher1.done = true
-				break
-			}
-			if payload.Op == et.OpSell && marketDepth.Price < payload.GetPrice() {
-				matcher1.done = true
+			if matcher1.isDone() || matcher1.priceDone(payload, marketDepth) {
 				break
 			}
 
@@ -468,6 +460,24 @@ func (m *matcher) recordMatchCount() {
 	if m.matchCount >= m.maxMatch {
 		m.done = true
 	}
+}
+
+func (m *matcher) priceDone(payload *et.LimitOrder, marketDepth *et.MarketDepth) bool {
+	if priceDone(payload, marketDepth) {
+		m.done = true
+		return true
+	}
+	return false
+}
+
+func priceDone(payload *et.LimitOrder, marketDepth *et.MarketDepth) bool {
+	if payload.Op == et.OpBuy && marketDepth.Price > payload.GetPrice() {
+		return true
+	}
+	if payload.Op == et.OpSell && marketDepth.Price < payload.GetPrice() {
+		return true
+	}
+	return false
 }
 
 func (m *matcher) QueryMarketDepth(payload *et.LimitOrder) (*et.MarketDepthList, error) {
