@@ -335,12 +335,9 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 
 	// A single transaction can match up to 100 historical orders, the maximum depth can be matched, the system has to protect itself
 	// Iteration has listing price
-	var done bool
+	matcher1 := newMatcher(a.localDB)
 	for {
-		if count >= et.MaxMatchCount {
-			break
-		}
-		if done {
+		if matcher1.isDone() {
 			break
 		}
 		//Obtain price information of existing market listing
@@ -351,15 +348,15 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 		for _, marketDepth := range marketDepthList.List {
 			elog.Info("LimitOrder debug find depth", "height", a.height, "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", a.OpSwap(payload.Op), "index", a.GetIndex())
 			if count >= et.MaxMatchCount {
-				done = true
+				matcher1.done = true
 				break
 			}
 			if payload.Op == et.OpBuy && marketDepth.Price > payload.GetPrice() {
-				done = true
+				matcher1.done = true
 				break
 			}
 			if payload.Op == et.OpSell && marketDepth.Price < payload.GetPrice() {
-				done = true
+				matcher1.done = true
 				break
 			}
 
@@ -367,7 +364,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 			var orderKey string
 			for {
 				if count >= et.MaxMatchCount {
-					done = true
+					matcher1.done = true
 					break
 				}
 				orderList, err := findOrderIDListByPrice(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), marketDepth.Price, a.OpSwap(payload.Op), et.ListASC, orderKey)
@@ -384,7 +381,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 				// got orderlist to trade
 				for _, matchorder := range orderList.List {
 					if count >= et.MaxMatchCount {
-						done = true
+						matcher1.done = true
 						break
 					}
 					// Check the order status
@@ -443,6 +440,34 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 	logs = append(logs, receiptlog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
+}
+
+// market depth:
+// price - list
+// order - list for each price
+type matcher struct {
+	localdb    dbm.KV
+	pricekey   string
+	matchCount int
+	maxMatch   int
+	done       bool
+}
+
+func newMatcher(localdb dbm.KV) *matcher {
+	return &matcher{
+		localdb:    localdb,
+		pricekey:   "",
+		matchCount: 0,
+		maxMatch:   et.MaxMatchCount,
+		done:       false,
+	}
+}
+func (m *matcher) isDone() bool {
+	return (m.done || m.matchCount >= m.maxMatch)
+}
+
+func (m *matcher) QueryMarketDepth(payload *et.LimitOrder) (*et.MarketDepthList, error) {
+	return nil, nil
 }
 
 // Query the status database according to the order number
