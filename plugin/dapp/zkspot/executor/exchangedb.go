@@ -324,7 +324,6 @@ func (a *SpotAction) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error
 func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string, taker *spotTaker) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	var priceKey string
 
 	or := taker.order
 	re := &et.ReceiptExchange{
@@ -340,7 +339,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 			break
 		}
 		//Obtain price information of existing market listing
-		marketDepthList, _ := QueryMarketDepth(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), a.OpSwap(payload.Op), priceKey, et.Count)
+		marketDepthList, _ := matcher1.QueryMarketDepth(payload)
 		if marketDepthList == nil || len(marketDepthList.List) == 0 {
 			break
 		}
@@ -423,11 +422,6 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 				re.MatchOrders = append(re.MatchOrders, &matchorder)
 			}
 		}
-
-		if marketDepthList.PrimaryKey == "" {
-			break
-		}
-		priceKey = marketDepthList.PrimaryKey
 	}
 
 	kvs = append(kvs, a.GetKVSet(or)...)
@@ -442,20 +436,27 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 // price - list
 // order - list for each price
 type matcher struct {
-	localdb    dbm.KV
-	pricekey   string
+	localdb dbm.KV
+
 	matchCount int
 	maxMatch   int
 	done       bool
+
+	// price list
+	pricekey     string
+	endPriceList bool
+
+	// order list
 }
 
 func newMatcher(localdb dbm.KV) *matcher {
 	return &matcher{
-		localdb:    localdb,
-		pricekey:   "",
-		matchCount: 0,
-		maxMatch:   et.MaxMatchCount,
-		done:       false,
+		localdb:      localdb,
+		pricekey:     "",
+		matchCount:   0,
+		maxMatch:     et.MaxMatchCount,
+		done:         false,
+		endPriceList: false,
 	}
 }
 func (m *matcher) isDone() bool {
@@ -470,7 +471,23 @@ func (m *matcher) recordMatchCount() {
 }
 
 func (m *matcher) QueryMarketDepth(payload *et.LimitOrder) (*et.MarketDepthList, error) {
-	return nil, nil
+	if m.endPriceList {
+		m.done = true
+		return nil, nil
+	}
+	marketDepthList, _ := QueryMarketDepth(m.localdb, payload.GetLeftAsset(), payload.GetRightAsset(), OpSwap(payload.Op), m.pricekey, et.Count)
+	if marketDepthList == nil || len(marketDepthList.List) == 0 {
+		return nil, nil
+	}
+
+	// reatch the last price list
+	if marketDepthList.PrimaryKey == "" {
+		m.endPriceList = true
+	}
+
+	// set next key
+	m.pricekey = marketDepthList.PrimaryKey
+	return marketDepthList, nil
 }
 
 // Query the status database according to the order number
