@@ -206,22 +206,10 @@ func (a *SpotAction) getFees(fromaddr string, left, right uint32) (*feeDetail, e
 
 //LimitOrder ...
 func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*types.Receipt, error) {
-	leftAsset := payload.GetLeftAsset()
-	rightAsset := payload.GetRightAsset()
 	cfg := a.api.GetConfig()
-
-	// checks
-	if !CheckExchangeAsset(cfg.GetCoinExec(), leftAsset, rightAsset) {
-		return nil, et.ErrAsset
-	}
-	if !CheckAmount(payload.GetAmount(), cfg.GetCoinPrecision()) {
-		return nil, et.ErrAssetAmount
-	}
-	if !CheckPrice(payload.GetPrice()) {
-		return nil, et.ErrAssetPrice
-	}
-	if !CheckOp(payload.GetOp()) {
-		return nil, et.ErrAssetOp
+	err := checkLimitOrder(cfg, payload)
+	if err != nil {
+		return nil, err
 	}
 
 	fees, err := a.getFees(a.fromaddr, payload.LeftAsset, payload.RightAsset)
