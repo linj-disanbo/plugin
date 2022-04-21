@@ -35,6 +35,32 @@ type matchInfo struct {
 	feeMater     int64 // use right token
 }
 
+func (s *spotTaker) FrozenTokenForLimitOrder() ([]*types.ReceiptLog, []*types.KeyValue, error) {
+	// TODO
+	precision := int64(1e8) // cfg.GetCoinPrecision()
+	or := s.order.GetLimitOrder()
+	if or.GetOp() == et.OpBuy {
+		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
+		fee := calcMtfFee(amount, int32(getFeeRate(s.acc)))
+		total := SafeAdd(amount, int64(fee))
+
+		err := s.acc.Frozen(or.RightAsset, uint64(total))
+		if err != nil {
+			elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
+			return nil, nil, et.ErrAssetBalance
+		}
+	} else {
+		/* if payload.GetOp() == et.OpSell */
+		amount := or.GetAmount()
+		err := s.acc.Frozen(or.LeftAsset, uint64(or.GetAmount()))
+		if err != nil {
+			elog.Error("limit check left balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
+			return nil, nil, et.ErrAssetBalance
+		}
+	}
+	return nil, nil, nil
+}
+
 func (s *spotTaker) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	balance := s.calcTradeBalance(maker.order)
 	matchDetail := s.calcTradeInfo(maker, balance)
@@ -164,8 +190,6 @@ func (s *spotTaker) selfSettlement(tradeBalance matchInfo) ([]*types.ReceiptLog,
 		Log: types.Encode(&re),
 	}
 	return []*types.ReceiptLog{&log1}, kvs1, nil
-
-	return nil, nil, nil
 }
 
 func (s *spotTaker) orderTraded(matchDetail matchInfo, order *et.Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
@@ -218,29 +242,12 @@ func (m *spotMaker) orderTraded(matchDetail matchInfo) ([]*types.ReceiptLog, []*
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (a *SpotAction) matchModel2(leftAccountDB, rightAccountDB *dexAccount, payload *et.LimitOrder, matchorder *et.Order, or *et.Order, re *et.ReceiptExchange, feeAddr string, takerFee int32) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (a *SpotAction) matchModel2(leftAccountDB, rightAccountDB *dexAccount, payload *et.LimitOrder, matchorder *et.Order, or *et.Order, re *et.ReceiptExchange, takerFee int32, taker *spotTaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var matched int64
 
 	// cfg := a.api.GetConfig()
-
-	var feeAccID = uint64(3)
-
-	accFee, err := LoadSpotAccount(feeAddr, feeAccID, a.statedb)
-	if err != nil {
-		elog.Error("matchModel.LoadSpotAccount failed", "fee", feeAddr, "err", err)
-		return nil, nil, err
-	}
-	taker := spotTaker{
-		spotTrader: spotTrader{
-			acc:     leftAccountDB,
-			order:   or,
-			feeRate: takerFee,
-			cfg:     a.api.GetConfig(),
-		},
-		accFee: accFee,
-	}
 	matched = taker.calcTradeBalance(matchorder)
 	elog.Info("try match", "activeId", or.OrderID, "passiveId", matchorder.OrderID, "activeAddr", or.Addr, "passiveAddr",
 		matchorder.Addr, "amount", matched, "price", payload.Price)
