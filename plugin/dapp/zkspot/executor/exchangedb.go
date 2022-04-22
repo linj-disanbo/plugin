@@ -331,13 +331,14 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 		Index: a.GetIndex(),
 	}
 
-	// A single transaction can match up to 100 historical orders, the maximum depth can be matched, the system has to protect itself
-	// Iteration has listing price
+	// A single transaction can match up to {MaxCount} orders, the maximum depth can be matched, the system has to protect itself
+	// TODO next-price, next-order-list
 	matcher1 := newMatcher(a.localDB)
 	for {
 		if matcher1.isDone() {
 			break
 		}
+
 		//Obtain price information of existing market listing
 		marketDepthList, _ := matcher1.QueryMarketDepth(payload)
 		if marketDepthList == nil || len(marketDepthList.List) == 0 {
@@ -376,10 +377,8 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 					logs = append(logs, log...)
 					kvs = append(kvs, kv...)
 					if or.Status == et.Completed {
-						receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
-						logs = append(logs, receiptlog)
-						receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
-						return receipts, nil
+						matcher1.done = true
+						break
 					}
 					// match depth count
 					matcher1.recordMatchCount()
