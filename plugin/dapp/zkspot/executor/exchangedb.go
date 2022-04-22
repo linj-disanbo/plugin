@@ -369,7 +369,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 					if err != nil || order.Status != et.Ordered {
 						continue
 					}
-					log, kv, err := matcher1.matchModel2(order, taker)
+					log, kv, err := matcher1.matchModel(order, taker)
 					if err != nil {
 						elog.Error("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", taker.order.GetOrderID(), "error", err)
 						return nil, err
