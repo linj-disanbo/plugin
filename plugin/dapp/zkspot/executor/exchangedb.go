@@ -243,7 +243,14 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 	//Check your account balance first
 	receipt1, kvs1, err := taker.FrozenTokenForLimitOrder()
 	_, _ = receipt1, kvs1
-	return a.matchLimitOrder(payload, entrustAddr, &taker)
+	receipt2, err := a.matchLimitOrder(payload, entrustAddr, &taker)
+	if err != nil {
+		return nil, err
+	}
+	if taker.order.Status != et.Completed && taker.order.GetLimitOrder().Op == et.OpBuy {
+		taker.UnFrozenFeeForLimitOrder() // taker fee to maker fee
+	}
+	return receipt2, nil
 }
 
 //RevokeOrder ...

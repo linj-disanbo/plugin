@@ -61,6 +61,23 @@ func (s *spotTaker) FrozenTokenForLimitOrder() ([]*types.ReceiptLog, []*types.Ke
 	return nil, nil, nil
 }
 
+func (s *spotTaker) UnFrozenFeeForLimitOrder() ([]*types.ReceiptLog, []*types.KeyValue, error) {
+	or := s.order.GetLimitOrder()
+	if or.GetOp() != et.OpBuy {
+		return nil, nil, nil
+	}
+	precision := int64(1e8) // cfg.GetCoinPrecision()
+	// takerFee - makerFee
+	actvieFee := SafeMul(or.GetAmount(), int64(s.feeRate-s.order.Rate), precision)
+	err := s.acc.Active(or.RightAsset, uint64(actvieFee))
+	if err != nil {
+		elog.Error("UnFrozenFeeForLimitOrder", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", actvieFee)
+		return nil, nil, et.ErrAssetBalance
+	}
+
+	return nil, nil, nil
+}
+
 func (s *spotTaker) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	balance := s.calcTradeBalance(maker.order)
 	matchDetail := s.calcTradeInfo(maker, balance)
