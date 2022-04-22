@@ -349,22 +349,14 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 				break
 			}
 
-			var hasOrder = false
-			var orderKey string
 			for {
 				if matcher1.isDone() {
 					break
 				}
-				orderList, err := findOrderIDListByPrice(a.localDB, payload.GetLeftAsset(), payload.GetRightAsset(), marketDepth.Price, a.OpSwap(payload.Op), et.ListASC, orderKey)
-				if orderList != nil && !hasOrder {
-					hasOrder = true
-				}
-				if err != nil {
-					if err == types.ErrNotFound {
-						break
-					}
-					elog.Error("findOrderIDListByPrice error", "height", a.height, "symbol", payload.GetLeftAsset(), "price", marketDepth.Price, "op", a.OpSwap(payload.Op), "error", err)
-					return nil, err
+
+				orderList, err := matcher1.findOrderIDListByPrice(payload, marketDepth)
+				if err != nil || orderList == nil || len(orderList.List) == 0 {
+					break
 				}
 				// got orderlist to trade
 				for _, matchorder := range orderList.List {
@@ -374,17 +366,11 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 					// Check the order status
 					order, err := findOrderByOrderID(a.statedb, a.localDB, matchorder.GetOrderID())
 					if err != nil || order.Status != et.Ordered {
-						if len(orderList.List) == 1 {
-							hasOrder = true
-						}
 						continue
 					}
 					log, kv, err := a.matchModel2(order, or, re, taker)
 					if err != nil {
-						if err == types.ErrNoBalance {
-							elog.Warn("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)
-							continue
-						}
+						elog.Error("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)
 						return nil, err
 					}
 					logs = append(logs, log...)
@@ -398,20 +384,9 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 					// match depth count
 					matcher1.recordMatchCount()
 				}
-				if orderList.PrimaryKey == "" {
+				if matcher1.isEndOrderList(marketDepth.Price) {
 					break
 				}
-				orderKey = orderList.PrimaryKey
-			}
-			if !hasOrder {
-				var matchorder et.Order
-				matchorder.UpdateTime = a.blocktime
-				matchorder.Status = et.Completed
-				matchorder.Balance = 0
-				matchorder.Executed = 0
-				matchorder.AVGPrice = marketDepth.Price
-				elog.Info("make empty match to del depth", "height", a.height, "price", marketDepth.Price, "amount", marketDepth.Amount)
-				re.MatchOrders = append(re.MatchOrders, &matchorder)
 			}
 		}
 	}
@@ -439,6 +414,9 @@ type matcher struct {
 	endPriceList bool
 
 	// order list
+	lastOrderPrice int64
+	orderKey       string
+	endOrderList   bool
 }
 
 func newMatcher(localdb dbm.KV) *matcher {
@@ -498,6 +476,36 @@ func (m *matcher) QueryMarketDepth(payload *et.LimitOrder) (*et.MarketDepthList,
 	// set next key
 	m.pricekey = marketDepthList.PrimaryKey
 	return marketDepthList, nil
+}
+
+func (m *matcher) findOrderIDListByPrice(payload *et.LimitOrder, marketDepth *et.MarketDepth) (*et.OrderList, error) {
+	direction := et.ListASC // 撮合按时间先后顺序
+	price := marketDepth.Price
+	if price != m.lastOrderPrice {
+		m.orderKey = ""
+		m.endOrderList = false
+	}
+
+	orderList, err := findOrderIDListByPrice(m.localdb, payload.GetLeftAsset(), payload.GetRightAsset(), price, OpSwap(payload.Op), direction, m.orderKey)
+	if err != nil {
+		if err == types.ErrNotFound {
+			return &et.OrderList{List: []*et.Order{}, PrimaryKey: ""}, nil
+		}
+		elog.Error("findOrderIDListByPrice error" /*"height", a.height, */, "symbol", payload.GetLeftAsset(), "price", marketDepth.Price, "op", OpSwap(payload.Op), "error", err)
+		return nil, err
+	}
+	// reatch the last order list for price
+	if orderList.PrimaryKey == "" {
+		m.endOrderList = true
+	}
+
+	// set next key
+	m.orderKey = orderList.PrimaryKey
+	return orderList, nil
+}
+
+func (m *matcher) isEndOrderList(price int64) bool {
+	return price == m.lastOrderPrice && m.endOrderList
 }
 
 // Query the status database according to the order number
