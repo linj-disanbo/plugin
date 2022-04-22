@@ -332,7 +332,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 
 	// A single transaction can match up to {MaxCount} orders, the maximum depth can be matched, the system has to protect itself
 	// TODO next-price, next-order-list
-	matcher1 := newMatcher(a.localDB)
+	matcher1 := newMatcher(a.statedb, a.localDB, a.api)
 	taker.re = re
 	for {
 		if matcher1.isDone() {
@@ -369,7 +369,7 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 					if err != nil || order.Status != et.Ordered {
 						continue
 					}
-					log, kv, err := a.matchModel2(order, taker)
+					log, kv, err := matcher1.matchModel2(order, taker)
 					if err != nil {
 						elog.Error("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", taker.order.GetOrderID(), "error", err)
 						return nil, err
@@ -403,6 +403,8 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 // order - list for each price
 type matcher struct {
 	localdb dbm.KV
+	statedb dbm.KV
+	api     client.QueueProtocolAPI
 
 	matchCount int
 	maxMatch   int
@@ -418,9 +420,12 @@ type matcher struct {
 	endOrderList   bool
 }
 
-func newMatcher(localdb dbm.KV) *matcher {
+func newMatcher(statedb, localdb dbm.KV, api client.QueueProtocolAPI) *matcher {
 	return &matcher{
-		localdb:      localdb,
+		localdb: localdb,
+		statedb: statedb,
+		api:     api,
+
 		pricekey:     "",
 		matchCount:   0,
 		maxMatch:     et.MaxMatchCount,

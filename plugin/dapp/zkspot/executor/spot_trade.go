@@ -242,7 +242,7 @@ func (m *spotMaker) orderTraded(matchDetail matchInfo) ([]*types.ReceiptLog, []*
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (a *SpotAction) matchModel2(matchorder *et.Order, taker *spotTaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (m *matcher) matchModel2(matchorder *et.Order, taker *spotTaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -250,7 +250,7 @@ func (a *SpotAction) matchModel2(matchorder *et.Order, taker *spotTaker) ([]*typ
 	elog.Info("try match", "activeId", taker.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.Addr, "passiveAddr",
 		matchorder.Addr, "amount", matched, "price", taker.order.GetLimitOrder().Price)
 
-	accMatch, err := LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, a.statedb)
+	accMatch, err := LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, m.statedb)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -259,7 +259,7 @@ func (a *SpotAction) matchModel2(matchorder *et.Order, taker *spotTaker) ([]*typ
 			acc:     accMatch,
 			order:   matchorder,
 			feeRate: matchorder.GetRate(),
-			cfg:     a.api.GetConfig(),
+			cfg:     m.api.GetConfig(),
 		},
 	}
 
