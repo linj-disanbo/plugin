@@ -325,15 +325,15 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
-	or := taker.order
 	re := &et.ReceiptExchange{
-		Order: or,
+		Order: taker.order,
 		Index: a.GetIndex(),
 	}
 
 	// A single transaction can match up to {MaxCount} orders, the maximum depth can be matched, the system has to protect itself
 	// TODO next-price, next-order-list
 	matcher1 := newMatcher(a.localDB)
+	taker.re = re
 	for {
 		if matcher1.isDone() {
 			break
@@ -369,14 +369,14 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 					if err != nil || order.Status != et.Ordered {
 						continue
 					}
-					log, kv, err := a.matchModel2(order, or, re, taker)
+					log, kv, err := a.matchModel2(order, taker)
 					if err != nil {
-						elog.Error("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", or.GetOrderID(), "error", err)
+						elog.Error("matchModel RevokeOrder", "height", a.height, "orderID", order.GetOrderID(), "payloadID", taker.order.GetOrderID(), "error", err)
 						return nil, err
 					}
 					logs = append(logs, log...)
 					kvs = append(kvs, kv...)
-					if or.Status == et.Completed {
+					if taker.order.Status == et.Completed {
 						matcher1.done = true
 						break
 					}
@@ -390,8 +390,8 @@ func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string,
 		}
 	}
 
-	kvs = append(kvs, a.GetKVSet(or)...)
-	re.Order = or
+	kvs = append(kvs, a.GetKVSet(taker.order)...)
+	re.Order = taker.order
 	receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(re)}
 	logs = append(logs, receiptlog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}

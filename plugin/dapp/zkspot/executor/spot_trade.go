@@ -242,14 +242,13 @@ func (m *spotMaker) orderTraded(matchDetail matchInfo) ([]*types.ReceiptLog, []*
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (a *SpotAction) matchModel2(matchorder *et.Order, or *et.Order, re *et.ReceiptExchange, taker *spotTaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (a *SpotAction) matchModel2(matchorder *et.Order, taker *spotTaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	var matched int64
 
-	matched = taker.calcTradeBalance(matchorder)
-	elog.Info("try match", "activeId", or.OrderID, "passiveId", matchorder.OrderID, "activeAddr", or.Addr, "passiveAddr",
-		matchorder.Addr, "amount", matched, "price", or.GetLimitOrder().Price)
+	matched := taker.calcTradeBalance(matchorder)
+	elog.Info("try match", "activeId", taker.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.Addr, "passiveAddr",
+		matchorder.Addr, "amount", matched, "price", taker.order.GetLimitOrder().Price)
 
 	accMatch, err := LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, a.statedb)
 	if err != nil {
@@ -265,6 +264,5 @@ func (a *SpotAction) matchModel2(matchorder *et.Order, or *et.Order, re *et.Rece
 	}
 
 	logs, kvs, err = taker.Trade(&maker)
-	re = taker.re
 	return logs, kvs, nil
 }
