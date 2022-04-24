@@ -127,72 +127,6 @@ func (acc *dexAccount) doBurn(tid uint32, amount uint64) error {
 	return nil
 }
 
-// 撮合 包含 1个交换, 和两个手续费
-// 币的源头是是从balance/frozen 中转 看balance 的中值是否为frozen
-// 币的目的一般到 balance即可, 如果有到frozen的 提供额外的函数或参数
-/*
-func (acc *dexAccount) Swap(accTo *dexAccount, got, gave *et.DexAccountBalance) error {
-	err := acc.Tranfer(accTo, gave)
-	if err != nil {
-		return err
-	}
-	return acc.Withdraw(accTo, got)
-}
-*/
-
-func (acc *dexAccount) Tranfer1(accTo *dexAccount, b *et.DexAccountBalance) error {
-	idx := acc.findTokenIndex(b.Id)
-	if idx < 0 {
-		return et.ErrDexNotEnough
-	}
-	idxTo := accTo.findTokenIndex(b.Id)
-	if idxTo < 0 {
-		idxTo = acc.newToken(b.Id, 0)
-	}
-	if b.Balance > 0 {
-		if acc.acc.Balance[idx].Balance < b.Balance {
-			return et.ErrDexNotEnough
-		}
-		acc.acc.Balance[idx].Balance -= b.Balance
-		accTo.acc.Balance[idxTo].Balance += b.Balance
-	}
-	if b.Frozen > 0 {
-		if acc.acc.Balance[idx].Frozen < b.Frozen {
-			return et.ErrDexNotEnough
-		}
-		acc.acc.Balance[idx].Frozen -= b.Frozen
-		accTo.acc.Balance[idxTo].Balance += b.Balance
-	}
-	return nil
-}
-
-func (acc *dexAccount) Tranfer(accTo *dexAccount, token uint32, balance uint64) error {
-	idx := acc.findTokenIndex(token)
-	if idx < 0 {
-		return et.ErrDexNotEnough
-	}
-	idxTo := accTo.findTokenIndex(token)
-	if idxTo < 0 {
-		idxTo = acc.newToken(token, 0)
-	}
-
-	if acc.acc.Balance[idx].Balance < balance {
-		return et.ErrDexNotEnough
-	}
-
-	//copyAcc := dupAccount(acc.acc)
-	//copyAccTo := dupAccount(accTo.acc)
-
-	acc.acc.Balance[idx].Balance -= balance
-	accTo.acc.Balance[idxTo].Balance += balance
-
-	return nil
-}
-
-func (acc *dexAccount) Withdraw(accTo *dexAccount, b *et.DexAccountBalance) error {
-	return accTo.Tranfer1(acc, b)
-}
-
 func (acc *dexAccount) doFrozen(token uint32, amount uint64) error {
 	idx := acc.findTokenIndex(token)
 	if idx < 0 {
@@ -217,14 +151,6 @@ func (acc *dexAccount) doActive(token uint32, amount uint64) error {
 	acc.acc.Balance[idx].Balance += amount
 	acc.acc.Balance[idx].Frozen -= amount
 	return nil
-}
-
-func (acc *dexAccount) FrozenTranfer(accTo *dexAccount, tid uint32, amount uint64) error {
-	b := et.DexAccountBalance{
-		Id:     tid,
-		Frozen: amount,
-	}
-	return acc.Tranfer1(accTo, &b)
 }
 
 func dupAccount(acc *et.DexAccount) *et.DexAccount {
@@ -292,4 +218,80 @@ func (acc *dexAccount) genReceipt(ty int32, acc1 *dexAccount, r *et.ReceiptDexAc
 		KV:   kv,
 		Logs: []*types.ReceiptLog{log1},
 	}
+}
+
+// two account operator
+
+// 撮合 包含 1个交换, 和两个手续费
+// 币的源头是是从balance/frozen 中转 看balance 的中值是否为frozen
+// 币的目的一般到 balance即可, 如果有到frozen的 提供额外的函数或参数
+/*
+func (acc *dexAccount) Swap(accTo *dexAccount, got, gave *et.DexAccountBalance) error {
+	err := acc.Tranfer(accTo, gave)
+	if err != nil {
+		return err
+	}
+	return acc.Withdraw(accTo, got)
+}
+*/
+
+func (acc *dexAccount) Tranfer1(accTo *dexAccount, b *et.DexAccountBalance) error {
+	idx := acc.findTokenIndex(b.Id)
+	if idx < 0 {
+		return et.ErrDexNotEnough
+	}
+	idxTo := accTo.findTokenIndex(b.Id)
+	if idxTo < 0 {
+		idxTo = acc.newToken(b.Id, 0)
+	}
+	if b.Balance > 0 {
+		if acc.acc.Balance[idx].Balance < b.Balance {
+			return et.ErrDexNotEnough
+		}
+		acc.acc.Balance[idx].Balance -= b.Balance
+		accTo.acc.Balance[idxTo].Balance += b.Balance
+	}
+	if b.Frozen > 0 {
+		if acc.acc.Balance[idx].Frozen < b.Frozen {
+			return et.ErrDexNotEnough
+		}
+		acc.acc.Balance[idx].Frozen -= b.Frozen
+		accTo.acc.Balance[idxTo].Balance += b.Balance
+	}
+	return nil
+}
+
+func (acc *dexAccount) Tranfer(accTo *dexAccount, token uint32, balance uint64) error {
+	idx := acc.findTokenIndex(token)
+	if idx < 0 {
+		return et.ErrDexNotEnough
+	}
+	idxTo := accTo.findTokenIndex(token)
+	if idxTo < 0 {
+		idxTo = acc.newToken(token, 0)
+	}
+
+	if acc.acc.Balance[idx].Balance < balance {
+		return et.ErrDexNotEnough
+	}
+
+	//copyAcc := dupAccount(acc.acc)
+	//copyAccTo := dupAccount(accTo.acc)
+
+	acc.acc.Balance[idx].Balance -= balance
+	accTo.acc.Balance[idxTo].Balance += balance
+
+	return nil
+}
+
+func (acc *dexAccount) Withdraw(accTo *dexAccount, b *et.DexAccountBalance) error {
+	return accTo.Tranfer1(acc, b)
+}
+
+func (acc *dexAccount) FrozenTranfer(accTo *dexAccount, tid uint32, amount uint64) error {
+	b := et.DexAccountBalance{
+		Id:     tid,
+		Frozen: amount,
+	}
+	return acc.Tranfer1(accTo, &b)
 }
