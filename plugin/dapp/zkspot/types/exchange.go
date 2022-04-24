@@ -48,6 +48,8 @@ const (
 	// account logs
 	TyDexAccountFrozen
 	TyDexAccountActive
+	TyDexAccountBurn
+	TyDexAccountMint
 )
 
 // OP
