@@ -48,7 +48,7 @@ func NewSpotAction(e *exchange, tx *types.Transaction, index int) *SpotAction {
 }
 
 //NewAction ...
-func NewSpotAction2(e *zkspot, tx *types.Transaction, index int) *SpotAction {
+func NewSpotDex(e *zkspot, tx *types.Transaction, index int) *SpotAction {
 	hash := tx.Hash()
 	fromaddr := tx.From()
 	toaddr := tx.GetTo()
@@ -157,32 +157,16 @@ func getFeeRate(acc *dexAccount) uint64 {
 	return 1e5
 }
 
-func (a *SpotAction) createLimitOrder(payload *et.LimitOrder, entrustAddr string, trade *feeDetail) *et.Order {
-	or := &et.Order{
-		OrderID:     a.GetIndex(),
-		Value:       &et.Order_LimitOrder{LimitOrder: payload},
-		Ty:          et.TyLimitOrderAction,
-		Executed:    0,
-		AVGPrice:    0,
-		Balance:     payload.GetAmount(),
-		Status:      et.Ordered,
-		EntrustAddr: entrustAddr,
-		Addr:        a.fromaddr,
-		UpdateTime:  a.blocktime,
-		Index:       a.GetIndex(),
-		Rate:        int32(trade.maker),
-		//MinFee:      trade.GetMinFee(),
-		Hash:       hex.EncodeToString(a.txhash),
-		CreateTime: a.blocktime,
+func (a *SpotAction) initLimitOrder() func(*et.Order) *et.Order {
+	return func(order *et.Order) *et.Order {
+		order.OrderID = a.GetIndex()
+		order.Index = a.GetIndex()
+		order.CreateTime = a.blocktime
+		order.UpdateTime = a.blocktime
+		order.Hash = hex.EncodeToString(a.txhash)
+		order.Addr = a.fromaddr
+		return order
 	}
-	return or
-}
-
-type feeDetail struct {
-	addr  string
-	id    uint64
-	taker uint64
-	maker uint64
 }
 
 func (a *SpotAction) getFees(fromaddr string, left, right uint32) (*feeDetail, error) {
@@ -199,8 +183,8 @@ func (a *SpotAction) getFees(fromaddr string, left, right uint32) (*feeDetail, e
 	return &feeDetail{
 		addr:  tCfg.GetFeeAddr(),
 		id:    uint64(3), // TODO get from zk by chain33-addr
-		taker: uint64(trade.Taker),
-		maker: uint64(trade.Maker),
+		taker: trade.Taker,
+		maker: trade.Maker,
 	}, nil
 }
 
@@ -218,7 +202,8 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 		return nil, err
 	}
 
-	order := a.createLimitOrder(payload, entrustAddr, fees)
+	order := createLimitOrder(payload, entrustAddr,
+		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
 	acc, err := LoadSpotAccount(a.fromaddr, payload.Order.AccountID, a.statedb)
 	if err != nil {
 		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)

@@ -283,3 +283,36 @@ func (m *matcher) matchModel(matchorder *et.Order, taker *spotTaker) ([]*types.R
 	logs, kvs, err = taker.Trade(&maker)
 	return logs, kvs, nil
 }
+
+type orderInit func(*et.Order) *et.Order
+
+func createLimitOrder(payload *et.LimitOrder, entrustAddr string, inits []orderInit) *et.Order {
+	or := &et.Order{
+		Value:       &et.Order_LimitOrder{LimitOrder: payload},
+		Ty:          et.TyLimitOrderAction,
+		EntrustAddr: entrustAddr,
+		Executed:    0,
+		AVGPrice:    0,
+		Balance:     payload.GetAmount(),
+		Status:      et.Ordered,
+	}
+	for _, initFun := range inits {
+		or = initFun(or)
+	}
+	return or
+}
+
+type feeDetail struct {
+	addr  string
+	id    uint64
+	taker int32
+	maker int32
+}
+
+func (f *feeDetail) initLimitOrder() func(*et.Order) *et.Order {
+	return func(order *et.Order) *et.Order {
+		order.Rate = f.maker
+		order.TakerRate = f.taker
+		return order
+	}
+}

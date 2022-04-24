@@ -18,7 +18,7 @@ func checkZkSignature() error {
 func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.LimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	// checkTx will check payload and zk Signature
 
-	action := NewSpotAction2(e, tx, index)
+	action := NewSpotDex(e, tx, index)
 	r, err := action.LimitOrder(payload, "")
 	if err != nil {
 		return r, err

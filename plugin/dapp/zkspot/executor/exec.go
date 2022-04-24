@@ -13,7 +13,7 @@ func (z *zkspot) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, inde
 	}
 	list := SampleDeposit( /* r *types.Receipt */ )
 	_ = list
-	action2 := NewSpotAction2(z, tx, index)
+	action2 := NewSpotDex(z, tx, index)
 	r2, err := action2.Deposit(payload /* , list */) // TODO 增加参数
 	if err != nil {
 		return r, err
