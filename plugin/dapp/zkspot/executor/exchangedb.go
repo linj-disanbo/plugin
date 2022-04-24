@@ -170,7 +170,6 @@ func (a *SpotAction) initLimitOrder() func(*et.Order) *et.Order {
 }
 
 func (a *SpotAction) getFees(fromaddr string, left, right uint32) (*feeDetail, error) {
-	// TODO Payload args to left/right
 	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
 	if err != nil {
 		elog.Error("executor/exchangedb ParseConfig", "err", err)
@@ -178,11 +177,11 @@ func (a *SpotAction) getFees(fromaddr string, left, right uint32) (*feeDetail, e
 	}
 	trade := tCfg.GetTrade(left, right)
 
-	// Taker/Maker fee may relate to user (fromaddr ) level in dex
+	// Taker/Maker fee may relate to user (fromaddr) level in dex
 
 	return &feeDetail{
 		addr:  tCfg.GetFeeAddr(),
-		id:    uint64(3), // TODO get from zk by chain33-addr
+		id:    tCfg.GetFeeAddrID(),
 		taker: trade.Taker,
 		maker: trade.Maker,
 	}, nil
@@ -204,6 +203,7 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 
 	order := createLimitOrder(payload, entrustAddr,
 		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
+
 	acc, err := LoadSpotAccount(a.fromaddr, payload.Order.AccountID, a.statedb)
 	if err != nil {
 		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
@@ -217,10 +217,9 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 	}
 	taker := spotTaker{
 		spotTrader: spotTrader{
-			acc:     acc,
-			order:   order,
-			feeRate: int32(fees.taker),
-			cfg:     a.api.GetConfig(),
+			acc:   acc,
+			order: order,
+			cfg:   a.api.GetConfig(),
 		},
 		accFee: accFee,
 	}

@@ -131,6 +131,10 @@ func (f *Econfig) GetFeeAddr() string {
 	return f.Banks[0]
 }
 
+func (f *Econfig) GetFeeAddrID() uint64 {
+	return 1
+}
+
 func (f *Econfig) GetCoinName(asset *Asset) string {
 	for _, v := range f.Coins {
 		if v.Coin == asset.GetSymbol() && v.Execer == asset.GetExecer() {

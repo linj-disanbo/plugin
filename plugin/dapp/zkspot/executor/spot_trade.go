@@ -15,10 +15,9 @@ type spotTaker struct {
 }
 
 type spotTrader struct {
-	acc     *dexAccount
-	order   *et.Order
-	feeRate int32
-	cfg     *types.Chain33Config
+	acc   *dexAccount
+	order *et.Order
+	cfg   *types.Chain33Config
 	// external infos
 	blocktime int64
 }
@@ -68,7 +67,7 @@ func (s *spotTaker) UnFrozenFeeForLimitOrder() ([]*types.ReceiptLog, []*types.Ke
 	}
 	precision := int64(1e8) // cfg.GetCoinPrecision()
 	// takerFee - makerFee
-	actvieFee := SafeMul(or.GetAmount(), int64(s.feeRate-s.order.Rate), precision)
+	actvieFee := SafeMul(or.GetAmount(), int64(s.order.TakerRate-s.order.Rate), precision)
 	err := s.acc.Active(or.RightAsset, uint64(actvieFee))
 	if err != nil {
 		elog.Error("UnFrozenFeeForLimitOrder", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", actvieFee)
@@ -117,8 +116,8 @@ func (s *spotTaker) calcTradeInfo(maker *spotMaker, balance int64) matchInfo {
 	info.matched = balance
 	info.leftBalance = balance
 	info.rightBalance = SafeMul(balance, maker.order.GetLimitOrder().Price, s.cfg.GetCoinPrecision())
-	info.feeTaker = SafeMul(info.rightBalance, int64(s.feeRate), s.cfg.GetCoinPrecision())
-	info.feeMater = SafeMul(info.rightBalance, int64(maker.feeRate), s.cfg.GetCoinPrecision())
+	info.feeTaker = SafeMul(info.rightBalance, int64(s.order.TakerRate), s.cfg.GetCoinPrecision())
+	info.feeMater = SafeMul(info.rightBalance, int64(maker.order.Rate), s.cfg.GetCoinPrecision())
 	return info
 }
 
@@ -273,10 +272,9 @@ func (m *matcher) matchModel(matchorder *et.Order, taker *spotTaker) ([]*types.R
 	}
 	maker := spotMaker{
 		spotTrader: spotTrader{
-			acc:     accMatch,
-			order:   matchorder,
-			feeRate: matchorder.GetRate(),
-			cfg:     m.api.GetConfig(),
+			acc:   accMatch,
+			order: matchorder,
+			cfg:   m.api.GetConfig(),
 		},
 	}
 
