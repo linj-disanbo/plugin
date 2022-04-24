@@ -129,7 +129,7 @@ message Order {
   //手续费
   int64 digestedFee = 13;
   // 主动成交手续费
-  int64 takerRate = 14;
+  int32 takerRate = 14;
   //挂单hash
   string hash = 15;
   //撤单hash
