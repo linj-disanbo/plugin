@@ -39,7 +39,7 @@ func newSpotDex() *SpotDex {
 }
 
 func genAccountKey(dexType []byte, addr string, id uint64) []byte {
-	return []byte(fmt.Sprintf("%s:016%d:%s", dexType, addr))
+	return []byte(fmt.Sprintf("%s:%s", dexType, addr))
 }
 
 func LoadSpotAccount(addr string, id uint64, db dbm.KV) (*dexAccount, error) {
@@ -50,7 +50,9 @@ func (dex *Dex) LoadAccount(addr string, id uint64, db dbm.KV) (*dexAccount, err
 	key := genAccountKey(dex.keyPrefix, addr, id)
 	v, err := db.Get(key)
 	if err == types.ErrNotFound {
-		return NewDexAccount(dex.dexName, id, addr), nil
+		acc := NewDexAccount(dex.dexName, id, addr)
+		acc.db = db
+		return acc, nil
 	}
 	var acc et.DexAccount
 	err = types.Decode(v, &acc)
@@ -58,16 +60,15 @@ func (dex *Dex) LoadAccount(addr string, id uint64, db dbm.KV) (*dexAccount, err
 		return nil, err
 	}
 
-	return GetDexAccount(&acc), nil
+	return GetDexAccount(&acc, db), nil
 }
 
 type dexAccount struct {
 	ty  string // spot, future, asset
 	acc *et.DexAccount
+	db  dbm.KV
 }
 
-// 先写逻辑
-// TODO 需要增加 kv , receipt的处理
 func NewDexAccount(ty string, id uint64, addr string) *dexAccount {
 	return &dexAccount{
 		ty: ty,
@@ -79,8 +80,8 @@ func NewDexAccount(ty string, id uint64, addr string) *dexAccount {
 	}
 }
 
-func GetDexAccount(acc *et.DexAccount) *dexAccount {
-	return &dexAccount{acc: acc}
+func GetDexAccount(acc *et.DexAccount, db dbm.KV) *dexAccount {
+	return &dexAccount{acc: acc, db: db}
 }
 
 func (acc *dexAccount) findTokenIndex(tid uint32) int {
@@ -167,9 +168,11 @@ func dupAccount(acc *et.DexAccount) *et.DexAccount {
 // GetKVSet account to statdb kv
 func (acc *dexAccount) GetKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(acc.acc)
+	key := genAccountKey(spotAccountKey, acc.acc.Addr, acc.acc.Id)
+
 	kvset = make([]*types.KeyValue, 1)
 	kvset[0] = &types.KeyValue{
-		Key:   genAccountKey(spotAccountKey, acc.acc.Addr, acc.acc.Id),
+		Key:   key,
 		Value: value,
 	}
 	return kvset

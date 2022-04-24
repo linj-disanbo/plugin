@@ -869,16 +869,5 @@ func (a *SpotAction) Deposit(payload *et.ZkDeposit) (*types.Receipt, error) {
 }
 
 func (a *SpotAction) LoadDexAccount(chain33addr string) (*dexAccount, error) {
-	key := fmt.Sprintf("dexAccountKey%s", chain33addr)
-	v, err := a.statedb.Get([]byte(key))
-	if err != nil {
-		return nil, err
-	}
-	var val et.DexAccount
-	err = types.Decode(v, &val)
-	if err != nil {
-		return nil, err
-	}
-	acc := GetDexAccount(&val)
-	return acc, nil
+	return LoadSpotAccount(chain33addr, 1, a.statedb)
 }
