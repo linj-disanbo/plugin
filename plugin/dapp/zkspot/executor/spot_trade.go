@@ -132,16 +132,42 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance matchInfo) ([]*typ
 	copyFeeAcc := dupAccount(s.accFee.acc)
 
 	leftToken, rightToken := uint32(1), uint32(2)
+	var err error
 	if s.order.GetLimitOrder().Op == et.OpSell {
-		s.acc.FrozenTranfer(maker.acc, leftToken, uint64(tradeBalance.leftBalance))
-		maker.acc.FrozenTranfer(s.acc, rightToken, uint64(tradeBalance.rightBalance))
+		err = s.acc.doFrozenTranfer(maker.acc, leftToken, uint64(tradeBalance.leftBalance))
+		if err != nil {
+			return nil, nil, err
+		}
+		err = maker.acc.doFrozenTranfer(s.acc, rightToken, uint64(tradeBalance.rightBalance))
+		if err != nil {
+			return nil, nil, err
+		}
+		err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.feeTaker))
+		if err != nil {
+			return nil, nil, err
+		}
+		err = maker.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.feeMater))
+		if err != nil {
+			return nil, nil, err
+		}
 	} else {
-		s.acc.FrozenTranfer(maker.acc, rightToken, uint64(tradeBalance.rightBalance))
-		maker.acc.FrozenTranfer(s.acc, leftToken, uint64(tradeBalance.leftBalance))
+		err = s.acc.doFrozenTranfer(maker.acc, rightToken, uint64(tradeBalance.rightBalance))
+		if err != nil {
+			return nil, nil, err
+		}
+		err = maker.acc.doFrozenTranfer(s.acc, leftToken, uint64(tradeBalance.leftBalance))
+		if err != nil {
+			return nil, nil, err
+		}
+		err = s.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.feeTaker))
+		if err != nil {
+			return nil, nil, err
+		}
+		err = maker.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.feeMater))
+		if err != nil {
+			return nil, nil, err
+		}
 	}
-
-	s.acc.FrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.feeTaker))
-	maker.acc.FrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.feeMater))
 
 	kvs1 := s.acc.GetKVSet()
 	kvs2 := maker.acc.GetKVSet()
@@ -176,10 +202,18 @@ func (s *spotTaker) selfSettlement(tradeBalance matchInfo) ([]*types.ReceiptLog,
 	copyFeeAcc := dupAccount(s.accFee.acc)
 
 	leftToken, rightToken := uint32(1), uint32(2)
-	s.acc.Active(leftToken, uint64(tradeBalance.leftBalance))
-	s.acc.Active(rightToken, uint64(tradeBalance.rightBalance))
-
-	s.acc.FrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.feeTaker+tradeBalance.feeMater))
+	err := s.acc.doActive(leftToken, uint64(tradeBalance.leftBalance))
+	if err != nil {
+		return nil, nil, err
+	}
+	err = s.acc.doActive(rightToken, uint64(tradeBalance.rightBalance))
+	if err != nil {
+		return nil, nil, err
+	}
+	err = s.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.feeTaker+tradeBalance.feeMater))
+	if err != nil {
+		return nil, nil, err
+	}
 
 	kvs1 := s.acc.GetKVSet()
 	kvs3 := s.accFee.GetKVSet()
