@@ -223,21 +223,26 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 		},
 		accFee: accFee,
 	}
-	// TODO frozen receipt and kv
-	//Check your account balance first
+
 	receipt1, err := taker.FrozenTokenForLimitOrder()
 	if err != nil {
 		return nil, err
 	}
-	_, _ = receipt1, err
+
 	receipt2, err := a.matchLimitOrder(payload, entrustAddr, &taker)
 	if err != nil {
 		return nil, err
 	}
+	receipt1 = mergeReceipt(receipt1, receipt2)
 	if taker.order.Status != et.Completed && taker.order.GetLimitOrder().Op == et.OpBuy {
-		taker.UnFrozenFeeForLimitOrder() // taker fee to maker fee
+		// taker fee to maker fee
+		receipt3, err := taker.UnFrozenFeeForLimitOrder()
+		if err != nil {
+			return nil, err
+		}
+		receipt1 = mergeReceipt(receipt1, receipt3)
 	}
-	return receipt2, nil
+	return receipt1, nil
 }
 
 //RevokeOrder ...
