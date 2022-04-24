@@ -256,4 +256,9 @@ message ReceiptSpotTrade {
   TradeAccounts current = 3;
 }
 
+message ReceiptDexAccount {
+  DexAccount prev = 1;
+  DexAccount current = 2;
+}
+
 service exchange {}
