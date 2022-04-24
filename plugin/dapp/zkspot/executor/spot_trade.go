@@ -18,8 +18,6 @@ type spotTrader struct {
 	acc   *dexAccount
 	order *et.Order
 	cfg   *types.Chain33Config
-	// external infos
-	blocktime int64
 }
 
 type spotMaker struct {
@@ -81,7 +79,7 @@ func (s *spotTaker) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyVa
 	balance := s.calcTradeBalance(maker.order)
 	matchDetail := s.calcTradeInfo(maker, balance)
 
-	receipt3, kvs3, err := maker.orderTraded(matchDetail)
+	receipt3, kvs3, err := maker.orderTraded(matchDetail, s.order)
 	if err != nil {
 		return receipt3, kvs3, err
 	}
@@ -215,8 +213,6 @@ func (s *spotTaker) orderTraded(matchDetail matchInfo, order *et.Order) ([]*type
 	s.order.DigestedFee += matchDetail.feeTaker
 	s.order.AVGPrice = caclAVGPrice(s.order, s.order.GetLimitOrder().Price, matched)
 
-	s.order.UpdateTime = s.blocktime
-
 	// status
 	if matched == s.order.GetBalance() {
 		s.order.Status = et.Completed
@@ -235,14 +231,14 @@ func (s *spotTaker) orderTraded(matchDetail matchInfo, order *et.Order) ([]*type
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (m *spotMaker) orderTraded(matchDetail matchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (m *spotMaker) orderTraded(matchDetail matchInfo, takerOrder *et.Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	matched := matchDetail.matched
 
 	// fee and AVGPrice
 	m.order.DigestedFee += matchDetail.feeMater
 	m.order.AVGPrice = caclAVGPrice(m.order, m.order.GetLimitOrder().Price, matched)
 
-	m.order.UpdateTime = m.blocktime
+	m.order.UpdateTime = takerOrder.UpdateTime
 
 	// status
 	if matched == m.order.GetBalance() {
