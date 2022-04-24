@@ -226,6 +226,9 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 	// TODO frozen receipt and kv
 	//Check your account balance first
 	receipt1, err := taker.FrozenTokenForLimitOrder()
+	if err != nil {
+		return nil, err
+	}
 	_, _ = receipt1, err
 	receipt2, err := a.matchLimitOrder(payload, entrustAddr, &taker)
 	if err != nil {
@@ -259,38 +262,34 @@ func (a *SpotAction) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error
 	cfg := a.api.GetConfig()
 
 	if order.GetLimitOrder().GetOp() == et.OpBuy {
-		// TODO id
 		accX, err := LoadSpotAccount(order.Addr, uint64(order.GetLimitOrder().RightAsset), a.statedb)
 		if err != nil {
 			return nil, err
 		}
 		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
-		amount += order.FeeBalance
+		amount += SafeMul(balance, int64(order.Rate), cfg.GetCoinPrecision())
 
-		/*receipt,*/
-		err = accX.Active(order.GetLimitOrder().RightAsset, uint64(amount))
+		receipt, err := accX.Active(order.GetLimitOrder().RightAsset, uint64(amount))
 		if err != nil {
 			elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", amount, "err", err.Error())
 			return nil, err
 		}
-		//logs = append(logs, receipt.Logs...)
-		//kvs = append(kvs, receipt.KV...)
+		logs = append(logs, receipt.Logs...)
+		kvs = append(kvs, receipt.KV...)
 	}
 	if order.GetLimitOrder().GetOp() == et.OpSell {
-		// TODO id
 		accX, err := LoadSpotAccount(order.Addr, uint64(order.GetLimitOrder().RightAsset), a.statedb)
 		if err != nil {
 			return nil, err
 		}
 
-		/*receipt,*/
-		err = accX.Active(order.GetLimitOrder().RightAsset, uint64(balance))
+		receipt, err := accX.Active(order.GetLimitOrder().RightAsset, uint64(balance))
 		if err != nil {
 			elog.Error("RevokeOrder.ExecActive", "addr", a.fromaddr, "amount", balance, "err", err.Error())
 			return nil, err
 		}
-		//logs = append(logs, receipt.Logs...)
-		//kvs = append(kvs, receipt.KV...)
+		logs = append(logs, receipt.Logs...)
+		kvs = append(kvs, receipt.KV...)
 	}
 
 	order.Status = et.Revoked

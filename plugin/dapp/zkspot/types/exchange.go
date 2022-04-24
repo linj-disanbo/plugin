@@ -47,6 +47,7 @@ const (
 
 	// account logs
 	TyDexAccountFrozen
+	TyDexAccountActive
 )
 
 // OP

@@ -205,7 +205,7 @@ func (acc *dexAccount) doFrozen(token uint32, amount uint64) error {
 	return nil
 }
 
-func (acc *dexAccount) Active(token uint32, amount uint64) error {
+func (acc *dexAccount) doActive(token uint32, amount uint64) error {
 	idx := acc.findTokenIndex(token)
 	if idx < 0 {
 		return et.ErrDexNotEnough
@@ -260,6 +260,20 @@ func (acc *dexAccount) Frozen(token uint32, amount uint64) (*types.Receipt, erro
 	}
 
 	return acc.genReceipt(et.TyDexAccountFrozen, acc, &receiptlog), nil
+}
+
+func (acc *dexAccount) Active(token uint32, amount uint64) (*types.Receipt, error) {
+	copyAcc := dupAccount(acc.acc)
+	err := acc.doActive(token, amount)
+	if err != nil {
+		return nil, err
+	}
+	receiptlog := et.ReceiptDexAccount{
+		Prev:    copyAcc,
+		Current: acc.acc,
+	}
+
+	return acc.genReceipt(et.TyDexAccountActive, acc, &receiptlog), nil
 }
 
 func (acc *dexAccount) genReceipt(ty int32, acc1 *dexAccount, r *et.ReceiptDexAccount) *types.Receipt {
