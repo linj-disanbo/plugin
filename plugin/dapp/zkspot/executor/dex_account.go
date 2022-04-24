@@ -192,7 +192,7 @@ func (acc *dexAccount) Withdraw(accTo *dexAccount, b *et.DexAccountBalance) erro
 	return accTo.Tranfer1(acc, b)
 }
 
-func (acc *dexAccount) Frozen(token uint32, amount uint64) error {
+func (acc *dexAccount) doFrozen(token uint32, amount uint64) error {
 	idx := acc.findTokenIndex(token)
 	if idx < 0 {
 		return et.ErrDexNotEnough
@@ -246,4 +246,31 @@ func (acc *dexAccount) GetKVSet() (kvset []*types.KeyValue) {
 		Value: value,
 	}
 	return kvset
+}
+
+func (acc *dexAccount) Frozen(token uint32, amount uint64) (*types.Receipt, error) {
+	copyAcc := dupAccount(acc.acc)
+	err := acc.doFrozen(token, amount)
+	if err != nil {
+		return nil, err
+	}
+	receiptlog := et.ReceiptDexAccount{
+		Prev:    copyAcc,
+		Current: acc.acc,
+	}
+
+	return acc.genReceipt(et.TyDexAccountFrozen, acc, &receiptlog), nil
+}
+
+func (acc *dexAccount) genReceipt(ty int32, acc1 *dexAccount, r *et.ReceiptDexAccount) *types.Receipt {
+	log1 := &types.ReceiptLog{
+		Ty:  ty,
+		Log: types.Encode(r),
+	}
+	kv := acc.GetKVSet()
+	return &types.Receipt{
+		Ty:   types.ExecOk,
+		KV:   kv,
+		Logs: []*types.ReceiptLog{log1},
+	}
 }

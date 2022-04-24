@@ -32,30 +32,30 @@ type matchInfo struct {
 	feeMater     int64 // use right token
 }
 
-func (s *spotTaker) FrozenTokenForLimitOrder() ([]*types.ReceiptLog, []*types.KeyValue, error) {
-	// TODO
-	precision := int64(1e8) // cfg.GetCoinPrecision()
+func (s *spotTaker) FrozenTokenForLimitOrder() (*types.Receipt, error) {
+	precision := s.cfg.GetCoinPrecision()
 	or := s.order.GetLimitOrder()
 	if or.GetOp() == et.OpBuy {
 		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
 		fee := calcMtfFee(amount, int32(getFeeRate(s.acc)))
 		total := SafeAdd(amount, int64(fee))
 
-		err := s.acc.Frozen(or.RightAsset, uint64(total))
+		receipt, err := s.acc.Frozen(or.RightAsset, uint64(total))
 		if err != nil {
 			elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
-			return nil, nil, et.ErrAssetBalance
+			return nil, et.ErrAssetBalance
 		}
-	} else {
-		/* if payload.GetOp() == et.OpSell */
-		amount := or.GetAmount()
-		err := s.acc.Frozen(or.LeftAsset, uint64(or.GetAmount()))
-		if err != nil {
-			elog.Error("limit check left balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
-			return nil, nil, et.ErrAssetBalance
-		}
+		return receipt, nil
 	}
-	return nil, nil, nil
+
+	/* if payload.GetOp() == et.OpSell */
+	amount := or.GetAmount()
+	receipt, err := s.acc.Frozen(or.LeftAsset, uint64(or.GetAmount()))
+	if err != nil {
+		elog.Error("limit check left balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
+		return nil, et.ErrAssetBalance
+	}
+	return receipt, nil
 }
 
 func (s *spotTaker) UnFrozenFeeForLimitOrder() ([]*types.ReceiptLog, []*types.KeyValue, error) {

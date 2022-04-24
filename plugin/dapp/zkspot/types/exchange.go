@@ -37,13 +37,16 @@ const (
 
 // log类型id值
 const (
-	TyUnknowLog = iota + 1200
+	TyUnknowLog = iota + 2000
 	TyLimitOrderLog
 	TyMarketOrderLog
 	TyRevokeOrderLog
 
 	TyExchangeBindLog
 	TxSpotTradeLog
+
+	// account logs
+	TyDexAccountFrozen
 )
 
 // OP

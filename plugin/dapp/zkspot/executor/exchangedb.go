@@ -225,8 +225,8 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 	}
 	// TODO frozen receipt and kv
 	//Check your account balance first
-	receipt1, kvs1, err := taker.FrozenTokenForLimitOrder()
-	_, _ = receipt1, kvs1
+	receipt1, err := taker.FrozenTokenForLimitOrder()
+	_, _ = receipt1, err
 	receipt2, err := a.matchLimitOrder(payload, entrustAddr, &taker)
 	if err != nil {
 		return nil, err
