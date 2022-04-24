@@ -1,7 +1,10 @@
 package executor
 
 import (
+	"math/big"
+
 	"github.com/33cn/chain33/types"
+	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
@@ -22,8 +25,29 @@ func (z *zkspot) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, inde
 }
 
 func (z *zkspot) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
+	dex1 := NewSpotDex(z, tx, index)
+	maxActive, err := dex1.CalcMaxActive(uint32(payload.TokenId), payload.Amount)
+	if err != nil {
+		return nil, err
+	}
+	amount2, ok := big.NewInt(0).SetString(payload.Amount, 10)
+	if !ok {
+		return nil, et.ErrAssetBalance
+	}
+	if amount2.Uint64() > maxActive {
+		return nil, et.ErrDexNotEnough
+	}
+
 	action := NewAction(z, tx, index)
-	return action.Withdraw(payload)
+	receipt1, err := action.Withdraw(payload)
+	if err != nil {
+		return nil, err
+	}
+	receipt2, err := dex1.Withdraw(payload)
+	if err != nil {
+		return nil, err
+	}
+	return mergeReceipt(receipt1, receipt2), nil
 }
 
 func (z *zkspot) Exec_ContractToTree(payload *zt.ZkContractToTree, tx *types.Transaction, index int) (*types.Receipt, error) {

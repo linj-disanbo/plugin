@@ -871,3 +871,34 @@ func (a *SpotAction) Deposit(payload *et.ZkDeposit) (*types.Receipt, error) {
 func (a *SpotAction) LoadDexAccount(chain33addr string) (*dexAccount, error) {
 	return LoadSpotAccount(chain33addr, 1, a.statedb)
 }
+
+func (a *SpotAction) CalcMaxActive(token uint32, amount string) (uint64, error) {
+	acc, err := LoadSpotAccount(a.fromaddr, 1, a.statedb)
+	if err != nil {
+		return 0, err
+	}
+	idx := acc.findTokenIndex(token)
+	if idx < 0 {
+		return 0, nil
+	}
+	return acc.acc.Balance[idx].Balance, nil
+}
+
+func (a *SpotAction) Withdraw(payload *et.ZkWithdraw) (*types.Receipt, error) {
+
+	chain33Addr := a.fromaddr
+	amount := payload.GetAmount()
+
+	// TODO tid 哪里定义, 里面不需要知道tid 是什么, 在合约里 id1 换 id2
+
+	acc, err := a.LoadDexAccount(chain33Addr)
+	if err != nil {
+		return nil, err
+	}
+	amount2, ok := big.NewInt(0).SetString(amount, 10)
+	if !ok {
+		return nil, et.ErrAssetBalance
+	}
+
+	return acc.Burn(uint32(payload.TokenId), amount2.Uint64())
+}
