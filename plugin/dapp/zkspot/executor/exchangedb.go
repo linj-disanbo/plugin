@@ -864,9 +864,8 @@ func (a *SpotAction) Deposit(payload *et.ZkDeposit) (*types.Receipt, error) {
 	if !ok {
 		return nil, et.ErrAssetBalance
 	}
-	// TODO 未处理 receipt kv log 等
-	acc.Mint(uint32(payload.TokenId), amount2.Uint64())
-	return nil, nil
+
+	return acc.Mint(uint32(payload.TokenId), amount2.Uint64())
 }
 
 func (a *SpotAction) LoadDexAccount(chain33addr string) (*dexAccount, error) {

@@ -100,7 +100,7 @@ func (acc *dexAccount) newToken(tid uint32, amount uint64) int {
 	return len(acc.acc.Balance) - 1
 }
 
-func (acc *dexAccount) Mint(tid uint32, amount uint64) {
+func (acc *dexAccount) doMint(tid uint32, amount uint64) error {
 	idx := acc.findTokenIndex(tid)
 	if idx == -1 {
 		acc.acc.Balance = append(acc.acc.Balance, &et.DexAccountBalance{
@@ -110,6 +110,7 @@ func (acc *dexAccount) Mint(tid uint32, amount uint64) {
 	} else {
 		acc.acc.Balance[idx].Balance += amount
 	}
+	return nil
 }
 
 func (acc *dexAccount) Burn(tid uint32, amount uint64) error {
@@ -249,22 +250,22 @@ func (acc *dexAccount) GetKVSet() (kvset []*types.KeyValue) {
 }
 
 func (acc *dexAccount) Frozen(token uint32, amount uint64) (*types.Receipt, error) {
-	copyAcc := dupAccount(acc.acc)
-	err := acc.doFrozen(token, amount)
-	if err != nil {
-		return nil, err
-	}
-	receiptlog := et.ReceiptDexAccount{
-		Prev:    copyAcc,
-		Current: acc.acc,
-	}
-
-	return acc.genReceipt(et.TyDexAccountFrozen, acc, &receiptlog), nil
+	return acc.updateWithFunc(token, amount, acc.doFrozen)
 }
 
 func (acc *dexAccount) Active(token uint32, amount uint64) (*types.Receipt, error) {
+	return acc.updateWithFunc(token, amount, acc.doActive)
+}
+
+func (acc *dexAccount) Mint(token uint32, amount uint64) (*types.Receipt, error) {
+	return acc.updateWithFunc(token, amount, acc.doMint)
+}
+
+type updateDexAccount func(token uint32, amount uint64) error
+
+func (acc *dexAccount) updateWithFunc(token uint32, amount uint64, f updateDexAccount) (*types.Receipt, error) {
 	copyAcc := dupAccount(acc.acc)
-	err := acc.doActive(token, amount)
+	err := f(token, amount)
 	if err != nil {
 		return nil, err
 	}
