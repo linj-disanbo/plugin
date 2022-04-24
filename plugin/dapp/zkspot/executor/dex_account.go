@@ -169,6 +169,7 @@ func dupAccount(acc *et.DexAccount) *et.DexAccount {
 func (acc *dexAccount) GetKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(acc.acc)
 	key := genAccountKey(spotAccountKey, acc.acc.Addr, acc.acc.Id)
+	acc.db.Set(key, value)
 
 	kvset = make([]*types.KeyValue, 1)
 	kvset[0] = &types.KeyValue{
