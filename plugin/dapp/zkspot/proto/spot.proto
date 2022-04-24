@@ -128,8 +128,8 @@ message Order {
   int32 rate = 12;
   //手续费
   int64 digestedFee = 13;
-  //最小手续费
-  int64 minFee = 14;
+  // 主动成交手续费
+  int64 takerRate = 14;
   //挂单hash
   string hash = 15;
   //撤单hash
