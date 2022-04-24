@@ -10,8 +10,8 @@ import (
 // RightToken: buyer, seller -> fee-bank
 type spotTaker struct {
 	spotTrader
-	re     *et.ReceiptExchange // TODO last need append to receipt
-	accFee *dexAccount
+	matches *et.ReceiptExchange
+	accFee  *dexAccount
 }
 
 type spotTrader struct {
@@ -223,11 +223,12 @@ func (s *spotTaker) orderTraded(matchDetail matchInfo, order *et.Order) ([]*type
 	s.order.Executed = matched
 	s.order.Balance -= matched
 
-	s.re.Order = s.order
-	s.re.MatchOrders = append(s.re.MatchOrders, order)
-	// TODO n times trade, will gen n order-kvs
-	kvs := GetOrderKvSet(s.order)
-	return []*types.ReceiptLog{}, kvs, nil
+	s.matches.Order = s.order
+	s.matches.MatchOrders = append(s.matches.MatchOrders, order)
+	// receipt-log, order-kvs 在匹配完成后一次性生成, 不需要生成多次
+	// kvs := GetOrderKvSet(s.order)
+	// logs += s.matches
+	return []*types.ReceiptLog{}, []*types.KeyValue{}, nil
 }
 
 func (m *spotMaker) orderTraded(matchDetail matchInfo, takerOrder *et.Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
