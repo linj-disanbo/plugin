@@ -235,33 +235,7 @@ func (acc *dexAccount) Swap(accTo *dexAccount, got, gave *et.DexAccountBalance) 
 }
 */
 
-func (acc *dexAccount) Tranfer1(accTo *dexAccount, b *et.DexAccountBalance) error {
-	idx := acc.findTokenIndex(b.Id)
-	if idx < 0 {
-		return et.ErrDexNotEnough
-	}
-	idxTo := accTo.findTokenIndex(b.Id)
-	if idxTo < 0 {
-		idxTo = acc.newToken(b.Id, 0)
-	}
-	if b.Balance > 0 {
-		if acc.acc.Balance[idx].Balance < b.Balance {
-			return et.ErrDexNotEnough
-		}
-		acc.acc.Balance[idx].Balance -= b.Balance
-		accTo.acc.Balance[idxTo].Balance += b.Balance
-	}
-	if b.Frozen > 0 {
-		if acc.acc.Balance[idx].Frozen < b.Frozen {
-			return et.ErrDexNotEnough
-		}
-		acc.acc.Balance[idx].Frozen -= b.Frozen
-		accTo.acc.Balance[idxTo].Balance += b.Balance
-	}
-	return nil
-}
-
-func (acc *dexAccount) Tranfer(accTo *dexAccount, token uint32, balance uint64) error {
+func (acc *dexAccount) doTranfer(accTo *dexAccount, token uint32, balance uint64) error {
 	idx := acc.findTokenIndex(token)
 	if idx < 0 {
 		return et.ErrDexNotEnough
@@ -275,23 +249,27 @@ func (acc *dexAccount) Tranfer(accTo *dexAccount, token uint32, balance uint64) 
 		return et.ErrDexNotEnough
 	}
 
-	//copyAcc := dupAccount(acc.acc)
-	//copyAccTo := dupAccount(accTo.acc)
-
 	acc.acc.Balance[idx].Balance -= balance
 	accTo.acc.Balance[idxTo].Balance += balance
 
 	return nil
 }
 
-func (acc *dexAccount) Withdraw(accTo *dexAccount, b *et.DexAccountBalance) error {
-	return accTo.Tranfer1(acc, b)
-}
-
-func (acc *dexAccount) FrozenTranfer(accTo *dexAccount, tid uint32, amount uint64) error {
-	b := et.DexAccountBalance{
-		Id:     tid,
-		Frozen: amount,
+func (acc *dexAccount) doFrozenTranfer(accTo *dexAccount, token uint32, amount uint64) error {
+	idx := acc.findTokenIndex(token)
+	if idx < 0 {
+		return et.ErrDexNotEnough
 	}
-	return acc.Tranfer1(accTo, &b)
+	idxTo := accTo.findTokenIndex(token)
+	if idxTo < 0 {
+		idxTo = acc.newToken(token, 0)
+	}
+
+	if acc.acc.Balance[idx].Frozen < amount {
+		return et.ErrDexNotEnough
+	}
+
+	acc.acc.Balance[idx].Frozen -= amount
+	accTo.acc.Balance[idxTo].Balance += amount
+	return nil
 }
