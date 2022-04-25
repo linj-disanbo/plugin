@@ -1,6 +1,7 @@
 package executor
 
 import (
+	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
@@ -162,3 +163,14 @@ func SampleSpotMatch() TodoList {
 // 撮合 包含 1个交换, 和两个手续费
 // 币的源头是是从balance/frozen 中转 看balance 的中值是否为frozen
 // 币的目的一般到 balance即可, 如果有到frozen的 提供额外的函数或参数
+
+func GetSpotMatch(receipt *types.Receipt) *types.Receipt {
+	receipt2 := &types.Receipt{Logs: []*types.ReceiptLog{}}
+	for _, l := range receipt.Logs {
+		if l.Ty != et.TySpotTradeLog {
+			continue
+		}
+		receipt2.Logs = append(receipt2.Logs, l)
+	}
+	return receipt2
+}

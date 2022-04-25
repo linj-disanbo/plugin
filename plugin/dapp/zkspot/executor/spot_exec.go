@@ -24,9 +24,9 @@ func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.LimitOrder, tx *types.Tr
 		return r, err
 	}
 	// 构造 LimitOrder 的结算清单
-	list := SampleSpotMatch( /* r *types.Receipt */ )
+	list := GetSpotMatch(r)
 	action2 := NewAction(e, tx, index)
-	r2, err := action2.SpotMatch(payload, &list)
+	r2, err := action2.SpotMatch(payload, list)
 	if err != nil {
 		return r, err
 	}
