@@ -1408,8 +1408,127 @@ func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *zt.LimitOrder, trade *et
 	return receipts, nil
 }
 
+// 将参加放到 ZkTransfer, 可以方便的修改 Transfer的实现
 func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *zt.LimitOrder, trade *et.ReceiptSpotTrade, info *TreeUpdateInfo, zklog *zt.ZkReceiptLog) (*types.Receipt, error) {
-	return nil, nil
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	var localKvs []*types.KeyValue
+
+	operationInfo := zklog.OperationInfo
+	//加上手续费
+	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
+	totalAmount := amountInt.String()
+
+	err := checkParam(totalAmount)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
+
+	fromLeaf, err := GetLeafByAccountId(a.statedb, payload.GetFromAccountId(), info)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	if fromLeaf == nil {
+		return nil, errors.New("account not exist")
+	}
+	// maker 没有获得 Signature , 如果需要, 可以补上
+	if payload.Signature != nil {
+		err = authVerification(payload.Signature.PubKey, fromLeaf.PubKey)
+		if err != nil {
+			return nil, errors.Wrapf(err, "authVerification")
+		}
+	}
+
+	fromToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, payload.TokenId, info)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
+	}
+	err = checkAmount(fromToken, payload.GetAmount())
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.checkAmount")
+	}
+
+	//更新之前先计算证明
+	receipt, err := calProof(a.statedb, info, payload.FromAccountId, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+
+	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId)
+	// after
+	//更新fromLeaf
+	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	kvs = append(kvs, fromKvs...)
+	localKvs = append(localKvs, fromLocal...)
+	//更新之后计算证明
+	receipt, err = calProof(a.statedb, info, payload.FromAccountId, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+
+	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId)
+
+	branch := &zt.OperationPairBranch{
+		Before: before,
+		After:  after,
+	}
+	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
+	// 2before
+	toLeaf, err := GetLeafByAccountId(a.statedb, payload.ToAccountId, info)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	if toLeaf == nil {
+		return nil, errors.New("account not exist")
+	}
+
+	//更新之前先计算证明
+	receipt, err = calProof(a.statedb, info, payload.ToAccountId, payload.TokenId)
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	var balance string
+	if receipt.Token == nil {
+		balance = "0"
+	} else {
+		balance = receipt.Token.Balance
+	}
+	before = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, balance, payload.ToAccountId)
+	// 2after
+	//更新toLeaf
+	tokvs, toLocal, err := UpdateLeaf(a.statedb, a.localDB, info, toLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.UpdateLeaf")
+	}
+	kvs = append(kvs, tokvs...)
+	localKvs = append(localKvs, toLocal...)
+	//更新之后计算证明
+	receipt, err = calProof(a.statedb, info, payload.GetToAccountId(), payload.GetTokenId())
+	if err != nil {
+		return nil, errors.Wrapf(err, "calProof")
+	}
+	after = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, receipt.Token.Balance, payload.ToAccountId)
+	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
+	kv := &types.KeyValue{
+		Key:   getHeightKey(a.height),
+		Value: rootHash,
+	}
+	kvs = append(kvs, kv)
+
+	branch = &zt.OperationPairBranch{
+		Before: before,
+		After:  after,
+	}
+	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
+
+	// 返回 operationInfo (本来就是引用zklog) localKvs
+	zklog.LocalKvs = append(zklog.LocalKvs, localKvs...)
+
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	return receipts, nil
 }
 
 func (a *Action) swapGenTransfer(payload1 *zt.LimitOrder, trade *et.ReceiptSpotTrade) []*zt.ZkTransfer {
