@@ -169,6 +169,7 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 	kvs1 = append(kvs1, kvs3...)
 
 	re := et.ReceiptSpotTrade{
+		Match: tradeBalance,
 		Prev: &et.TradeAccounts{
 			Taker: copyAcc,
 			Maker: copyAccMaker,
@@ -220,6 +221,7 @@ func (s *spotTaker) selfSettlement(tradeBalance *et.MatchInfo) ([]*types.Receipt
 	kvs1 = append(kvs1, kvs3...)
 
 	re := et.ReceiptSpotTrade{
+		Match: tradeBalance,
 		Prev: &et.TradeAccounts{
 			Taker: copyAcc,
 			Maker: copyAcc,
