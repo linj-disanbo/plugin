@@ -206,11 +206,19 @@ func (s *spotTaker) selfSettlement(tradeBalance matchInfo) ([]*types.ReceiptLog,
 	if err != nil {
 		return nil, nil, err
 	}
-	err = s.acc.doActive(rightToken, uint64(tradeBalance.rightBalance))
+	// taker 是buy, takerFee是冻结的, makerFee 是活动的
+	// taker 是sell, takerFee是活动的, makerFee 是冻结的
+	rightAmount := tradeBalance.rightBalance
+	if s.order.GetLimitOrder().Op == et.OpBuy {
+		rightAmount += tradeBalance.feeTaker
+	} else {
+		rightAmount += tradeBalance.feeTaker
+	}
+	err = s.acc.doActive(rightToken, uint64(rightAmount))
 	if err != nil {
 		return nil, nil, err
 	}
-	err = s.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.feeTaker+tradeBalance.feeMater))
+	err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.feeTaker+tradeBalance.feeMater))
 	if err != nil {
 		return nil, nil, err
 	}
