@@ -52,6 +52,7 @@ func (a *SpotAction) EntrustOrder(payload *et.EntrustOrder) (*types.Receipt, err
 		Price:      payload.Price,
 		Amount:     payload.Amount,
 		Op:         payload.Op,
+		Order:      payload.Order,
 	}
 	return a.LimitOrder(limitOrder, entrustAddr)
 }
