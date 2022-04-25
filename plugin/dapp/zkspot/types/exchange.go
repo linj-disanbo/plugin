@@ -43,7 +43,7 @@ const (
 	TyRevokeOrderLog
 
 	TyExchangeBindLog
-	TxSpotTradeLog
+	TySpotTradeLog
 
 	// account logs
 	TyDexAccountFrozen

@@ -190,7 +190,7 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance matchInfo) ([]*typ
 	}
 
 	log1 := types.ReceiptLog{
-		Ty:  et.TxSpotTradeLog,
+		Ty:  et.TySpotTradeLog,
 		Log: types.Encode(&re),
 	}
 	return []*types.ReceiptLog{&log1}, kvs1, nil
@@ -233,7 +233,7 @@ func (s *spotTaker) selfSettlement(tradeBalance matchInfo) ([]*types.ReceiptLog,
 	}
 
 	log1 := types.ReceiptLog{
-		Ty:  et.TxSpotTradeLog,
+		Ty:  et.TySpotTradeLog,
 		Log: types.Encode(&re),
 	}
 	return []*types.ReceiptLog{&log1}, kvs1, nil
