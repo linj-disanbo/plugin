@@ -251,7 +251,19 @@ message TradeAccounts {
   DexAccount fee = 3;
 }
 
+message MatchInfo {
+  // trade match balance
+	int64 matched = 1;
+	int64 leftBalance = 2;
+  // = matched * price
+	int64 rightBalance = 3;
+  // fee use right token
+	int64 feeTaker = 4;
+	int64 feeMater = 5;
+}
+
 message ReceiptSpotTrade {
+  MatchInfo Match = 1;
   TradeAccounts prev = 2;
   TradeAccounts current = 3;
 }
