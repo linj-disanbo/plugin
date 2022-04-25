@@ -24,14 +24,6 @@ type spotMaker struct {
 	spotTrader
 }
 
-type matchInfo struct {
-	matched      int64
-	leftBalance  int64 // = trade balance
-	rightBalance int64 // = * price
-	feeTaker     int64 // use right token
-	feeMater     int64 // use right token
-}
-
 func (s *spotTaker) FrozenTokenForLimitOrder() (*types.Receipt, error) {
 	precision := s.cfg.GetCoinPrecision()
 	or := s.order.GetLimitOrder()
@@ -78,17 +70,17 @@ func (s *spotTaker) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyVa
 	balance := s.calcTradeBalance(maker.order)
 	matchDetail := s.calcTradeInfo(maker, balance)
 
-	receipt3, kvs3, err := maker.orderTraded(matchDetail, s.order)
+	receipt3, kvs3, err := maker.orderTraded(&matchDetail, s.order)
 	if err != nil {
 		return receipt3, kvs3, err
 	}
 
-	receipt2, kvs2, err := s.orderTraded(matchDetail, maker.order)
+	receipt2, kvs2, err := s.orderTraded(&matchDetail, maker.order)
 	if err != nil {
 		return receipt2, kvs2, err
 	}
 
-	receipt, kvs, err := s.settlement(maker, matchDetail)
+	receipt, kvs, err := s.settlement(maker, &matchDetail)
 	if err != nil {
 		return receipt, kvs, err
 	}
@@ -108,13 +100,13 @@ func (s *spotTaker) calcTradeBalance(order *et.Order) int64 {
 	return order.GetBalance()
 }
 
-func (s *spotTaker) calcTradeInfo(maker *spotMaker, balance int64) matchInfo {
-	var info matchInfo
-	info.matched = balance
-	info.leftBalance = balance
-	info.rightBalance = SafeMul(balance, maker.order.GetLimitOrder().Price, s.cfg.GetCoinPrecision())
-	info.feeTaker = SafeMul(info.rightBalance, int64(s.order.TakerRate), s.cfg.GetCoinPrecision())
-	info.feeMater = SafeMul(info.rightBalance, int64(maker.order.Rate), s.cfg.GetCoinPrecision())
+func (s *spotTaker) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo {
+	var info et.MatchInfo
+	info.Matched = balance
+	info.LeftBalance = balance
+	info.RightBalance = SafeMul(balance, maker.order.GetLimitOrder().Price, s.cfg.GetCoinPrecision())
+	info.FeeTaker = SafeMul(info.RightBalance, int64(s.order.TakerRate), s.cfg.GetCoinPrecision())
+	info.FeeMater = SafeMul(info.RightBalance, int64(maker.order.Rate), s.cfg.GetCoinPrecision())
 	return info
 }
 
@@ -122,7 +114,7 @@ func (s *spotTaker) calcTradeInfo(maker *spotMaker, balance int64) matchInfo {
 // LeftToken: seller -> buyer
 // RightToken: buyer -> seller
 // RightToken: buyer, seller -> fee-bank
-func (s *spotTaker) settlement(maker *spotMaker, tradeBalance matchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	if s.acc.acc.Addr == maker.acc.acc.Addr {
 		return s.selfSettlement(tradeBalance)
 	}
@@ -134,36 +126,36 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance matchInfo) ([]*typ
 	leftToken, rightToken := uint32(1), uint32(2)
 	var err error
 	if s.order.GetLimitOrder().Op == et.OpSell {
-		err = s.acc.doFrozenTranfer(maker.acc, leftToken, uint64(tradeBalance.leftBalance))
+		err = s.acc.doFrozenTranfer(maker.acc, leftToken, uint64(tradeBalance.LeftBalance))
 		if err != nil {
 			return nil, nil, err
 		}
-		err = maker.acc.doFrozenTranfer(s.acc, rightToken, uint64(tradeBalance.rightBalance))
+		err = maker.acc.doFrozenTranfer(s.acc, rightToken, uint64(tradeBalance.RightBalance))
 		if err != nil {
 			return nil, nil, err
 		}
-		err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.feeTaker))
+		err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker))
 		if err != nil {
 			return nil, nil, err
 		}
-		err = maker.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.feeMater))
+		err = maker.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMater))
 		if err != nil {
 			return nil, nil, err
 		}
 	} else {
-		err = s.acc.doFrozenTranfer(maker.acc, rightToken, uint64(tradeBalance.rightBalance))
+		err = s.acc.doFrozenTranfer(maker.acc, rightToken, uint64(tradeBalance.RightBalance))
 		if err != nil {
 			return nil, nil, err
 		}
-		err = maker.acc.doFrozenTranfer(s.acc, leftToken, uint64(tradeBalance.leftBalance))
+		err = maker.acc.doFrozenTranfer(s.acc, leftToken, uint64(tradeBalance.LeftBalance))
 		if err != nil {
 			return nil, nil, err
 		}
-		err = s.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.feeTaker))
+		err = s.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker))
 		if err != nil {
 			return nil, nil, err
 		}
-		err = maker.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.feeMater))
+		err = maker.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMater))
 		if err != nil {
 			return nil, nil, err
 		}
@@ -197,28 +189,28 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance matchInfo) ([]*typ
 }
 
 // taker/maker the same user
-func (s *spotTaker) selfSettlement(tradeBalance matchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (s *spotTaker) selfSettlement(tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	copyAcc := dupAccount(s.acc.acc)
 	copyFeeAcc := dupAccount(s.accFee.acc)
 
 	leftToken, rightToken := uint32(1), uint32(2)
-	err := s.acc.doActive(leftToken, uint64(tradeBalance.leftBalance))
+	err := s.acc.doActive(leftToken, uint64(tradeBalance.LeftBalance))
 	if err != nil {
 		return nil, nil, err
 	}
 	// taker 是buy, takerFee是冻结的, makerFee 是活动的
 	// taker 是sell, takerFee是活动的, makerFee 是冻结的
-	rightAmount := tradeBalance.rightBalance
+	rightAmount := tradeBalance.RightBalance
 	if s.order.GetLimitOrder().Op == et.OpBuy {
-		rightAmount += tradeBalance.feeTaker
+		rightAmount += tradeBalance.FeeTaker
 	} else {
-		rightAmount += tradeBalance.feeTaker
+		rightAmount += tradeBalance.FeeMater
 	}
 	err = s.acc.doActive(rightToken, uint64(rightAmount))
 	if err != nil {
 		return nil, nil, err
 	}
-	err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.feeTaker+tradeBalance.feeMater))
+	err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker+tradeBalance.FeeMater))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -247,11 +239,11 @@ func (s *spotTaker) selfSettlement(tradeBalance matchInfo) ([]*types.ReceiptLog,
 	return []*types.ReceiptLog{&log1}, kvs1, nil
 }
 
-func (s *spotTaker) orderTraded(matchDetail matchInfo, order *et.Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
-	matched := matchDetail.matched
+func (s *spotTaker) orderTraded(matchDetail *et.MatchInfo, order *et.Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+	matched := matchDetail.Matched
 
 	// fee and AVGPrice
-	s.order.DigestedFee += matchDetail.feeTaker
+	s.order.DigestedFee += matchDetail.FeeTaker
 	s.order.AVGPrice = caclAVGPrice(s.order, s.order.GetLimitOrder().Price, matched)
 
 	// status
@@ -273,11 +265,11 @@ func (s *spotTaker) orderTraded(matchDetail matchInfo, order *et.Order) ([]*type
 	return []*types.ReceiptLog{}, []*types.KeyValue{}, nil
 }
 
-func (m *spotMaker) orderTraded(matchDetail matchInfo, takerOrder *et.Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
-	matched := matchDetail.matched
+func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+	matched := matchDetail.Matched
 
 	// fee and AVGPrice
-	m.order.DigestedFee += matchDetail.feeMater
+	m.order.DigestedFee += matchDetail.FeeMater
 	m.order.AVGPrice = caclAVGPrice(m.order, m.order.GetLimitOrder().Price, matched)
 
 	m.order.UpdateTime = takerOrder.UpdateTime
