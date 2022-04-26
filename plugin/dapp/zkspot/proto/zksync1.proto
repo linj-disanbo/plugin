@@ -1,0 +1,36 @@
+syntax = "proto3";
+import "spot.proto";
+//import "witness.proto";
+import "zksync.proto";
+//import "common.proto";
+
+package types;
+option go_package = "github.com/33cn/plugin/plugin/dapp/zkspot/types";
+
+message ZksyncAction1 {
+  int32 ty = 1;
+  oneof value {
+    // zk
+    ZkWithdraw withdraw = 2;
+    ZkContractToTree contractToTree = 3;
+    ZkTreeToContract treeToContract = 4;
+    ZkTransfer transfer = 5;
+    ZkTransferToNew transferToNew = 6;
+    ZkForceExit forceExit = 7;
+    ZkSetPubKey setPubKey = 8;
+    ZkFullExit  fullExit = 9;
+    ZkSwap  swap = 10;
+    ZkVerifyKey         setVerifyKey = 11;
+    ZkCommitProof         commitProof  = 12;
+    ZkVerifier  setVerifier = 13;
+    ZkDeposit  deposit = 14;
+
+    // spot
+    SpotLimitOrder  limitOrder = 101;
+    SpotMarketOrder marketOrder = 102;
+    SpotRevokeOrder revokeOrder = 103;
+    SpotExchangeBind exchangeBind = 104;
+    SpotEntrustOrder entrustOrder = 105;
+    SpotEntrustRevokeOrder entrustRevokeOrder = 107;
+  } 
+}

@@ -11,7 +11,7 @@ var (
 	exchangeBindKeyPrefix = []byte("mavl-exchange-ebind-")
 )
 
-func (a *SpotAction) ExchangeBind(payload *et.ExchangeBind) (*types.Receipt, error) {
+func (a *SpotAction) ExchangeBind(payload *et.SpotExchangeBind) (*types.Receipt, error) {
 	if a.fromaddr != payload.GetExchangeAddress() {
 		return nil, types.ErrFromAddr
 	}
@@ -38,7 +38,7 @@ func (a *SpotAction) ExchangeBind(payload *et.ExchangeBind) (*types.Receipt, err
 	return receipt, nil
 }
 
-func (a *SpotAction) EntrustOrder(payload *et.EntrustOrder) (*types.Receipt, error) {
+func (a *SpotAction) EntrustOrder(payload *et.SpotEntrustOrder) (*types.Receipt, error) {
 	entrustAddr, addr := a.fromaddr, payload.Addr
 
 	if !a.checkBind(entrustAddr, addr) {
@@ -46,7 +46,7 @@ func (a *SpotAction) EntrustOrder(payload *et.EntrustOrder) (*types.Receipt, err
 	}
 
 	a.fromaddr = addr
-	limitOrder := &et.LimitOrder{
+	limitOrder := &et.SpotLimitOrder{
 		LeftAsset:  payload.LeftAsset,
 		RightAsset: payload.RightAsset,
 		Price:      payload.Price,
@@ -57,7 +57,7 @@ func (a *SpotAction) EntrustOrder(payload *et.EntrustOrder) (*types.Receipt, err
 	return a.LimitOrder(limitOrder, entrustAddr)
 }
 
-func (a *SpotAction) EntrustRevokeOrder(payload *et.EntrustRevokeOrder) (*types.Receipt, error) {
+func (a *SpotAction) EntrustRevokeOrder(payload *et.SpotEntrustRevokeOrder) (*types.Receipt, error) {
 	entrustAddr, addr := a.fromaddr, payload.Addr
 
 	if !a.checkBind(entrustAddr, addr) {
@@ -65,7 +65,7 @@ func (a *SpotAction) EntrustRevokeOrder(payload *et.EntrustRevokeOrder) (*types.
 	}
 
 	a.fromaddr = payload.Addr
-	revokeOrder := &et.RevokeOrder{OrderID: payload.OrderID}
+	revokeOrder := &et.SpotRevokeOrder{OrderID: payload.OrderID}
 	return a.RevokeOrder(revokeOrder)
 }
 
@@ -78,7 +78,7 @@ func (a *SpotAction) getBind(addr string) string {
 	if err != nil || value == nil {
 		return ""
 	}
-	var bind et.ExchangeBind
+	var bind et.SpotExchangeBind
 	err = types.Decode(value, &bind)
 	if err != nil {
 		panic(err)
@@ -92,10 +92,10 @@ func bindKey(id string) (key []byte) {
 	return key
 }
 
-func getBindLog(payload *et.ExchangeBind, old string) *types.ReceiptLog {
+func getBindLog(payload *et.SpotExchangeBind, old string) *types.ReceiptLog {
 	log := &types.ReceiptLog{}
 	log.Ty = et.TyExchangeBindLog
-	r := &et.ReceiptExchangeBind{}
+	r := &et.ReceiptDexBind{}
 	r.ExchangeAddress = payload.ExchangeAddress
 	r.OldEntrustAddress = old
 	r.NewEntrustAddress = payload.EntrustAddress
@@ -103,14 +103,14 @@ func getBindLog(payload *et.ExchangeBind, old string) *types.ReceiptLog {
 	return log
 }
 
-func saveBind(db dbm.KV, payload *et.ExchangeBind) {
+func saveBind(db dbm.KV, payload *et.SpotExchangeBind) {
 	set := getBindKV(payload)
 	for i := 0; i < len(set); i++ {
 		db.Set(set[i].GetKey(), set[i].Value)
 	}
 }
 
-func getBindKV(payload *et.ExchangeBind) (kvset []*types.KeyValue) {
+func getBindKV(payload *et.SpotExchangeBind) (kvset []*types.KeyValue) {
 	value := types.Encode(payload)
 	kvset = append(kvset, &types.KeyValue{Key: bindKey(payload.ExchangeAddress), Value: value})
 	return kvset

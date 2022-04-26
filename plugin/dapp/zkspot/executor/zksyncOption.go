@@ -14,7 +14,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/pkg/errors"
 )
@@ -1341,7 +1341,7 @@ func (a *Action) MakeFeeLog(amount string, info *TreeUpdateInfo, tokenId uint64,
 //    主动结算: (用户地址发起的交易)    如: 撮合
 //    被动结算: (系统特定帐号发起的交易) 如: 永续中暴仓, 和资金费
 //  结算的列表以结果的形式体现帐号的变化, 和具体的业务无关
-func (a *Action) SpotMatch(payload *zt.LimitOrder, list *types.Receipt) (*types.Receipt, error) {
+func (a *Action) SpotMatch(payload *et.SpotLimitOrder, list *types.Receipt) (*types.Receipt, error) {
 	receipt := &types.Receipt{}
 	for _, tradeRaw := range list.Logs {
 		switch tradeRaw.Ty {
@@ -1366,7 +1366,7 @@ func (a *Action) SpotMatch(payload *zt.LimitOrder, list *types.Receipt) (*types.
 // A 和 B 交换 = transfer(A,B) + transfer(B,A) + transfer(A,fee) + transfer(B,fee)
 // A 和 A 交换 = transfer(A,fee), 两个订单都是 A 发的
 // fee 先不处理, 因为交易本身就收了手续费
-func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *zt.LimitOrder, trade *et.ReceiptSpotTrade) (*types.Receipt, error) {
+func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -1409,7 +1409,7 @@ func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *zt.LimitOrder, trade *et
 }
 
 // 将参加放到 ZkTransfer, 可以方便的修改 Transfer的实现
-func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *zt.LimitOrder, trade *et.ReceiptSpotTrade, info *TreeUpdateInfo, zklog *zt.ZkReceiptLog) (*types.Receipt, error) {
+func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade, info *TreeUpdateInfo, zklog *zt.ZkReceiptLog) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
@@ -1531,7 +1531,7 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *zt.LimitOrder,
 	return receipts, nil
 }
 
-func (a *Action) swapGenTransfer(payload1 *zt.LimitOrder, trade *et.ReceiptSpotTrade) []*zt.ZkTransfer {
+func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) []*zt.ZkTransfer {
 	// A 和 A 交易
 	var transfers []*zt.ZkTransfer
 	if trade.Current.Maker.Addr == trade.Current.Taker.Addr {

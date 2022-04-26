@@ -6,7 +6,7 @@ import (
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
 const (
@@ -120,8 +120,6 @@ func (r *ZksyncInfoRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-
-
 var opt_commit_proof = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "proof",
@@ -174,7 +172,6 @@ func (r *CommitProofRow) Get(key string) ([]byte, error) {
 	return nil, types.ErrNotFound
 }
 
-
 var opt_history_account_tree = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "historyTree",
@@ -224,5 +221,3 @@ func (r *HistoryAccountTreeRow) Get(key string) ([]byte, error) {
 	}
 	return nil, types.ErrNotFound
 }
-
-

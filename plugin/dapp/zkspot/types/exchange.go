@@ -141,15 +141,6 @@ func (f *Econfig) GetFeeAddrID() uint64 {
 	return 1
 }
 
-func (f *Econfig) GetCoinName(asset *Asset) string {
-	for _, v := range f.Coins {
-		if v.Coin == asset.GetSymbol() && v.Execer == asset.GetExecer() {
-			return v.Name
-		}
-	}
-	return asset.Symbol
-}
-
 // TODO
 func (f *Econfig) GetSymbol(left, right uint32) string {
 	return fmt.Sprintf("%v_%v", left, right)

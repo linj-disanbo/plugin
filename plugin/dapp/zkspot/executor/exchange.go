@@ -25,7 +25,7 @@ type exchange struct {
 // CheckTx 实现自定义检验交易接口，供框架调用
 func SpotCheckTx(cfg *types.Chain33Config, tx *types.Transaction, index int) error {
 	//发送交易的时候就检查payload,做严格的参数检查
-	var exchange exchangetypes.ExchangeAction
+	var exchange exchangetypes.SpotAction
 	types.Decode(tx.GetPayload(), &exchange)
 	if exchange.Ty == exchangetypes.TyLimitOrderAction {
 		limitOrder := exchange.GetLimitOrder()
@@ -37,7 +37,7 @@ func SpotCheckTx(cfg *types.Chain33Config, tx *types.Transaction, index int) err
 	return nil
 }
 
-func checkLimitOrder(cfg *types.Chain33Config, limitOrder *et.LimitOrder) error {
+func checkLimitOrder(cfg *types.Chain33Config, limitOrder *et.SpotLimitOrder) error {
 	left := limitOrder.GetLeftAsset()
 	right := limitOrder.GetRightAsset()
 	price := limitOrder.GetPrice()

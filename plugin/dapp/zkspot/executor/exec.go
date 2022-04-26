@@ -5,7 +5,7 @@ import (
 
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
 func (z *zkspot) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, index int) (*types.Receipt, error) {

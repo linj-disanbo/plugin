@@ -10,13 +10,13 @@ import (
 // RightToken: buyer, seller -> fee-bank
 type spotTaker struct {
 	spotTrader
-	matches *et.ReceiptExchange
+	matches *et.ReceiptSpotMatch
 	accFee  *dexAccount
 }
 
 type spotTrader struct {
 	acc   *dexAccount
-	order *et.Order
+	order *et.SpotOrder
 	cfg   *types.Chain33Config
 }
 
@@ -93,7 +93,7 @@ func (s *spotTaker) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyVa
 	return receipt, kvs, nil
 }
 
-func (s *spotTaker) calcTradeBalance(order *et.Order) int64 {
+func (s *spotTaker) calcTradeBalance(order *et.SpotOrder) int64 {
 	if order.GetBalance() >= s.order.GetBalance() {
 		return s.order.GetBalance()
 	}
@@ -241,7 +241,7 @@ func (s *spotTaker) selfSettlement(tradeBalance *et.MatchInfo) ([]*types.Receipt
 	return []*types.ReceiptLog{&log1}, kvs1, nil
 }
 
-func (s *spotTaker) orderTraded(matchDetail *et.MatchInfo, order *et.Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (s *spotTaker) orderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
@@ -267,7 +267,7 @@ func (s *spotTaker) orderTraded(matchDetail *et.MatchInfo, order *et.Order) ([]*
 	return []*types.ReceiptLog{}, []*types.KeyValue{}, nil
 }
 
-func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
@@ -290,7 +290,7 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.Order)
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (m *matcher) matchModel(matchorder *et.Order, taker *spotTaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *spotTaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -314,11 +314,11 @@ func (m *matcher) matchModel(matchorder *et.Order, taker *spotTaker) ([]*types.R
 	return logs, kvs, nil
 }
 
-type orderInit func(*et.Order) *et.Order
+type orderInit func(*et.SpotOrder) *et.SpotOrder
 
-func createLimitOrder(payload *et.LimitOrder, entrustAddr string, inits []orderInit) *et.Order {
-	or := &et.Order{
-		Value:       &et.Order_LimitOrder{LimitOrder: payload},
+func createLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, inits []orderInit) *et.SpotOrder {
+	or := &et.SpotOrder{
+		Value:       &et.SpotOrder_LimitOrder{LimitOrder: payload},
 		Ty:          et.TyLimitOrderAction,
 		EntrustAddr: entrustAddr,
 		Executed:    0,
@@ -339,8 +339,8 @@ type feeDetail struct {
 	maker int32
 }
 
-func (f *feeDetail) initLimitOrder() func(*et.Order) *et.Order {
-	return func(order *et.Order) *et.Order {
+func (f *feeDetail) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
+	return func(order *et.SpotOrder) *et.SpotOrder {
 		order.Rate = f.maker
 		order.TakerRate = f.taker
 		return order

@@ -13,7 +13,9 @@ import (
 	"github.com/33cn/chain33/common/log/log15"
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
-	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+
+	//zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 )
@@ -25,7 +27,7 @@ var (
 )
 
 func init() {
-	wcom.RegisterPolicy(zt.Zksync, New())
+	wcom.RegisterPolicy("zt.Zkspot", New())
 }
 
 // New 创建一盒钱包业务策略

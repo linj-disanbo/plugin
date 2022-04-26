@@ -30,5 +30,5 @@ func Init(name string, s rpctypes.RPCServer) {
 	grpc := &Grpc{channelClient: cli}
 	cli.Init(name, s, &Jrpc{cli: cli}, grpc)
 	//存在grpc service时注册grpc server，需要生成对应的pb.go文件
-	zt.RegisterZksyncServer(s.GRPC(), grpc)
+	zt.RegisterZkspotServer(s.GRPC(), grpc)
 }

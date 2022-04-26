@@ -4,6 +4,7 @@ import (
 	"reflect"
 
 	"github.com/33cn/chain33/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
 /*
@@ -159,27 +160,27 @@ var (
 	logMap = map[int64]*types.LogInfo{
 		// zk
 		//TyNoopLog:           {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyNoopLog"},
-		TyDepositLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyDepositLog"},
-		TyWithdrawLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawLog"},
-		TyContractToTreeLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyContractToTreeLog"},
-		TyTreeToContractLog:     {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTreeToContractLog"},
-		TyTransferLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferLog"},
-		TyTransferToNewLog:      {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferToNewLog"},
-		TyForceExitLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyForceExitLog"},
-		TySetPubKeyLog:          {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySetPubKeyLog"},
-		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
-		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
-		TyFeeLog:                {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFeeLog"},
-		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
-		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
-		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
-		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
+		TyDepositLog:            {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyDepositLog"},
+		TyWithdrawLog:           {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyWithdrawLog"},
+		TyContractToTreeLog:     {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyContractToTreeLog"},
+		TyTreeToContractLog:     {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTreeToContractLog"},
+		TyTransferLog:           {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTransferLog"},
+		TyTransferToNewLog:      {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTransferToNewLog"},
+		TyForceExitLog:          {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyForceExitLog"},
+		TySetPubKeyLog:          {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TySetPubKeyLog"},
+		TyFullExitLog:           {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyFullExitLog"},
+		TySwapLog:               {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TySwapLog"},
+		TyFeeLog:                {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyFeeLog"},
+		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(zt.ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
+		TyCommitProofLog:        {Ty: reflect.TypeOf(zt.ReceiptCommitProof{}), Name: "TyCommitProof"},
+		TySetVerifierLog:        {Ty: reflect.TypeOf(zt.ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
+		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(zt.ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
 
 		// spot
-		TyLimitOrderLog:   {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyLimitOrderLog"},
-		TyMarketOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyMarketOrderLog"},
-		TyRevokeOrderLog:  {Ty: reflect.TypeOf(ReceiptExchange{}), Name: "TyRevokeOrderLog"},
-		TyExchangeBindLog: {Ty: reflect.TypeOf(ReceiptExchangeBind{}), Name: "TyExchangeBindLog"},
+		TyLimitOrderLog:   {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyLimitOrderLog"},
+		TyMarketOrderLog:  {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyMarketOrderLog"},
+		TyRevokeOrderLog:  {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyRevokeOrderLog"},
+		TyExchangeBindLog: {Ty: reflect.TypeOf(ReceiptDexBind{}), Name: "TyExchangeBindLog"},
 		TySpotTradeLog:    {Ty: reflect.TypeOf(ReceiptSpotTrade{}), Name: "TySpotTradeLog"},
 	}
 
@@ -227,7 +228,7 @@ func NewType(cfg *types.Chain33Config) *ZksyncType {
 
 // GetPayload 获取合约action结构
 func (e *ZksyncType) GetPayload() types.Message {
-	return &ZksyncAction{}
+	return &ZksyncAction1{}
 }
 
 // GetTypeMap 获取合约action的id和name信息

@@ -6,7 +6,7 @@ import (
 )
 
 //查询市场深度
-func (e *exchange) Query_QueryMarketDepth(in *et.QueryMarketDepth) (types.Message, error) {
+func (e *exchange) Query_QueryMarketDepth(in *et.SpotQueryMarketDepth) (types.Message, error) {
 	if !CheckCount(in.Count) {
 		return nil, et.ErrCount
 	}
@@ -21,7 +21,7 @@ func (e *exchange) Query_QueryMarketDepth(in *et.QueryMarketDepth) (types.Messag
 }
 
 //查询已经完成得订单
-func (e *exchange) Query_QueryHistoryOrderList(in *et.QueryHistoryOrderList) (types.Message, error) {
+func (e *exchange) Query_QueryHistoryOrderList(in *et.SpotQueryHistoryOrderList) (types.Message, error) {
 	if !CheckExchangeAsset(e.GetAPI().GetConfig().GetCoinExec(), in.LeftAsset, in.RightAsset) {
 		return nil, et.ErrAsset
 	}
@@ -36,7 +36,7 @@ func (e *exchange) Query_QueryHistoryOrderList(in *et.QueryHistoryOrderList) (ty
 }
 
 //根据orderID查询订单信息
-func (e *exchange) Query_QueryOrder(in *et.QueryOrder) (types.Message, error) {
+func (e *exchange) Query_QueryOrder(in *et.SpotQueryOrder) (types.Message, error) {
 	if in.OrderID == 0 {
 		return nil, et.ErrOrderID
 	}
@@ -44,7 +44,7 @@ func (e *exchange) Query_QueryOrder(in *et.QueryOrder) (types.Message, error) {
 }
 
 //根据订单状态，查询订单信息（这里面包含所有交易对）
-func (e *exchange) Query_QueryOrderList(in *et.QueryOrderList) (types.Message, error) {
+func (e *exchange) Query_QueryOrderList(in *et.SpotQueryOrderList) (types.Message, error) {
 	if !CheckStatus(in.Status) {
 		return nil, et.ErrStatus
 	}

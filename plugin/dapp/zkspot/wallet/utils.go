@@ -6,7 +6,8 @@ import (
 	"strings"
 
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	zst "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 )
@@ -362,12 +363,12 @@ func GetFullExitMsg(payload *zt.ZkFullExit) *zt.ZkMsg {
 }
 
 // TODO need Gen all kind of market action
-func GetLimitOrderMsg(payload *zt.LimitOrder) *zt.ZkMsg {
+func GetLimitOrderMsg(payload *zst.SpotLimitOrder) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyLimitOrderAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TyLimitOrderAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.AccountID), zt.TokenBitWidth)...)
 	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.Order.EthAddress), 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)

@@ -6,6 +6,7 @@ package types // import "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 import proto "github.com/golang/protobuf/proto"
 import fmt "fmt"
 import math "math"
+import types "github.com/33cn/plugin/plugin/dapp/zksync/types"
 
 import (
 	context "golang.org/x/net/context"
@@ -23,165 +24,135 @@ var _ = math.Inf
 // proto package needs to be updated.
 const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
 
-type Exchange struct {
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Exchange) Reset()         { *m = Exchange{} }
-func (m *Exchange) String() string { return proto.CompactTextString(m) }
-func (*Exchange) ProtoMessage()    {}
-func (*Exchange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{0}
-}
-func (m *Exchange) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Exchange.Unmarshal(m, b)
-}
-func (m *Exchange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Exchange.Marshal(b, m, deterministic)
-}
-func (dst *Exchange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Exchange.Merge(dst, src)
-}
-func (m *Exchange) XXX_Size() int {
-	return xxx_messageInfo_Exchange.Size(m)
-}
-func (m *Exchange) XXX_DiscardUnknown() {
-	xxx_messageInfo_Exchange.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Exchange proto.InternalMessageInfo
-
-type ExchangeAction struct {
+type SpotAction struct {
 	// Types that are valid to be assigned to Value:
-	//	*ExchangeAction_LimitOrder
-	//	*ExchangeAction_MarketOrder
-	//	*ExchangeAction_RevokeOrder
-	//	*ExchangeAction_ExchangeBind
-	//	*ExchangeAction_EntrustOrder
-	//	*ExchangeAction_EntrustRevokeOrder
-	Value                isExchangeAction_Value `protobuf_oneof:"value"`
-	Ty                   int32                  `protobuf:"varint,6,opt,name=ty,proto3" json:"ty,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}               `json:"-"`
-	XXX_unrecognized     []byte                 `json:"-"`
-	XXX_sizecache        int32                  `json:"-"`
+	//	*SpotAction_LimitOrder
+	//	*SpotAction_MarketOrder
+	//	*SpotAction_RevokeOrder
+	//	*SpotAction_ExchangeBind
+	//	*SpotAction_EntrustOrder
+	//	*SpotAction_EntrustRevokeOrder
+	Value                isSpotAction_Value `protobuf_oneof:"value"`
+	Ty                   int32              `protobuf:"varint,6,opt,name=ty,proto3" json:"ty,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
 }
 
-func (m *ExchangeAction) Reset()         { *m = ExchangeAction{} }
-func (m *ExchangeAction) String() string { return proto.CompactTextString(m) }
-func (*ExchangeAction) ProtoMessage()    {}
-func (*ExchangeAction) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{1}
+func (m *SpotAction) Reset()         { *m = SpotAction{} }
+func (m *SpotAction) String() string { return proto.CompactTextString(m) }
+func (*SpotAction) ProtoMessage()    {}
+func (*SpotAction) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{0}
 }
-func (m *ExchangeAction) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ExchangeAction.Unmarshal(m, b)
+func (m *SpotAction) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotAction.Unmarshal(m, b)
 }
-func (m *ExchangeAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ExchangeAction.Marshal(b, m, deterministic)
+func (m *SpotAction) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotAction.Marshal(b, m, deterministic)
 }
-func (dst *ExchangeAction) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ExchangeAction.Merge(dst, src)
+func (dst *SpotAction) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotAction.Merge(dst, src)
 }
-func (m *ExchangeAction) XXX_Size() int {
-	return xxx_messageInfo_ExchangeAction.Size(m)
+func (m *SpotAction) XXX_Size() int {
+	return xxx_messageInfo_SpotAction.Size(m)
 }
-func (m *ExchangeAction) XXX_DiscardUnknown() {
-	xxx_messageInfo_ExchangeAction.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_ExchangeAction proto.InternalMessageInfo
-
-type isExchangeAction_Value interface {
-	isExchangeAction_Value()
+func (m *SpotAction) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotAction.DiscardUnknown(m)
 }
 
-type ExchangeAction_LimitOrder struct {
-	LimitOrder *LimitOrder `protobuf:"bytes,1,opt,name=limitOrder,proto3,oneof"`
+var xxx_messageInfo_SpotAction proto.InternalMessageInfo
+
+type isSpotAction_Value interface {
+	isSpotAction_Value()
 }
 
-type ExchangeAction_MarketOrder struct {
-	MarketOrder *MarketOrder `protobuf:"bytes,2,opt,name=marketOrder,proto3,oneof"`
+type SpotAction_LimitOrder struct {
+	LimitOrder *SpotLimitOrder `protobuf:"bytes,1,opt,name=limitOrder,proto3,oneof"`
 }
 
-type ExchangeAction_RevokeOrder struct {
-	RevokeOrder *RevokeOrder `protobuf:"bytes,3,opt,name=revokeOrder,proto3,oneof"`
+type SpotAction_MarketOrder struct {
+	MarketOrder *SpotMarketOrder `protobuf:"bytes,2,opt,name=marketOrder,proto3,oneof"`
 }
 
-type ExchangeAction_ExchangeBind struct {
-	ExchangeBind *ExchangeBind `protobuf:"bytes,4,opt,name=exchangeBind,proto3,oneof"`
+type SpotAction_RevokeOrder struct {
+	RevokeOrder *SpotRevokeOrder `protobuf:"bytes,3,opt,name=revokeOrder,proto3,oneof"`
 }
 
-type ExchangeAction_EntrustOrder struct {
-	EntrustOrder *EntrustOrder `protobuf:"bytes,5,opt,name=entrustOrder,proto3,oneof"`
+type SpotAction_ExchangeBind struct {
+	ExchangeBind *SpotExchangeBind `protobuf:"bytes,4,opt,name=exchangeBind,proto3,oneof"`
 }
 
-type ExchangeAction_EntrustRevokeOrder struct {
-	EntrustRevokeOrder *EntrustRevokeOrder `protobuf:"bytes,7,opt,name=entrustRevokeOrder,proto3,oneof"`
+type SpotAction_EntrustOrder struct {
+	EntrustOrder *SpotEntrustOrder `protobuf:"bytes,5,opt,name=entrustOrder,proto3,oneof"`
 }
 
-func (*ExchangeAction_LimitOrder) isExchangeAction_Value() {}
+type SpotAction_EntrustRevokeOrder struct {
+	EntrustRevokeOrder *SpotEntrustRevokeOrder `protobuf:"bytes,7,opt,name=entrustRevokeOrder,proto3,oneof"`
+}
 
-func (*ExchangeAction_MarketOrder) isExchangeAction_Value() {}
+func (*SpotAction_LimitOrder) isSpotAction_Value() {}
 
-func (*ExchangeAction_RevokeOrder) isExchangeAction_Value() {}
+func (*SpotAction_MarketOrder) isSpotAction_Value() {}
 
-func (*ExchangeAction_ExchangeBind) isExchangeAction_Value() {}
+func (*SpotAction_RevokeOrder) isSpotAction_Value() {}
 
-func (*ExchangeAction_EntrustOrder) isExchangeAction_Value() {}
+func (*SpotAction_ExchangeBind) isSpotAction_Value() {}
 
-func (*ExchangeAction_EntrustRevokeOrder) isExchangeAction_Value() {}
+func (*SpotAction_EntrustOrder) isSpotAction_Value() {}
 
-func (m *ExchangeAction) GetValue() isExchangeAction_Value {
+func (*SpotAction_EntrustRevokeOrder) isSpotAction_Value() {}
+
+func (m *SpotAction) GetValue() isSpotAction_Value {
 	if m != nil {
 		return m.Value
 	}
 	return nil
 }
 
-func (m *ExchangeAction) GetLimitOrder() *LimitOrder {
-	if x, ok := m.GetValue().(*ExchangeAction_LimitOrder); ok {
+func (m *SpotAction) GetLimitOrder() *SpotLimitOrder {
+	if x, ok := m.GetValue().(*SpotAction_LimitOrder); ok {
 		return x.LimitOrder
 	}
 	return nil
 }
 
-func (m *ExchangeAction) GetMarketOrder() *MarketOrder {
-	if x, ok := m.GetValue().(*ExchangeAction_MarketOrder); ok {
+func (m *SpotAction) GetMarketOrder() *SpotMarketOrder {
+	if x, ok := m.GetValue().(*SpotAction_MarketOrder); ok {
 		return x.MarketOrder
 	}
 	return nil
 }
 
-func (m *ExchangeAction) GetRevokeOrder() *RevokeOrder {
-	if x, ok := m.GetValue().(*ExchangeAction_RevokeOrder); ok {
+func (m *SpotAction) GetRevokeOrder() *SpotRevokeOrder {
+	if x, ok := m.GetValue().(*SpotAction_RevokeOrder); ok {
 		return x.RevokeOrder
 	}
 	return nil
 }
 
-func (m *ExchangeAction) GetExchangeBind() *ExchangeBind {
-	if x, ok := m.GetValue().(*ExchangeAction_ExchangeBind); ok {
+func (m *SpotAction) GetExchangeBind() *SpotExchangeBind {
+	if x, ok := m.GetValue().(*SpotAction_ExchangeBind); ok {
 		return x.ExchangeBind
 	}
 	return nil
 }
 
-func (m *ExchangeAction) GetEntrustOrder() *EntrustOrder {
-	if x, ok := m.GetValue().(*ExchangeAction_EntrustOrder); ok {
+func (m *SpotAction) GetEntrustOrder() *SpotEntrustOrder {
+	if x, ok := m.GetValue().(*SpotAction_EntrustOrder); ok {
 		return x.EntrustOrder
 	}
 	return nil
 }
 
-func (m *ExchangeAction) GetEntrustRevokeOrder() *EntrustRevokeOrder {
-	if x, ok := m.GetValue().(*ExchangeAction_EntrustRevokeOrder); ok {
+func (m *SpotAction) GetEntrustRevokeOrder() *SpotEntrustRevokeOrder {
+	if x, ok := m.GetValue().(*SpotAction_EntrustRevokeOrder); ok {
 		return x.EntrustRevokeOrder
 	}
 	return nil
 }
 
-func (m *ExchangeAction) GetTy() int32 {
+func (m *SpotAction) GetTy() int32 {
 	if m != nil {
 		return m.Ty
 	}
@@ -189,144 +160,144 @@ func (m *ExchangeAction) GetTy() int32 {
 }
 
 // XXX_OneofFuncs is for the internal use of the proto package.
-func (*ExchangeAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _ExchangeAction_OneofMarshaler, _ExchangeAction_OneofUnmarshaler, _ExchangeAction_OneofSizer, []interface{}{
-		(*ExchangeAction_LimitOrder)(nil),
-		(*ExchangeAction_MarketOrder)(nil),
-		(*ExchangeAction_RevokeOrder)(nil),
-		(*ExchangeAction_ExchangeBind)(nil),
-		(*ExchangeAction_EntrustOrder)(nil),
-		(*ExchangeAction_EntrustRevokeOrder)(nil),
+func (*SpotAction) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _SpotAction_OneofMarshaler, _SpotAction_OneofUnmarshaler, _SpotAction_OneofSizer, []interface{}{
+		(*SpotAction_LimitOrder)(nil),
+		(*SpotAction_MarketOrder)(nil),
+		(*SpotAction_RevokeOrder)(nil),
+		(*SpotAction_ExchangeBind)(nil),
+		(*SpotAction_EntrustOrder)(nil),
+		(*SpotAction_EntrustRevokeOrder)(nil),
 	}
 }
 
-func _ExchangeAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*ExchangeAction)
+func _SpotAction_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*SpotAction)
 	// value
 	switch x := m.Value.(type) {
-	case *ExchangeAction_LimitOrder:
+	case *SpotAction_LimitOrder:
 		b.EncodeVarint(1<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.LimitOrder); err != nil {
 			return err
 		}
-	case *ExchangeAction_MarketOrder:
+	case *SpotAction_MarketOrder:
 		b.EncodeVarint(2<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.MarketOrder); err != nil {
 			return err
 		}
-	case *ExchangeAction_RevokeOrder:
+	case *SpotAction_RevokeOrder:
 		b.EncodeVarint(3<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.RevokeOrder); err != nil {
 			return err
 		}
-	case *ExchangeAction_ExchangeBind:
+	case *SpotAction_ExchangeBind:
 		b.EncodeVarint(4<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.ExchangeBind); err != nil {
 			return err
 		}
-	case *ExchangeAction_EntrustOrder:
+	case *SpotAction_EntrustOrder:
 		b.EncodeVarint(5<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.EntrustOrder); err != nil {
 			return err
 		}
-	case *ExchangeAction_EntrustRevokeOrder:
+	case *SpotAction_EntrustRevokeOrder:
 		b.EncodeVarint(7<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.EntrustRevokeOrder); err != nil {
 			return err
 		}
 	case nil:
 	default:
-		return fmt.Errorf("ExchangeAction.Value has unexpected type %T", x)
+		return fmt.Errorf("SpotAction.Value has unexpected type %T", x)
 	}
 	return nil
 }
 
-func _ExchangeAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*ExchangeAction)
+func _SpotAction_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*SpotAction)
 	switch tag {
 	case 1: // value.limitOrder
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
-		msg := new(LimitOrder)
+		msg := new(SpotLimitOrder)
 		err := b.DecodeMessage(msg)
-		m.Value = &ExchangeAction_LimitOrder{msg}
+		m.Value = &SpotAction_LimitOrder{msg}
 		return true, err
 	case 2: // value.marketOrder
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
-		msg := new(MarketOrder)
+		msg := new(SpotMarketOrder)
 		err := b.DecodeMessage(msg)
-		m.Value = &ExchangeAction_MarketOrder{msg}
+		m.Value = &SpotAction_MarketOrder{msg}
 		return true, err
 	case 3: // value.revokeOrder
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
-		msg := new(RevokeOrder)
+		msg := new(SpotRevokeOrder)
 		err := b.DecodeMessage(msg)
-		m.Value = &ExchangeAction_RevokeOrder{msg}
+		m.Value = &SpotAction_RevokeOrder{msg}
 		return true, err
 	case 4: // value.exchangeBind
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
-		msg := new(ExchangeBind)
+		msg := new(SpotExchangeBind)
 		err := b.DecodeMessage(msg)
-		m.Value = &ExchangeAction_ExchangeBind{msg}
+		m.Value = &SpotAction_ExchangeBind{msg}
 		return true, err
 	case 5: // value.entrustOrder
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
-		msg := new(EntrustOrder)
+		msg := new(SpotEntrustOrder)
 		err := b.DecodeMessage(msg)
-		m.Value = &ExchangeAction_EntrustOrder{msg}
+		m.Value = &SpotAction_EntrustOrder{msg}
 		return true, err
 	case 7: // value.entrustRevokeOrder
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
-		msg := new(EntrustRevokeOrder)
+		msg := new(SpotEntrustRevokeOrder)
 		err := b.DecodeMessage(msg)
-		m.Value = &ExchangeAction_EntrustRevokeOrder{msg}
+		m.Value = &SpotAction_EntrustRevokeOrder{msg}
 		return true, err
 	default:
 		return false, nil
 	}
 }
 
-func _ExchangeAction_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*ExchangeAction)
+func _SpotAction_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*SpotAction)
 	// value
 	switch x := m.Value.(type) {
-	case *ExchangeAction_LimitOrder:
+	case *SpotAction_LimitOrder:
 		s := proto.Size(x.LimitOrder)
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
-	case *ExchangeAction_MarketOrder:
+	case *SpotAction_MarketOrder:
 		s := proto.Size(x.MarketOrder)
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
-	case *ExchangeAction_RevokeOrder:
+	case *SpotAction_RevokeOrder:
 		s := proto.Size(x.RevokeOrder)
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
-	case *ExchangeAction_ExchangeBind:
+	case *SpotAction_ExchangeBind:
 		s := proto.Size(x.ExchangeBind)
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
-	case *ExchangeAction_EntrustOrder:
+	case *SpotAction_EntrustOrder:
 		s := proto.Size(x.EntrustOrder)
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
-	case *ExchangeAction_EntrustRevokeOrder:
+	case *SpotAction_EntrustRevokeOrder:
 		s := proto.Size(x.EntrustRevokeOrder)
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
@@ -339,27 +310,27 @@ func _ExchangeAction_OneofSizer(msg proto.Message) (n int) {
 }
 
 type ZkOrder struct {
-	AccountID            uint64       `protobuf:"varint,1,opt,name=accountID,proto3" json:"accountID,omitempty"`
-	EthAddress           string       `protobuf:"bytes,2,opt,name=ethAddress,proto3" json:"ethAddress,omitempty"`
-	Nonce                uint64       `protobuf:"varint,3,opt,name=nonce,proto3" json:"nonce,omitempty"`
-	TokenSell            uint32       `protobuf:"varint,4,opt,name=tokenSell,proto3" json:"tokenSell,omitempty"`
-	TokenBuy             uint32       `protobuf:"varint,5,opt,name=tokenBuy,proto3" json:"tokenBuy,omitempty"`
-	Amount               uint64       `protobuf:"varint,6,opt,name=amount,proto3" json:"amount,omitempty"`
-	Ratio1               uint32       `protobuf:"varint,7,opt,name=ratio1,proto3" json:"ratio1,omitempty"`
-	Ratio2               uint32       `protobuf:"varint,8,opt,name=ratio2,proto3" json:"ratio2,omitempty"`
-	ValidFrom            uint64       `protobuf:"varint,9,opt,name=validFrom,proto3" json:"validFrom,omitempty"`
-	ValidUntil           uint64       `protobuf:"varint,10,opt,name=validUntil,proto3" json:"validUntil,omitempty"`
-	Signature            *ZkSignature `protobuf:"bytes,20,opt,name=signature,proto3" json:"signature,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
-	XXX_unrecognized     []byte       `json:"-"`
-	XXX_sizecache        int32        `json:"-"`
+	AccountID            uint64             `protobuf:"varint,1,opt,name=accountID,proto3" json:"accountID,omitempty"`
+	EthAddress           string             `protobuf:"bytes,2,opt,name=ethAddress,proto3" json:"ethAddress,omitempty"`
+	Nonce                uint64             `protobuf:"varint,3,opt,name=nonce,proto3" json:"nonce,omitempty"`
+	TokenSell            uint32             `protobuf:"varint,4,opt,name=tokenSell,proto3" json:"tokenSell,omitempty"`
+	TokenBuy             uint32             `protobuf:"varint,5,opt,name=tokenBuy,proto3" json:"tokenBuy,omitempty"`
+	Amount               uint64             `protobuf:"varint,6,opt,name=amount,proto3" json:"amount,omitempty"`
+	Ratio1               uint32             `protobuf:"varint,7,opt,name=ratio1,proto3" json:"ratio1,omitempty"`
+	Ratio2               uint32             `protobuf:"varint,8,opt,name=ratio2,proto3" json:"ratio2,omitempty"`
+	ValidFrom            uint64             `protobuf:"varint,9,opt,name=validFrom,proto3" json:"validFrom,omitempty"`
+	ValidUntil           uint64             `protobuf:"varint,10,opt,name=validUntil,proto3" json:"validUntil,omitempty"`
+	Signature            *types.ZkSignature `protobuf:"bytes,20,opt,name=signature,proto3" json:"signature,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
 }
 
 func (m *ZkOrder) Reset()         { *m = ZkOrder{} }
 func (m *ZkOrder) String() string { return proto.CompactTextString(m) }
 func (*ZkOrder) ProtoMessage()    {}
 func (*ZkOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{2}
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{1}
 }
 func (m *ZkOrder) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ZkOrder.Unmarshal(m, b)
@@ -449,7 +420,7 @@ func (m *ZkOrder) GetValidUntil() uint64 {
 	return 0
 }
 
-func (m *ZkOrder) GetSignature() *ZkSignature {
+func (m *ZkOrder) GetSignature() *types.ZkSignature {
 	if m != nil {
 		return m.Signature
 	}
@@ -457,7 +428,7 @@ func (m *ZkOrder) GetSignature() *ZkSignature {
 }
 
 // 限价订单
-type LimitOrder struct {
+type SpotLimitOrder struct {
 	// 交易对
 	LeftAsset uint32 `protobuf:"varint,1,opt,name=leftAsset,proto3" json:"leftAsset,omitempty"`
 	// 交易对
@@ -474,66 +445,66 @@ type LimitOrder struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *LimitOrder) Reset()         { *m = LimitOrder{} }
-func (m *LimitOrder) String() string { return proto.CompactTextString(m) }
-func (*LimitOrder) ProtoMessage()    {}
-func (*LimitOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{3}
+func (m *SpotLimitOrder) Reset()         { *m = SpotLimitOrder{} }
+func (m *SpotLimitOrder) String() string { return proto.CompactTextString(m) }
+func (*SpotLimitOrder) ProtoMessage()    {}
+func (*SpotLimitOrder) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{2}
 }
-func (m *LimitOrder) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_LimitOrder.Unmarshal(m, b)
+func (m *SpotLimitOrder) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotLimitOrder.Unmarshal(m, b)
 }
-func (m *LimitOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_LimitOrder.Marshal(b, m, deterministic)
+func (m *SpotLimitOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotLimitOrder.Marshal(b, m, deterministic)
 }
-func (dst *LimitOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_LimitOrder.Merge(dst, src)
+func (dst *SpotLimitOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotLimitOrder.Merge(dst, src)
 }
-func (m *LimitOrder) XXX_Size() int {
-	return xxx_messageInfo_LimitOrder.Size(m)
+func (m *SpotLimitOrder) XXX_Size() int {
+	return xxx_messageInfo_SpotLimitOrder.Size(m)
 }
-func (m *LimitOrder) XXX_DiscardUnknown() {
-	xxx_messageInfo_LimitOrder.DiscardUnknown(m)
+func (m *SpotLimitOrder) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotLimitOrder.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_LimitOrder proto.InternalMessageInfo
+var xxx_messageInfo_SpotLimitOrder proto.InternalMessageInfo
 
-func (m *LimitOrder) GetLeftAsset() uint32 {
+func (m *SpotLimitOrder) GetLeftAsset() uint32 {
 	if m != nil {
 		return m.LeftAsset
 	}
 	return 0
 }
 
-func (m *LimitOrder) GetRightAsset() uint32 {
+func (m *SpotLimitOrder) GetRightAsset() uint32 {
 	if m != nil {
 		return m.RightAsset
 	}
 	return 0
 }
 
-func (m *LimitOrder) GetPrice() int64 {
+func (m *SpotLimitOrder) GetPrice() int64 {
 	if m != nil {
 		return m.Price
 	}
 	return 0
 }
 
-func (m *LimitOrder) GetAmount() int64 {
+func (m *SpotLimitOrder) GetAmount() int64 {
 	if m != nil {
 		return m.Amount
 	}
 	return 0
 }
 
-func (m *LimitOrder) GetOp() int32 {
+func (m *SpotLimitOrder) GetOp() int32 {
 	if m != nil {
 		return m.Op
 	}
 	return 0
 }
 
-func (m *LimitOrder) GetOrder() *ZkOrder {
+func (m *SpotLimitOrder) GetOrder() *ZkOrder {
 	if m != nil {
 		return m.Order
 	}
@@ -541,11 +512,11 @@ func (m *LimitOrder) GetOrder() *ZkOrder {
 }
 
 // 市价委托
-type MarketOrder struct {
+type SpotMarketOrder struct {
 	// 资产1
-	LeftAsset *Asset `protobuf:"bytes,1,opt,name=leftAsset,proto3" json:"leftAsset,omitempty"`
+	LeftAsset uint32 `protobuf:"varint,1,opt,name=leftAsset,proto3" json:"leftAsset,omitempty"`
 	// 资产2
-	RightAsset *Asset `protobuf:"bytes,2,opt,name=rightAsset,proto3" json:"rightAsset,omitempty"`
+	RightAsset uint32 `protobuf:"varint,2,opt,name=rightAsset,proto3" json:"rightAsset,omitempty"`
 	// 总量
 	Amount int64 `protobuf:"varint,3,opt,name=amount,proto3" json:"amount,omitempty"`
 	// 操作， 1为买，2为卖
@@ -555,59 +526,59 @@ type MarketOrder struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *MarketOrder) Reset()         { *m = MarketOrder{} }
-func (m *MarketOrder) String() string { return proto.CompactTextString(m) }
-func (*MarketOrder) ProtoMessage()    {}
-func (*MarketOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{4}
+func (m *SpotMarketOrder) Reset()         { *m = SpotMarketOrder{} }
+func (m *SpotMarketOrder) String() string { return proto.CompactTextString(m) }
+func (*SpotMarketOrder) ProtoMessage()    {}
+func (*SpotMarketOrder) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{3}
 }
-func (m *MarketOrder) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MarketOrder.Unmarshal(m, b)
+func (m *SpotMarketOrder) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotMarketOrder.Unmarshal(m, b)
 }
-func (m *MarketOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MarketOrder.Marshal(b, m, deterministic)
+func (m *SpotMarketOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotMarketOrder.Marshal(b, m, deterministic)
 }
-func (dst *MarketOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MarketOrder.Merge(dst, src)
+func (dst *SpotMarketOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotMarketOrder.Merge(dst, src)
 }
-func (m *MarketOrder) XXX_Size() int {
-	return xxx_messageInfo_MarketOrder.Size(m)
+func (m *SpotMarketOrder) XXX_Size() int {
+	return xxx_messageInfo_SpotMarketOrder.Size(m)
 }
-func (m *MarketOrder) XXX_DiscardUnknown() {
-	xxx_messageInfo_MarketOrder.DiscardUnknown(m)
+func (m *SpotMarketOrder) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotMarketOrder.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MarketOrder proto.InternalMessageInfo
+var xxx_messageInfo_SpotMarketOrder proto.InternalMessageInfo
 
-func (m *MarketOrder) GetLeftAsset() *Asset {
+func (m *SpotMarketOrder) GetLeftAsset() uint32 {
 	if m != nil {
 		return m.LeftAsset
 	}
-	return nil
+	return 0
 }
 
-func (m *MarketOrder) GetRightAsset() *Asset {
+func (m *SpotMarketOrder) GetRightAsset() uint32 {
 	if m != nil {
 		return m.RightAsset
 	}
-	return nil
+	return 0
 }
 
-func (m *MarketOrder) GetAmount() int64 {
+func (m *SpotMarketOrder) GetAmount() int64 {
 	if m != nil {
 		return m.Amount
 	}
 	return 0
 }
 
-func (m *MarketOrder) GetOp() int32 {
+func (m *SpotMarketOrder) GetOp() int32 {
 	if m != nil {
 		return m.Op
 	}
 	return 0
 }
 
-type ExchangeBind struct {
+type SpotExchangeBind struct {
 	// 交易地址
 	ExchangeAddress string `protobuf:"bytes,1,opt,name=exchangeAddress,proto3" json:"exchangeAddress,omitempty"`
 	// 委托地址
@@ -617,38 +588,38 @@ type ExchangeBind struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ExchangeBind) Reset()         { *m = ExchangeBind{} }
-func (m *ExchangeBind) String() string { return proto.CompactTextString(m) }
-func (*ExchangeBind) ProtoMessage()    {}
-func (*ExchangeBind) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{5}
+func (m *SpotExchangeBind) Reset()         { *m = SpotExchangeBind{} }
+func (m *SpotExchangeBind) String() string { return proto.CompactTextString(m) }
+func (*SpotExchangeBind) ProtoMessage()    {}
+func (*SpotExchangeBind) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{4}
 }
-func (m *ExchangeBind) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ExchangeBind.Unmarshal(m, b)
+func (m *SpotExchangeBind) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotExchangeBind.Unmarshal(m, b)
 }
-func (m *ExchangeBind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ExchangeBind.Marshal(b, m, deterministic)
+func (m *SpotExchangeBind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotExchangeBind.Marshal(b, m, deterministic)
 }
-func (dst *ExchangeBind) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ExchangeBind.Merge(dst, src)
+func (dst *SpotExchangeBind) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotExchangeBind.Merge(dst, src)
 }
-func (m *ExchangeBind) XXX_Size() int {
-	return xxx_messageInfo_ExchangeBind.Size(m)
+func (m *SpotExchangeBind) XXX_Size() int {
+	return xxx_messageInfo_SpotExchangeBind.Size(m)
 }
-func (m *ExchangeBind) XXX_DiscardUnknown() {
-	xxx_messageInfo_ExchangeBind.DiscardUnknown(m)
+func (m *SpotExchangeBind) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotExchangeBind.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ExchangeBind proto.InternalMessageInfo
+var xxx_messageInfo_SpotExchangeBind proto.InternalMessageInfo
 
-func (m *ExchangeBind) GetExchangeAddress() string {
+func (m *SpotExchangeBind) GetExchangeAddress() string {
 	if m != nil {
 		return m.ExchangeAddress
 	}
 	return ""
 }
 
-func (m *ExchangeBind) GetEntrustAddress() string {
+func (m *SpotExchangeBind) GetEntrustAddress() string {
 	if m != nil {
 		return m.EntrustAddress
 	}
@@ -656,7 +627,7 @@ func (m *ExchangeBind) GetEntrustAddress() string {
 }
 
 // 委托限价订单
-type EntrustOrder struct {
+type SpotEntrustOrder struct {
 	// 交易对
 	LeftAsset uint32 `protobuf:"varint,1,opt,name=leftAsset,proto3" json:"leftAsset,omitempty"`
 	// 交易对
@@ -675,73 +646,73 @@ type EntrustOrder struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *EntrustOrder) Reset()         { *m = EntrustOrder{} }
-func (m *EntrustOrder) String() string { return proto.CompactTextString(m) }
-func (*EntrustOrder) ProtoMessage()    {}
-func (*EntrustOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{6}
+func (m *SpotEntrustOrder) Reset()         { *m = SpotEntrustOrder{} }
+func (m *SpotEntrustOrder) String() string { return proto.CompactTextString(m) }
+func (*SpotEntrustOrder) ProtoMessage()    {}
+func (*SpotEntrustOrder) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{5}
 }
-func (m *EntrustOrder) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_EntrustOrder.Unmarshal(m, b)
+func (m *SpotEntrustOrder) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotEntrustOrder.Unmarshal(m, b)
 }
-func (m *EntrustOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_EntrustOrder.Marshal(b, m, deterministic)
+func (m *SpotEntrustOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotEntrustOrder.Marshal(b, m, deterministic)
 }
-func (dst *EntrustOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EntrustOrder.Merge(dst, src)
+func (dst *SpotEntrustOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotEntrustOrder.Merge(dst, src)
 }
-func (m *EntrustOrder) XXX_Size() int {
-	return xxx_messageInfo_EntrustOrder.Size(m)
+func (m *SpotEntrustOrder) XXX_Size() int {
+	return xxx_messageInfo_SpotEntrustOrder.Size(m)
 }
-func (m *EntrustOrder) XXX_DiscardUnknown() {
-	xxx_messageInfo_EntrustOrder.DiscardUnknown(m)
+func (m *SpotEntrustOrder) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotEntrustOrder.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EntrustOrder proto.InternalMessageInfo
+var xxx_messageInfo_SpotEntrustOrder proto.InternalMessageInfo
 
-func (m *EntrustOrder) GetLeftAsset() uint32 {
+func (m *SpotEntrustOrder) GetLeftAsset() uint32 {
 	if m != nil {
 		return m.LeftAsset
 	}
 	return 0
 }
 
-func (m *EntrustOrder) GetRightAsset() uint32 {
+func (m *SpotEntrustOrder) GetRightAsset() uint32 {
 	if m != nil {
 		return m.RightAsset
 	}
 	return 0
 }
 
-func (m *EntrustOrder) GetPrice() int64 {
+func (m *SpotEntrustOrder) GetPrice() int64 {
 	if m != nil {
 		return m.Price
 	}
 	return 0
 }
 
-func (m *EntrustOrder) GetAmount() int64 {
+func (m *SpotEntrustOrder) GetAmount() int64 {
 	if m != nil {
 		return m.Amount
 	}
 	return 0
 }
 
-func (m *EntrustOrder) GetOp() int32 {
+func (m *SpotEntrustOrder) GetOp() int32 {
 	if m != nil {
 		return m.Op
 	}
 	return 0
 }
 
-func (m *EntrustOrder) GetAddr() string {
+func (m *SpotEntrustOrder) GetAddr() string {
 	if m != nil {
 		return m.Addr
 	}
 	return ""
 }
 
-func (m *EntrustOrder) GetOrder() *ZkOrder {
+func (m *SpotEntrustOrder) GetOrder() *ZkOrder {
 	if m != nil {
 		return m.Order
 	}
@@ -749,7 +720,7 @@ func (m *EntrustOrder) GetOrder() *ZkOrder {
 }
 
 // 委托撤回订单
-type EntrustRevokeOrder struct {
+type SpotEntrustRevokeOrder struct {
 	// 订单号
 	OrderID int64 `protobuf:"varint,1,opt,name=orderID,proto3" json:"orderID,omitempty"`
 	// 交易地址
@@ -759,38 +730,38 @@ type EntrustRevokeOrder struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *EntrustRevokeOrder) Reset()         { *m = EntrustRevokeOrder{} }
-func (m *EntrustRevokeOrder) String() string { return proto.CompactTextString(m) }
-func (*EntrustRevokeOrder) ProtoMessage()    {}
-func (*EntrustRevokeOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{7}
+func (m *SpotEntrustRevokeOrder) Reset()         { *m = SpotEntrustRevokeOrder{} }
+func (m *SpotEntrustRevokeOrder) String() string { return proto.CompactTextString(m) }
+func (*SpotEntrustRevokeOrder) ProtoMessage()    {}
+func (*SpotEntrustRevokeOrder) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{6}
 }
-func (m *EntrustRevokeOrder) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_EntrustRevokeOrder.Unmarshal(m, b)
+func (m *SpotEntrustRevokeOrder) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotEntrustRevokeOrder.Unmarshal(m, b)
 }
-func (m *EntrustRevokeOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_EntrustRevokeOrder.Marshal(b, m, deterministic)
+func (m *SpotEntrustRevokeOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotEntrustRevokeOrder.Marshal(b, m, deterministic)
 }
-func (dst *EntrustRevokeOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_EntrustRevokeOrder.Merge(dst, src)
+func (dst *SpotEntrustRevokeOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotEntrustRevokeOrder.Merge(dst, src)
 }
-func (m *EntrustRevokeOrder) XXX_Size() int {
-	return xxx_messageInfo_EntrustRevokeOrder.Size(m)
+func (m *SpotEntrustRevokeOrder) XXX_Size() int {
+	return xxx_messageInfo_SpotEntrustRevokeOrder.Size(m)
 }
-func (m *EntrustRevokeOrder) XXX_DiscardUnknown() {
-	xxx_messageInfo_EntrustRevokeOrder.DiscardUnknown(m)
+func (m *SpotEntrustRevokeOrder) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotEntrustRevokeOrder.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_EntrustRevokeOrder proto.InternalMessageInfo
+var xxx_messageInfo_SpotEntrustRevokeOrder proto.InternalMessageInfo
 
-func (m *EntrustRevokeOrder) GetOrderID() int64 {
+func (m *SpotEntrustRevokeOrder) GetOrderID() int64 {
 	if m != nil {
 		return m.OrderID
 	}
 	return 0
 }
 
-func (m *EntrustRevokeOrder) GetAddr() string {
+func (m *SpotEntrustRevokeOrder) GetAddr() string {
 	if m != nil {
 		return m.Addr
 	}
@@ -798,7 +769,7 @@ func (m *EntrustRevokeOrder) GetAddr() string {
 }
 
 // 撤回订单
-type RevokeOrder struct {
+type SpotRevokeOrder struct {
 	// 订单号
 	OrderID              int64    `protobuf:"varint,1,opt,name=orderID,proto3" json:"orderID,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
@@ -806,91 +777,44 @@ type RevokeOrder struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *RevokeOrder) Reset()         { *m = RevokeOrder{} }
-func (m *RevokeOrder) String() string { return proto.CompactTextString(m) }
-func (*RevokeOrder) ProtoMessage()    {}
-func (*RevokeOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{8}
+func (m *SpotRevokeOrder) Reset()         { *m = SpotRevokeOrder{} }
+func (m *SpotRevokeOrder) String() string { return proto.CompactTextString(m) }
+func (*SpotRevokeOrder) ProtoMessage()    {}
+func (*SpotRevokeOrder) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{7}
 }
-func (m *RevokeOrder) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_RevokeOrder.Unmarshal(m, b)
+func (m *SpotRevokeOrder) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotRevokeOrder.Unmarshal(m, b)
 }
-func (m *RevokeOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_RevokeOrder.Marshal(b, m, deterministic)
+func (m *SpotRevokeOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotRevokeOrder.Marshal(b, m, deterministic)
 }
-func (dst *RevokeOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_RevokeOrder.Merge(dst, src)
+func (dst *SpotRevokeOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotRevokeOrder.Merge(dst, src)
 }
-func (m *RevokeOrder) XXX_Size() int {
-	return xxx_messageInfo_RevokeOrder.Size(m)
+func (m *SpotRevokeOrder) XXX_Size() int {
+	return xxx_messageInfo_SpotRevokeOrder.Size(m)
 }
-func (m *RevokeOrder) XXX_DiscardUnknown() {
-	xxx_messageInfo_RevokeOrder.DiscardUnknown(m)
+func (m *SpotRevokeOrder) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotRevokeOrder.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_RevokeOrder proto.InternalMessageInfo
+var xxx_messageInfo_SpotRevokeOrder proto.InternalMessageInfo
 
-func (m *RevokeOrder) GetOrderID() int64 {
+func (m *SpotRevokeOrder) GetOrderID() int64 {
 	if m != nil {
 		return m.OrderID
 	}
 	return 0
 }
 
-// 资产类型
-type Asset struct {
-	Execer               string   `protobuf:"bytes,1,opt,name=execer,proto3" json:"execer,omitempty"`
-	Symbol               string   `protobuf:"bytes,2,opt,name=symbol,proto3" json:"symbol,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
-}
-
-func (m *Asset) Reset()         { *m = Asset{} }
-func (m *Asset) String() string { return proto.CompactTextString(m) }
-func (*Asset) ProtoMessage()    {}
-func (*Asset) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{9}
-}
-func (m *Asset) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Asset.Unmarshal(m, b)
-}
-func (m *Asset) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Asset.Marshal(b, m, deterministic)
-}
-func (dst *Asset) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Asset.Merge(dst, src)
-}
-func (m *Asset) XXX_Size() int {
-	return xxx_messageInfo_Asset.Size(m)
-}
-func (m *Asset) XXX_DiscardUnknown() {
-	xxx_messageInfo_Asset.DiscardUnknown(m)
-}
-
-var xxx_messageInfo_Asset proto.InternalMessageInfo
-
-func (m *Asset) GetExecer() string {
-	if m != nil {
-		return m.Execer
-	}
-	return ""
-}
-
-func (m *Asset) GetSymbol() string {
-	if m != nil {
-		return m.Symbol
-	}
-	return ""
-}
-
 // 订单信息
-type Order struct {
+type SpotOrder struct {
 	OrderID int64 `protobuf:"varint,1,opt,name=orderID,proto3" json:"orderID,omitempty"`
 	// Types that are valid to be assigned to Value:
-	//	*Order_LimitOrder
-	//	*Order_MarketOrder
-	Value isOrder_Value `protobuf_oneof:"value"`
+	//	*SpotOrder_LimitOrder
+	//	*SpotOrder_MarketOrder
+	Value isSpotOrder_Value `protobuf_oneof:"value"`
 	// 挂单类型
 	Ty int32 `protobuf:"varint,4,opt,name=ty,proto3" json:"ty,omitempty"`
 	// 已经成交的数量
@@ -928,180 +852,180 @@ type Order struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *Order) Reset()         { *m = Order{} }
-func (m *Order) String() string { return proto.CompactTextString(m) }
-func (*Order) ProtoMessage()    {}
-func (*Order) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{10}
+func (m *SpotOrder) Reset()         { *m = SpotOrder{} }
+func (m *SpotOrder) String() string { return proto.CompactTextString(m) }
+func (*SpotOrder) ProtoMessage()    {}
+func (*SpotOrder) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{8}
 }
-func (m *Order) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_Order.Unmarshal(m, b)
+func (m *SpotOrder) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotOrder.Unmarshal(m, b)
 }
-func (m *Order) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_Order.Marshal(b, m, deterministic)
+func (m *SpotOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotOrder.Marshal(b, m, deterministic)
 }
-func (dst *Order) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_Order.Merge(dst, src)
+func (dst *SpotOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotOrder.Merge(dst, src)
 }
-func (m *Order) XXX_Size() int {
-	return xxx_messageInfo_Order.Size(m)
+func (m *SpotOrder) XXX_Size() int {
+	return xxx_messageInfo_SpotOrder.Size(m)
 }
-func (m *Order) XXX_DiscardUnknown() {
-	xxx_messageInfo_Order.DiscardUnknown(m)
+func (m *SpotOrder) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotOrder.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_Order proto.InternalMessageInfo
+var xxx_messageInfo_SpotOrder proto.InternalMessageInfo
 
-func (m *Order) GetOrderID() int64 {
+func (m *SpotOrder) GetOrderID() int64 {
 	if m != nil {
 		return m.OrderID
 	}
 	return 0
 }
 
-type isOrder_Value interface {
-	isOrder_Value()
+type isSpotOrder_Value interface {
+	isSpotOrder_Value()
 }
 
-type Order_LimitOrder struct {
-	LimitOrder *LimitOrder `protobuf:"bytes,2,opt,name=limitOrder,proto3,oneof"`
+type SpotOrder_LimitOrder struct {
+	LimitOrder *SpotLimitOrder `protobuf:"bytes,2,opt,name=limitOrder,proto3,oneof"`
 }
 
-type Order_MarketOrder struct {
-	MarketOrder *MarketOrder `protobuf:"bytes,3,opt,name=marketOrder,proto3,oneof"`
+type SpotOrder_MarketOrder struct {
+	MarketOrder *SpotMarketOrder `protobuf:"bytes,3,opt,name=marketOrder,proto3,oneof"`
 }
 
-func (*Order_LimitOrder) isOrder_Value() {}
+func (*SpotOrder_LimitOrder) isSpotOrder_Value() {}
 
-func (*Order_MarketOrder) isOrder_Value() {}
+func (*SpotOrder_MarketOrder) isSpotOrder_Value() {}
 
-func (m *Order) GetValue() isOrder_Value {
+func (m *SpotOrder) GetValue() isSpotOrder_Value {
 	if m != nil {
 		return m.Value
 	}
 	return nil
 }
 
-func (m *Order) GetLimitOrder() *LimitOrder {
-	if x, ok := m.GetValue().(*Order_LimitOrder); ok {
+func (m *SpotOrder) GetLimitOrder() *SpotLimitOrder {
+	if x, ok := m.GetValue().(*SpotOrder_LimitOrder); ok {
 		return x.LimitOrder
 	}
 	return nil
 }
 
-func (m *Order) GetMarketOrder() *MarketOrder {
-	if x, ok := m.GetValue().(*Order_MarketOrder); ok {
+func (m *SpotOrder) GetMarketOrder() *SpotMarketOrder {
+	if x, ok := m.GetValue().(*SpotOrder_MarketOrder); ok {
 		return x.MarketOrder
 	}
 	return nil
 }
 
-func (m *Order) GetTy() int32 {
+func (m *SpotOrder) GetTy() int32 {
 	if m != nil {
 		return m.Ty
 	}
 	return 0
 }
 
-func (m *Order) GetExecuted() int64 {
+func (m *SpotOrder) GetExecuted() int64 {
 	if m != nil {
 		return m.Executed
 	}
 	return 0
 }
 
-func (m *Order) GetAVGPrice() int64 {
+func (m *SpotOrder) GetAVGPrice() int64 {
 	if m != nil {
 		return m.AVGPrice
 	}
 	return 0
 }
 
-func (m *Order) GetBalance() int64 {
+func (m *SpotOrder) GetBalance() int64 {
 	if m != nil {
 		return m.Balance
 	}
 	return 0
 }
 
-func (m *Order) GetStatus() int32 {
+func (m *SpotOrder) GetStatus() int32 {
 	if m != nil {
 		return m.Status
 	}
 	return 0
 }
 
-func (m *Order) GetAddr() string {
+func (m *SpotOrder) GetAddr() string {
 	if m != nil {
 		return m.Addr
 	}
 	return ""
 }
 
-func (m *Order) GetUpdateTime() int64 {
+func (m *SpotOrder) GetUpdateTime() int64 {
 	if m != nil {
 		return m.UpdateTime
 	}
 	return 0
 }
 
-func (m *Order) GetIndex() int64 {
+func (m *SpotOrder) GetIndex() int64 {
 	if m != nil {
 		return m.Index
 	}
 	return 0
 }
 
-func (m *Order) GetRate() int32 {
+func (m *SpotOrder) GetRate() int32 {
 	if m != nil {
 		return m.Rate
 	}
 	return 0
 }
 
-func (m *Order) GetDigestedFee() int64 {
+func (m *SpotOrder) GetDigestedFee() int64 {
 	if m != nil {
 		return m.DigestedFee
 	}
 	return 0
 }
 
-func (m *Order) GetTakerRate() int32 {
+func (m *SpotOrder) GetTakerRate() int32 {
 	if m != nil {
 		return m.TakerRate
 	}
 	return 0
 }
 
-func (m *Order) GetHash() string {
+func (m *SpotOrder) GetHash() string {
 	if m != nil {
 		return m.Hash
 	}
 	return ""
 }
 
-func (m *Order) GetRevokeHash() string {
+func (m *SpotOrder) GetRevokeHash() string {
 	if m != nil {
 		return m.RevokeHash
 	}
 	return ""
 }
 
-func (m *Order) GetCreateTime() int64 {
+func (m *SpotOrder) GetCreateTime() int64 {
 	if m != nil {
 		return m.CreateTime
 	}
 	return 0
 }
 
-func (m *Order) GetEntrustAddr() string {
+func (m *SpotOrder) GetEntrustAddr() string {
 	if m != nil {
 		return m.EntrustAddr
 	}
 	return ""
 }
 
-func (m *Order) GetFeeBalance() int64 {
+func (m *SpotOrder) GetFeeBalance() int64 {
 	if m != nil {
 		return m.FeeBalance
 	}
@@ -1109,68 +1033,68 @@ func (m *Order) GetFeeBalance() int64 {
 }
 
 // XXX_OneofFuncs is for the internal use of the proto package.
-func (*Order) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
-	return _Order_OneofMarshaler, _Order_OneofUnmarshaler, _Order_OneofSizer, []interface{}{
-		(*Order_LimitOrder)(nil),
-		(*Order_MarketOrder)(nil),
+func (*SpotOrder) XXX_OneofFuncs() (func(msg proto.Message, b *proto.Buffer) error, func(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error), func(msg proto.Message) (n int), []interface{}) {
+	return _SpotOrder_OneofMarshaler, _SpotOrder_OneofUnmarshaler, _SpotOrder_OneofSizer, []interface{}{
+		(*SpotOrder_LimitOrder)(nil),
+		(*SpotOrder_MarketOrder)(nil),
 	}
 }
 
-func _Order_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
-	m := msg.(*Order)
+func _SpotOrder_OneofMarshaler(msg proto.Message, b *proto.Buffer) error {
+	m := msg.(*SpotOrder)
 	// value
 	switch x := m.Value.(type) {
-	case *Order_LimitOrder:
+	case *SpotOrder_LimitOrder:
 		b.EncodeVarint(2<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.LimitOrder); err != nil {
 			return err
 		}
-	case *Order_MarketOrder:
+	case *SpotOrder_MarketOrder:
 		b.EncodeVarint(3<<3 | proto.WireBytes)
 		if err := b.EncodeMessage(x.MarketOrder); err != nil {
 			return err
 		}
 	case nil:
 	default:
-		return fmt.Errorf("Order.Value has unexpected type %T", x)
+		return fmt.Errorf("SpotOrder.Value has unexpected type %T", x)
 	}
 	return nil
 }
 
-func _Order_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
-	m := msg.(*Order)
+func _SpotOrder_OneofUnmarshaler(msg proto.Message, tag, wire int, b *proto.Buffer) (bool, error) {
+	m := msg.(*SpotOrder)
 	switch tag {
 	case 2: // value.limitOrder
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
-		msg := new(LimitOrder)
+		msg := new(SpotLimitOrder)
 		err := b.DecodeMessage(msg)
-		m.Value = &Order_LimitOrder{msg}
+		m.Value = &SpotOrder_LimitOrder{msg}
 		return true, err
 	case 3: // value.marketOrder
 		if wire != proto.WireBytes {
 			return true, proto.ErrInternalBadWireType
 		}
-		msg := new(MarketOrder)
+		msg := new(SpotMarketOrder)
 		err := b.DecodeMessage(msg)
-		m.Value = &Order_MarketOrder{msg}
+		m.Value = &SpotOrder_MarketOrder{msg}
 		return true, err
 	default:
 		return false, nil
 	}
 }
 
-func _Order_OneofSizer(msg proto.Message) (n int) {
-	m := msg.(*Order)
+func _SpotOrder_OneofSizer(msg proto.Message) (n int) {
+	m := msg.(*SpotOrder)
 	// value
 	switch x := m.Value.(type) {
-	case *Order_LimitOrder:
+	case *SpotOrder_LimitOrder:
 		s := proto.Size(x.LimitOrder)
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
 		n += s
-	case *Order_MarketOrder:
+	case *SpotOrder_MarketOrder:
 		s := proto.Size(x.MarketOrder)
 		n += 1 // tag and wire
 		n += proto.SizeVarint(uint64(s))
@@ -1183,7 +1107,7 @@ func _Order_OneofSizer(msg proto.Message) (n int) {
 }
 
 // 查询接口
-type QueryMarketDepth struct {
+type SpotQueryMarketDepth struct {
 	// 资产1
 	LeftAsset uint32 `protobuf:"varint,1,opt,name=leftAsset,proto3" json:"leftAsset,omitempty"`
 	// 资产2
@@ -1199,59 +1123,59 @@ type QueryMarketDepth struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *QueryMarketDepth) Reset()         { *m = QueryMarketDepth{} }
-func (m *QueryMarketDepth) String() string { return proto.CompactTextString(m) }
-func (*QueryMarketDepth) ProtoMessage()    {}
-func (*QueryMarketDepth) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{11}
+func (m *SpotQueryMarketDepth) Reset()         { *m = SpotQueryMarketDepth{} }
+func (m *SpotQueryMarketDepth) String() string { return proto.CompactTextString(m) }
+func (*SpotQueryMarketDepth) ProtoMessage()    {}
+func (*SpotQueryMarketDepth) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{9}
 }
-func (m *QueryMarketDepth) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueryMarketDepth.Unmarshal(m, b)
+func (m *SpotQueryMarketDepth) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotQueryMarketDepth.Unmarshal(m, b)
 }
-func (m *QueryMarketDepth) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueryMarketDepth.Marshal(b, m, deterministic)
+func (m *SpotQueryMarketDepth) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotQueryMarketDepth.Marshal(b, m, deterministic)
 }
-func (dst *QueryMarketDepth) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryMarketDepth.Merge(dst, src)
+func (dst *SpotQueryMarketDepth) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotQueryMarketDepth.Merge(dst, src)
 }
-func (m *QueryMarketDepth) XXX_Size() int {
-	return xxx_messageInfo_QueryMarketDepth.Size(m)
+func (m *SpotQueryMarketDepth) XXX_Size() int {
+	return xxx_messageInfo_SpotQueryMarketDepth.Size(m)
 }
-func (m *QueryMarketDepth) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryMarketDepth.DiscardUnknown(m)
+func (m *SpotQueryMarketDepth) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotQueryMarketDepth.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryMarketDepth proto.InternalMessageInfo
+var xxx_messageInfo_SpotQueryMarketDepth proto.InternalMessageInfo
 
-func (m *QueryMarketDepth) GetLeftAsset() uint32 {
+func (m *SpotQueryMarketDepth) GetLeftAsset() uint32 {
 	if m != nil {
 		return m.LeftAsset
 	}
 	return 0
 }
 
-func (m *QueryMarketDepth) GetRightAsset() uint32 {
+func (m *SpotQueryMarketDepth) GetRightAsset() uint32 {
 	if m != nil {
 		return m.RightAsset
 	}
 	return 0
 }
 
-func (m *QueryMarketDepth) GetOp() int32 {
+func (m *SpotQueryMarketDepth) GetOp() int32 {
 	if m != nil {
 		return m.Op
 	}
 	return 0
 }
 
-func (m *QueryMarketDepth) GetPrimaryKey() string {
+func (m *SpotQueryMarketDepth) GetPrimaryKey() string {
 	if m != nil {
 		return m.PrimaryKey
 	}
 	return ""
 }
 
-func (m *QueryMarketDepth) GetCount() int32 {
+func (m *SpotQueryMarketDepth) GetCount() int32 {
 	if m != nil {
 		return m.Count
 	}
@@ -1259,7 +1183,7 @@ func (m *QueryMarketDepth) GetCount() int32 {
 }
 
 // 市场深度
-type MarketDepth struct {
+type SpotMarketDepth struct {
 	// 资产1
 	LeftAsset uint32 `protobuf:"varint,1,opt,name=leftAsset,proto3" json:"leftAsset,omitempty"`
 	// 资产2
@@ -1275,59 +1199,59 @@ type MarketDepth struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *MarketDepth) Reset()         { *m = MarketDepth{} }
-func (m *MarketDepth) String() string { return proto.CompactTextString(m) }
-func (*MarketDepth) ProtoMessage()    {}
-func (*MarketDepth) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{12}
+func (m *SpotMarketDepth) Reset()         { *m = SpotMarketDepth{} }
+func (m *SpotMarketDepth) String() string { return proto.CompactTextString(m) }
+func (*SpotMarketDepth) ProtoMessage()    {}
+func (*SpotMarketDepth) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{10}
 }
-func (m *MarketDepth) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MarketDepth.Unmarshal(m, b)
+func (m *SpotMarketDepth) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotMarketDepth.Unmarshal(m, b)
 }
-func (m *MarketDepth) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MarketDepth.Marshal(b, m, deterministic)
+func (m *SpotMarketDepth) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotMarketDepth.Marshal(b, m, deterministic)
 }
-func (dst *MarketDepth) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MarketDepth.Merge(dst, src)
+func (dst *SpotMarketDepth) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotMarketDepth.Merge(dst, src)
 }
-func (m *MarketDepth) XXX_Size() int {
-	return xxx_messageInfo_MarketDepth.Size(m)
+func (m *SpotMarketDepth) XXX_Size() int {
+	return xxx_messageInfo_SpotMarketDepth.Size(m)
 }
-func (m *MarketDepth) XXX_DiscardUnknown() {
-	xxx_messageInfo_MarketDepth.DiscardUnknown(m)
+func (m *SpotMarketDepth) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotMarketDepth.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MarketDepth proto.InternalMessageInfo
+var xxx_messageInfo_SpotMarketDepth proto.InternalMessageInfo
 
-func (m *MarketDepth) GetLeftAsset() uint32 {
+func (m *SpotMarketDepth) GetLeftAsset() uint32 {
 	if m != nil {
 		return m.LeftAsset
 	}
 	return 0
 }
 
-func (m *MarketDepth) GetRightAsset() uint32 {
+func (m *SpotMarketDepth) GetRightAsset() uint32 {
 	if m != nil {
 		return m.RightAsset
 	}
 	return 0
 }
 
-func (m *MarketDepth) GetPrice() int64 {
+func (m *SpotMarketDepth) GetPrice() int64 {
 	if m != nil {
 		return m.Price
 	}
 	return 0
 }
 
-func (m *MarketDepth) GetAmount() int64 {
+func (m *SpotMarketDepth) GetAmount() int64 {
 	if m != nil {
 		return m.Amount
 	}
 	return 0
 }
 
-func (m *MarketDepth) GetOp() int32 {
+func (m *SpotMarketDepth) GetOp() int32 {
 	if m != nil {
 		return m.Op
 	}
@@ -1335,46 +1259,46 @@ func (m *MarketDepth) GetOp() int32 {
 }
 
 // 查询接口返回的市场深度列表
-type MarketDepthList struct {
-	List                 []*MarketDepth `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
-	PrimaryKey           string         `protobuf:"bytes,2,opt,name=primaryKey,proto3" json:"primaryKey,omitempty"`
-	XXX_NoUnkeyedLiteral struct{}       `json:"-"`
-	XXX_unrecognized     []byte         `json:"-"`
-	XXX_sizecache        int32          `json:"-"`
+type SpotMarketDepthList struct {
+	List                 []*SpotMarketDepth `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
+	PrimaryKey           string             `protobuf:"bytes,2,opt,name=primaryKey,proto3" json:"primaryKey,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}           `json:"-"`
+	XXX_unrecognized     []byte             `json:"-"`
+	XXX_sizecache        int32              `json:"-"`
 }
 
-func (m *MarketDepthList) Reset()         { *m = MarketDepthList{} }
-func (m *MarketDepthList) String() string { return proto.CompactTextString(m) }
-func (*MarketDepthList) ProtoMessage()    {}
-func (*MarketDepthList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{13}
+func (m *SpotMarketDepthList) Reset()         { *m = SpotMarketDepthList{} }
+func (m *SpotMarketDepthList) String() string { return proto.CompactTextString(m) }
+func (*SpotMarketDepthList) ProtoMessage()    {}
+func (*SpotMarketDepthList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{11}
 }
-func (m *MarketDepthList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_MarketDepthList.Unmarshal(m, b)
+func (m *SpotMarketDepthList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotMarketDepthList.Unmarshal(m, b)
 }
-func (m *MarketDepthList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_MarketDepthList.Marshal(b, m, deterministic)
+func (m *SpotMarketDepthList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotMarketDepthList.Marshal(b, m, deterministic)
 }
-func (dst *MarketDepthList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_MarketDepthList.Merge(dst, src)
+func (dst *SpotMarketDepthList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotMarketDepthList.Merge(dst, src)
 }
-func (m *MarketDepthList) XXX_Size() int {
-	return xxx_messageInfo_MarketDepthList.Size(m)
+func (m *SpotMarketDepthList) XXX_Size() int {
+	return xxx_messageInfo_SpotMarketDepthList.Size(m)
 }
-func (m *MarketDepthList) XXX_DiscardUnknown() {
-	xxx_messageInfo_MarketDepthList.DiscardUnknown(m)
+func (m *SpotMarketDepthList) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotMarketDepthList.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_MarketDepthList proto.InternalMessageInfo
+var xxx_messageInfo_SpotMarketDepthList proto.InternalMessageInfo
 
-func (m *MarketDepthList) GetList() []*MarketDepth {
+func (m *SpotMarketDepthList) GetList() []*SpotMarketDepth {
 	if m != nil {
 		return m.List
 	}
 	return nil
 }
 
-func (m *MarketDepthList) GetPrimaryKey() string {
+func (m *SpotMarketDepthList) GetPrimaryKey() string {
 	if m != nil {
 		return m.PrimaryKey
 	}
@@ -1382,7 +1306,7 @@ func (m *MarketDepthList) GetPrimaryKey() string {
 }
 
 // 查询最新得成交信息,外部接口
-type QueryHistoryOrderList struct {
+type SpotQueryHistoryOrderList struct {
 	// 资产1
 	LeftAsset uint32 `protobuf:"varint,1,opt,name=leftAsset,proto3" json:"leftAsset,omitempty"`
 	// 资产2
@@ -1398,59 +1322,59 @@ type QueryHistoryOrderList struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *QueryHistoryOrderList) Reset()         { *m = QueryHistoryOrderList{} }
-func (m *QueryHistoryOrderList) String() string { return proto.CompactTextString(m) }
-func (*QueryHistoryOrderList) ProtoMessage()    {}
-func (*QueryHistoryOrderList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{14}
+func (m *SpotQueryHistoryOrderList) Reset()         { *m = SpotQueryHistoryOrderList{} }
+func (m *SpotQueryHistoryOrderList) String() string { return proto.CompactTextString(m) }
+func (*SpotQueryHistoryOrderList) ProtoMessage()    {}
+func (*SpotQueryHistoryOrderList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{12}
 }
-func (m *QueryHistoryOrderList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueryHistoryOrderList.Unmarshal(m, b)
+func (m *SpotQueryHistoryOrderList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotQueryHistoryOrderList.Unmarshal(m, b)
 }
-func (m *QueryHistoryOrderList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueryHistoryOrderList.Marshal(b, m, deterministic)
+func (m *SpotQueryHistoryOrderList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotQueryHistoryOrderList.Marshal(b, m, deterministic)
 }
-func (dst *QueryHistoryOrderList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryHistoryOrderList.Merge(dst, src)
+func (dst *SpotQueryHistoryOrderList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotQueryHistoryOrderList.Merge(dst, src)
 }
-func (m *QueryHistoryOrderList) XXX_Size() int {
-	return xxx_messageInfo_QueryHistoryOrderList.Size(m)
+func (m *SpotQueryHistoryOrderList) XXX_Size() int {
+	return xxx_messageInfo_SpotQueryHistoryOrderList.Size(m)
 }
-func (m *QueryHistoryOrderList) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryHistoryOrderList.DiscardUnknown(m)
+func (m *SpotQueryHistoryOrderList) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotQueryHistoryOrderList.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryHistoryOrderList proto.InternalMessageInfo
+var xxx_messageInfo_SpotQueryHistoryOrderList proto.InternalMessageInfo
 
-func (m *QueryHistoryOrderList) GetLeftAsset() uint32 {
+func (m *SpotQueryHistoryOrderList) GetLeftAsset() uint32 {
 	if m != nil {
 		return m.LeftAsset
 	}
 	return 0
 }
 
-func (m *QueryHistoryOrderList) GetRightAsset() uint32 {
+func (m *SpotQueryHistoryOrderList) GetRightAsset() uint32 {
 	if m != nil {
 		return m.RightAsset
 	}
 	return 0
 }
 
-func (m *QueryHistoryOrderList) GetPrimaryKey() string {
+func (m *SpotQueryHistoryOrderList) GetPrimaryKey() string {
 	if m != nil {
 		return m.PrimaryKey
 	}
 	return ""
 }
 
-func (m *QueryHistoryOrderList) GetCount() int32 {
+func (m *SpotQueryHistoryOrderList) GetCount() int32 {
 	if m != nil {
 		return m.Count
 	}
 	return 0
 }
 
-func (m *QueryHistoryOrderList) GetDirection() int32 {
+func (m *SpotQueryHistoryOrderList) GetDirection() int32 {
 	if m != nil {
 		return m.Direction
 	}
@@ -1458,38 +1382,38 @@ func (m *QueryHistoryOrderList) GetDirection() int32 {
 }
 
 // 根据orderID去查询订单信息
-type QueryOrder struct {
+type SpotQueryOrder struct {
 	OrderID              int64    `protobuf:"varint,1,opt,name=orderID,proto3" json:"orderID,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *QueryOrder) Reset()         { *m = QueryOrder{} }
-func (m *QueryOrder) String() string { return proto.CompactTextString(m) }
-func (*QueryOrder) ProtoMessage()    {}
-func (*QueryOrder) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{15}
+func (m *SpotQueryOrder) Reset()         { *m = SpotQueryOrder{} }
+func (m *SpotQueryOrder) String() string { return proto.CompactTextString(m) }
+func (*SpotQueryOrder) ProtoMessage()    {}
+func (*SpotQueryOrder) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{13}
 }
-func (m *QueryOrder) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueryOrder.Unmarshal(m, b)
+func (m *SpotQueryOrder) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotQueryOrder.Unmarshal(m, b)
 }
-func (m *QueryOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueryOrder.Marshal(b, m, deterministic)
+func (m *SpotQueryOrder) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotQueryOrder.Marshal(b, m, deterministic)
 }
-func (dst *QueryOrder) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryOrder.Merge(dst, src)
+func (dst *SpotQueryOrder) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotQueryOrder.Merge(dst, src)
 }
-func (m *QueryOrder) XXX_Size() int {
-	return xxx_messageInfo_QueryOrder.Size(m)
+func (m *SpotQueryOrder) XXX_Size() int {
+	return xxx_messageInfo_SpotQueryOrder.Size(m)
 }
-func (m *QueryOrder) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryOrder.DiscardUnknown(m)
+func (m *SpotQueryOrder) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotQueryOrder.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryOrder proto.InternalMessageInfo
+var xxx_messageInfo_SpotQueryOrder proto.InternalMessageInfo
 
-func (m *QueryOrder) GetOrderID() int64 {
+func (m *SpotQueryOrder) GetOrderID() int64 {
 	if m != nil {
 		return m.OrderID
 	}
@@ -1497,7 +1421,7 @@ func (m *QueryOrder) GetOrderID() int64 {
 }
 
 // 根据地址，状态查询用户自己的挂单信息
-type QueryOrderList struct {
+type SpotQueryOrderList struct {
 	// 挂单状态必填(默认是0,只查询ordered挂单中的)
 	Status int32 `protobuf:"varint,1,opt,name=status,proto3" json:"status,omitempty"`
 	// 用户地址信息，必填
@@ -1513,59 +1437,59 @@ type QueryOrderList struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *QueryOrderList) Reset()         { *m = QueryOrderList{} }
-func (m *QueryOrderList) String() string { return proto.CompactTextString(m) }
-func (*QueryOrderList) ProtoMessage()    {}
-func (*QueryOrderList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{16}
+func (m *SpotQueryOrderList) Reset()         { *m = SpotQueryOrderList{} }
+func (m *SpotQueryOrderList) String() string { return proto.CompactTextString(m) }
+func (*SpotQueryOrderList) ProtoMessage()    {}
+func (*SpotQueryOrderList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{14}
 }
-func (m *QueryOrderList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_QueryOrderList.Unmarshal(m, b)
+func (m *SpotQueryOrderList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotQueryOrderList.Unmarshal(m, b)
 }
-func (m *QueryOrderList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_QueryOrderList.Marshal(b, m, deterministic)
+func (m *SpotQueryOrderList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotQueryOrderList.Marshal(b, m, deterministic)
 }
-func (dst *QueryOrderList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_QueryOrderList.Merge(dst, src)
+func (dst *SpotQueryOrderList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotQueryOrderList.Merge(dst, src)
 }
-func (m *QueryOrderList) XXX_Size() int {
-	return xxx_messageInfo_QueryOrderList.Size(m)
+func (m *SpotQueryOrderList) XXX_Size() int {
+	return xxx_messageInfo_SpotQueryOrderList.Size(m)
 }
-func (m *QueryOrderList) XXX_DiscardUnknown() {
-	xxx_messageInfo_QueryOrderList.DiscardUnknown(m)
+func (m *SpotQueryOrderList) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotQueryOrderList.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_QueryOrderList proto.InternalMessageInfo
+var xxx_messageInfo_SpotQueryOrderList proto.InternalMessageInfo
 
-func (m *QueryOrderList) GetStatus() int32 {
+func (m *SpotQueryOrderList) GetStatus() int32 {
 	if m != nil {
 		return m.Status
 	}
 	return 0
 }
 
-func (m *QueryOrderList) GetAddress() string {
+func (m *SpotQueryOrderList) GetAddress() string {
 	if m != nil {
 		return m.Address
 	}
 	return ""
 }
 
-func (m *QueryOrderList) GetPrimaryKey() string {
+func (m *SpotQueryOrderList) GetPrimaryKey() string {
 	if m != nil {
 		return m.PrimaryKey
 	}
 	return ""
 }
 
-func (m *QueryOrderList) GetCount() int32 {
+func (m *SpotQueryOrderList) GetCount() int32 {
 	if m != nil {
 		return m.Count
 	}
 	return 0
 }
 
-func (m *QueryOrderList) GetDirection() int32 {
+func (m *SpotQueryOrderList) GetDirection() int32 {
 	if m != nil {
 		return m.Direction
 	}
@@ -1573,46 +1497,46 @@ func (m *QueryOrderList) GetDirection() int32 {
 }
 
 // 订单列表
-type OrderList struct {
-	List                 []*Order `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
-	PrimaryKey           string   `protobuf:"bytes,2,opt,name=primaryKey,proto3" json:"primaryKey,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+type SpotOrderList struct {
+	List                 []*SpotOrder `protobuf:"bytes,1,rep,name=list,proto3" json:"list,omitempty"`
+	PrimaryKey           string       `protobuf:"bytes,2,opt,name=primaryKey,proto3" json:"primaryKey,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
-func (m *OrderList) Reset()         { *m = OrderList{} }
-func (m *OrderList) String() string { return proto.CompactTextString(m) }
-func (*OrderList) ProtoMessage()    {}
-func (*OrderList) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{17}
+func (m *SpotOrderList) Reset()         { *m = SpotOrderList{} }
+func (m *SpotOrderList) String() string { return proto.CompactTextString(m) }
+func (*SpotOrderList) ProtoMessage()    {}
+func (*SpotOrderList) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{15}
 }
-func (m *OrderList) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_OrderList.Unmarshal(m, b)
+func (m *SpotOrderList) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_SpotOrderList.Unmarshal(m, b)
 }
-func (m *OrderList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_OrderList.Marshal(b, m, deterministic)
+func (m *SpotOrderList) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_SpotOrderList.Marshal(b, m, deterministic)
 }
-func (dst *OrderList) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_OrderList.Merge(dst, src)
+func (dst *SpotOrderList) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_SpotOrderList.Merge(dst, src)
 }
-func (m *OrderList) XXX_Size() int {
-	return xxx_messageInfo_OrderList.Size(m)
+func (m *SpotOrderList) XXX_Size() int {
+	return xxx_messageInfo_SpotOrderList.Size(m)
 }
-func (m *OrderList) XXX_DiscardUnknown() {
-	xxx_messageInfo_OrderList.DiscardUnknown(m)
+func (m *SpotOrderList) XXX_DiscardUnknown() {
+	xxx_messageInfo_SpotOrderList.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_OrderList proto.InternalMessageInfo
+var xxx_messageInfo_SpotOrderList proto.InternalMessageInfo
 
-func (m *OrderList) GetList() []*Order {
+func (m *SpotOrderList) GetList() []*SpotOrder {
 	if m != nil {
 		return m.List
 	}
 	return nil
 }
 
-func (m *OrderList) GetPrimaryKey() string {
+func (m *SpotOrderList) GetPrimaryKey() string {
 	if m != nil {
 		return m.PrimaryKey
 	}
@@ -1620,61 +1544,61 @@ func (m *OrderList) GetPrimaryKey() string {
 }
 
 // exchange执行票据日志
-type ReceiptExchange struct {
-	Order                *Order   `protobuf:"bytes,1,opt,name=order,proto3" json:"order,omitempty"`
-	MatchOrders          []*Order `protobuf:"bytes,2,rep,name=matchOrders,proto3" json:"matchOrders,omitempty"`
-	Index                int64    `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
-	XXX_NoUnkeyedLiteral struct{} `json:"-"`
-	XXX_unrecognized     []byte   `json:"-"`
-	XXX_sizecache        int32    `json:"-"`
+type ReceiptSpotMatch struct {
+	Order                *SpotOrder   `protobuf:"bytes,1,opt,name=order,proto3" json:"order,omitempty"`
+	MatchOrders          []*SpotOrder `protobuf:"bytes,2,rep,name=matchOrders,proto3" json:"matchOrders,omitempty"`
+	Index                int64        `protobuf:"varint,3,opt,name=index,proto3" json:"index,omitempty"`
+	XXX_NoUnkeyedLiteral struct{}     `json:"-"`
+	XXX_unrecognized     []byte       `json:"-"`
+	XXX_sizecache        int32        `json:"-"`
 }
 
-func (m *ReceiptExchange) Reset()         { *m = ReceiptExchange{} }
-func (m *ReceiptExchange) String() string { return proto.CompactTextString(m) }
-func (*ReceiptExchange) ProtoMessage()    {}
-func (*ReceiptExchange) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{18}
+func (m *ReceiptSpotMatch) Reset()         { *m = ReceiptSpotMatch{} }
+func (m *ReceiptSpotMatch) String() string { return proto.CompactTextString(m) }
+func (*ReceiptSpotMatch) ProtoMessage()    {}
+func (*ReceiptSpotMatch) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{16}
 }
-func (m *ReceiptExchange) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReceiptExchange.Unmarshal(m, b)
+func (m *ReceiptSpotMatch) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReceiptSpotMatch.Unmarshal(m, b)
 }
-func (m *ReceiptExchange) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReceiptExchange.Marshal(b, m, deterministic)
+func (m *ReceiptSpotMatch) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReceiptSpotMatch.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptExchange) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptExchange.Merge(dst, src)
+func (dst *ReceiptSpotMatch) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptSpotMatch.Merge(dst, src)
 }
-func (m *ReceiptExchange) XXX_Size() int {
-	return xxx_messageInfo_ReceiptExchange.Size(m)
+func (m *ReceiptSpotMatch) XXX_Size() int {
+	return xxx_messageInfo_ReceiptSpotMatch.Size(m)
 }
-func (m *ReceiptExchange) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReceiptExchange.DiscardUnknown(m)
+func (m *ReceiptSpotMatch) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReceiptSpotMatch.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ReceiptExchange proto.InternalMessageInfo
+var xxx_messageInfo_ReceiptSpotMatch proto.InternalMessageInfo
 
-func (m *ReceiptExchange) GetOrder() *Order {
+func (m *ReceiptSpotMatch) GetOrder() *SpotOrder {
 	if m != nil {
 		return m.Order
 	}
 	return nil
 }
 
-func (m *ReceiptExchange) GetMatchOrders() []*Order {
+func (m *ReceiptSpotMatch) GetMatchOrders() []*SpotOrder {
 	if m != nil {
 		return m.MatchOrders
 	}
 	return nil
 }
 
-func (m *ReceiptExchange) GetIndex() int64 {
+func (m *ReceiptSpotMatch) GetIndex() int64 {
 	if m != nil {
 		return m.Index
 	}
 	return 0
 }
 
-type ReceiptExchangeBind struct {
+type ReceiptDexBind struct {
 	// 交易地址
 	ExchangeAddress string `protobuf:"bytes,1,opt,name=exchangeAddress,proto3" json:"exchangeAddress,omitempty"`
 	// 委托地址
@@ -1686,45 +1610,45 @@ type ReceiptExchangeBind struct {
 	XXX_sizecache        int32    `json:"-"`
 }
 
-func (m *ReceiptExchangeBind) Reset()         { *m = ReceiptExchangeBind{} }
-func (m *ReceiptExchangeBind) String() string { return proto.CompactTextString(m) }
-func (*ReceiptExchangeBind) ProtoMessage()    {}
-func (*ReceiptExchangeBind) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{19}
+func (m *ReceiptDexBind) Reset()         { *m = ReceiptDexBind{} }
+func (m *ReceiptDexBind) String() string { return proto.CompactTextString(m) }
+func (*ReceiptDexBind) ProtoMessage()    {}
+func (*ReceiptDexBind) Descriptor() ([]byte, []int) {
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{17}
 }
-func (m *ReceiptExchangeBind) XXX_Unmarshal(b []byte) error {
-	return xxx_messageInfo_ReceiptExchangeBind.Unmarshal(m, b)
+func (m *ReceiptDexBind) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_ReceiptDexBind.Unmarshal(m, b)
 }
-func (m *ReceiptExchangeBind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
-	return xxx_messageInfo_ReceiptExchangeBind.Marshal(b, m, deterministic)
+func (m *ReceiptDexBind) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_ReceiptDexBind.Marshal(b, m, deterministic)
 }
-func (dst *ReceiptExchangeBind) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_ReceiptExchangeBind.Merge(dst, src)
+func (dst *ReceiptDexBind) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_ReceiptDexBind.Merge(dst, src)
 }
-func (m *ReceiptExchangeBind) XXX_Size() int {
-	return xxx_messageInfo_ReceiptExchangeBind.Size(m)
+func (m *ReceiptDexBind) XXX_Size() int {
+	return xxx_messageInfo_ReceiptDexBind.Size(m)
 }
-func (m *ReceiptExchangeBind) XXX_DiscardUnknown() {
-	xxx_messageInfo_ReceiptExchangeBind.DiscardUnknown(m)
+func (m *ReceiptDexBind) XXX_DiscardUnknown() {
+	xxx_messageInfo_ReceiptDexBind.DiscardUnknown(m)
 }
 
-var xxx_messageInfo_ReceiptExchangeBind proto.InternalMessageInfo
+var xxx_messageInfo_ReceiptDexBind proto.InternalMessageInfo
 
-func (m *ReceiptExchangeBind) GetExchangeAddress() string {
+func (m *ReceiptDexBind) GetExchangeAddress() string {
 	if m != nil {
 		return m.ExchangeAddress
 	}
 	return ""
 }
 
-func (m *ReceiptExchangeBind) GetNewEntrustAddress() string {
+func (m *ReceiptDexBind) GetNewEntrustAddress() string {
 	if m != nil {
 		return m.NewEntrustAddress
 	}
 	return ""
 }
 
-func (m *ReceiptExchangeBind) GetOldEntrustAddress() string {
+func (m *ReceiptDexBind) GetOldEntrustAddress() string {
 	if m != nil {
 		return m.OldEntrustAddress
 	}
@@ -1748,7 +1672,7 @@ func (m *DexAccountBalance) Reset()         { *m = DexAccountBalance{} }
 func (m *DexAccountBalance) String() string { return proto.CompactTextString(m) }
 func (*DexAccountBalance) ProtoMessage()    {}
 func (*DexAccountBalance) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{20}
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{18}
 }
 func (m *DexAccountBalance) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DexAccountBalance.Unmarshal(m, b)
@@ -1818,7 +1742,7 @@ func (m *DexAccount) Reset()         { *m = DexAccount{} }
 func (m *DexAccount) String() string { return proto.CompactTextString(m) }
 func (*DexAccount) ProtoMessage()    {}
 func (*DexAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{21}
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{19}
 }
 func (m *DexAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DexAccount.Unmarshal(m, b)
@@ -1879,7 +1803,7 @@ func (m *TradeAccounts) Reset()         { *m = TradeAccounts{} }
 func (m *TradeAccounts) String() string { return proto.CompactTextString(m) }
 func (*TradeAccounts) ProtoMessage()    {}
 func (*TradeAccounts) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{22}
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{20}
 }
 func (m *TradeAccounts) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_TradeAccounts.Unmarshal(m, b)
@@ -1938,7 +1862,7 @@ func (m *MatchInfo) Reset()         { *m = MatchInfo{} }
 func (m *MatchInfo) String() string { return proto.CompactTextString(m) }
 func (*MatchInfo) ProtoMessage()    {}
 func (*MatchInfo) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{23}
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{21}
 }
 func (m *MatchInfo) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_MatchInfo.Unmarshal(m, b)
@@ -2006,7 +1930,7 @@ func (m *ReceiptSpotTrade) Reset()         { *m = ReceiptSpotTrade{} }
 func (m *ReceiptSpotTrade) String() string { return proto.CompactTextString(m) }
 func (*ReceiptSpotTrade) ProtoMessage()    {}
 func (*ReceiptSpotTrade) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{24}
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{22}
 }
 func (m *ReceiptSpotTrade) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptSpotTrade.Unmarshal(m, b)
@@ -2059,7 +1983,7 @@ func (m *ReceiptDexAccount) Reset()         { *m = ReceiptDexAccount{} }
 func (m *ReceiptDexAccount) String() string { return proto.CompactTextString(m) }
 func (*ReceiptDexAccount) ProtoMessage()    {}
 func (*ReceiptDexAccount) Descriptor() ([]byte, []int) {
-	return fileDescriptor_spot_84029154a76d2eed, []int{25}
+	return fileDescriptor_spot_442b6ff8ea939d3e, []int{23}
 }
 func (m *ReceiptDexAccount) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_ReceiptDexAccount.Unmarshal(m, b)
@@ -2094,26 +2018,24 @@ func (m *ReceiptDexAccount) GetCurrent() *DexAccount {
 }
 
 func init() {
-	proto.RegisterType((*Exchange)(nil), "types.Exchange")
-	proto.RegisterType((*ExchangeAction)(nil), "types.ExchangeAction")
+	proto.RegisterType((*SpotAction)(nil), "types.SpotAction")
 	proto.RegisterType((*ZkOrder)(nil), "types.ZkOrder")
-	proto.RegisterType((*LimitOrder)(nil), "types.LimitOrder")
-	proto.RegisterType((*MarketOrder)(nil), "types.MarketOrder")
-	proto.RegisterType((*ExchangeBind)(nil), "types.ExchangeBind")
-	proto.RegisterType((*EntrustOrder)(nil), "types.EntrustOrder")
-	proto.RegisterType((*EntrustRevokeOrder)(nil), "types.EntrustRevokeOrder")
-	proto.RegisterType((*RevokeOrder)(nil), "types.RevokeOrder")
-	proto.RegisterType((*Asset)(nil), "types.asset")
-	proto.RegisterType((*Order)(nil), "types.Order")
-	proto.RegisterType((*QueryMarketDepth)(nil), "types.QueryMarketDepth")
-	proto.RegisterType((*MarketDepth)(nil), "types.MarketDepth")
-	proto.RegisterType((*MarketDepthList)(nil), "types.MarketDepthList")
-	proto.RegisterType((*QueryHistoryOrderList)(nil), "types.QueryHistoryOrderList")
-	proto.RegisterType((*QueryOrder)(nil), "types.QueryOrder")
-	proto.RegisterType((*QueryOrderList)(nil), "types.QueryOrderList")
-	proto.RegisterType((*OrderList)(nil), "types.OrderList")
-	proto.RegisterType((*ReceiptExchange)(nil), "types.ReceiptExchange")
-	proto.RegisterType((*ReceiptExchangeBind)(nil), "types.ReceiptExchangeBind")
+	proto.RegisterType((*SpotLimitOrder)(nil), "types.SpotLimitOrder")
+	proto.RegisterType((*SpotMarketOrder)(nil), "types.SpotMarketOrder")
+	proto.RegisterType((*SpotExchangeBind)(nil), "types.SpotExchangeBind")
+	proto.RegisterType((*SpotEntrustOrder)(nil), "types.SpotEntrustOrder")
+	proto.RegisterType((*SpotEntrustRevokeOrder)(nil), "types.SpotEntrustRevokeOrder")
+	proto.RegisterType((*SpotRevokeOrder)(nil), "types.SpotRevokeOrder")
+	proto.RegisterType((*SpotOrder)(nil), "types.SpotOrder")
+	proto.RegisterType((*SpotQueryMarketDepth)(nil), "types.SpotQueryMarketDepth")
+	proto.RegisterType((*SpotMarketDepth)(nil), "types.SpotMarketDepth")
+	proto.RegisterType((*SpotMarketDepthList)(nil), "types.SpotMarketDepthList")
+	proto.RegisterType((*SpotQueryHistoryOrderList)(nil), "types.SpotQueryHistoryOrderList")
+	proto.RegisterType((*SpotQueryOrder)(nil), "types.SpotQueryOrder")
+	proto.RegisterType((*SpotQueryOrderList)(nil), "types.SpotQueryOrderList")
+	proto.RegisterType((*SpotOrderList)(nil), "types.SpotOrderList")
+	proto.RegisterType((*ReceiptSpotMatch)(nil), "types.ReceiptSpotMatch")
+	proto.RegisterType((*ReceiptDexBind)(nil), "types.ReceiptDexBind")
 	proto.RegisterType((*DexAccountBalance)(nil), "types.DexAccountBalance")
 	proto.RegisterType((*DexAccount)(nil), "types.DexAccount")
 	proto.RegisterType((*TradeAccounts)(nil), "types.TradeAccounts")
@@ -2130,125 +2052,123 @@ var _ grpc.ClientConn
 // is compatible with the grpc package it is being compiled against.
 const _ = grpc.SupportPackageIsVersion4
 
-// ExchangeClient is the client API for Exchange service.
+// ZkspotClient is the client API for Zkspot service.
 //
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
-type ExchangeClient interface {
+type ZkspotClient interface {
 }
 
-type exchangeClient struct {
+type zkspotClient struct {
 	cc *grpc.ClientConn
 }
 
-func NewExchangeClient(cc *grpc.ClientConn) ExchangeClient {
-	return &exchangeClient{cc}
+func NewZkspotClient(cc *grpc.ClientConn) ZkspotClient {
+	return &zkspotClient{cc}
 }
 
-// ExchangeServer is the server API for Exchange service.
-type ExchangeServer interface {
+// ZkspotServer is the server API for Zkspot service.
+type ZkspotServer interface {
 }
 
-func RegisterExchangeServer(s *grpc.Server, srv ExchangeServer) {
-	s.RegisterService(&_Exchange_serviceDesc, srv)
+func RegisterZkspotServer(s *grpc.Server, srv ZkspotServer) {
+	s.RegisterService(&_Zkspot_serviceDesc, srv)
 }
 
-var _Exchange_serviceDesc = grpc.ServiceDesc{
-	ServiceName: "types.exchange",
-	HandlerType: (*ExchangeServer)(nil),
+var _Zkspot_serviceDesc = grpc.ServiceDesc{
+	ServiceName: "types.zkspot",
+	HandlerType: (*ZkspotServer)(nil),
 	Methods:     []grpc.MethodDesc{},
 	Streams:     []grpc.StreamDesc{},
 	Metadata:    "spot.proto",
 }
 
-func init() { proto.RegisterFile("spot.proto", fileDescriptor_spot_84029154a76d2eed) }
+func init() { proto.RegisterFile("spot.proto", fileDescriptor_spot_442b6ff8ea939d3e) }
 
-var fileDescriptor_spot_84029154a76d2eed = []byte{
-	// 1384 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x58, 0xcd, 0x6f, 0x1b, 0x45,
-	0x14, 0xef, 0x7e, 0x38, 0xae, 0x9f, 0x63, 0x27, 0x99, 0x16, 0xb4, 0x14, 0x54, 0x45, 0x0b, 0xa4,
-	0x11, 0x54, 0x09, 0x4d, 0x24, 0x10, 0xc7, 0x58, 0xfd, 0x48, 0xd5, 0x86, 0x8f, 0x69, 0xa9, 0x44,
-	0x2f, 0xb0, 0xf1, 0x3e, 0xdb, 0x2b, 0xdb, 0xbb, 0xab, 0xdd, 0x71, 0x1a, 0x17, 0x89, 0x0b, 0x12,
-	0x12, 0x27, 0x84, 0x84, 0x7a, 0xe1, 0xc8, 0x89, 0x0b, 0x7f, 0x05, 0xe2, 0xca, 0xbf, 0x84, 0xe6,
-	0xcd, 0xec, 0xee, 0xac, 0x9d, 0xd0, 0x42, 0x41, 0x9c, 0xea, 0xf7, 0x35, 0xef, 0xf7, 0xbe, 0x37,
-	0x05, 0xc8, 0xd3, 0x44, 0xec, 0xa4, 0x59, 0x22, 0x12, 0xd6, 0x10, 0xf3, 0x14, 0xf3, 0x2b, 0x9d,
-	0x27, 0x91, 0x88, 0x31, 0xcf, 0x15, 0xd7, 0x07, 0xb8, 0x78, 0xeb, 0xb4, 0x3f, 0x0a, 0xe2, 0x21,
-	0xfa, 0x3f, 0x38, 0xd0, 0x2d, 0x88, 0x83, 0xbe, 0x88, 0x92, 0x98, 0xed, 0x03, 0x4c, 0xa2, 0x69,
-	0x24, 0x3e, 0xce, 0x42, 0xcc, 0x3c, 0x6b, 0xd3, 0xda, 0x6e, 0xef, 0x6d, 0xec, 0xd0, 0x4b, 0x3b,
-	0xf7, 0x4b, 0xc1, 0xe1, 0x05, 0x6e, 0xa8, 0xb1, 0xf7, 0xa1, 0x3d, 0x0d, 0xb2, 0x31, 0x6a, 0x2b,
-	0x9b, 0xac, 0x98, 0xb6, 0x3a, 0xaa, 0x24, 0x87, 0x17, 0xb8, 0xa9, 0x28, 0xed, 0x32, 0x3c, 0x49,
-	0xc6, 0xa8, 0xec, 0x9c, 0x9a, 0x1d, 0xaf, 0x24, 0xd2, 0xce, 0x50, 0x64, 0x1f, 0xc2, 0x2a, 0x6a,
-	0xd8, 0xbd, 0x28, 0x0e, 0x3d, 0x97, 0x0c, 0x2f, 0x69, 0xc3, 0x5b, 0x86, 0xe8, 0xf0, 0x02, 0xaf,
-	0xa9, 0x92, 0x69, 0x2c, 0xb2, 0x59, 0xae, 0xb1, 0x36, 0xea, 0xa6, 0x86, 0x88, 0x4c, 0x0d, 0x9a,
-	0xdd, 0x03, 0xa6, 0x69, 0x03, 0x9a, 0xd7, 0xa4, 0x07, 0x5e, 0xab, 0x3f, 0x50, 0xc7, 0x7e, 0x86,
-	0x19, 0xeb, 0x82, 0x2d, 0xe6, 0xde, 0xca, 0xa6, 0xb5, 0xdd, 0xe0, 0xb6, 0x98, 0xf7, 0x9a, 0xd0,
-	0x38, 0x09, 0x26, 0x33, 0xf4, 0xff, 0xb0, 0xa1, 0xf9, 0x78, 0xac, 0x94, 0xde, 0x80, 0x56, 0xd0,
-	0xef, 0x27, 0xb3, 0x58, 0xdc, 0xbd, 0x49, 0xb5, 0x70, 0x79, 0xc5, 0x60, 0x57, 0x01, 0x50, 0x8c,
-	0x0e, 0xc2, 0x30, 0xc3, 0x3c, 0xa7, 0xa4, 0xb7, 0xb8, 0xc1, 0x61, 0x97, 0xa1, 0x11, 0x27, 0x71,
-	0x1f, 0x29, 0xaf, 0x2e, 0x57, 0x84, 0x7c, 0x53, 0x24, 0x63, 0x8c, 0x1f, 0xe0, 0x64, 0x42, 0x89,
-	0xeb, 0xf0, 0x8a, 0xc1, 0xae, 0xc0, 0x45, 0x22, 0x7a, 0xb3, 0x39, 0xa5, 0xa6, 0xc3, 0x4b, 0x9a,
-	0xbd, 0x0a, 0x2b, 0xc1, 0x54, 0xfa, 0x26, 0xd8, 0x2e, 0xd7, 0x94, 0xe4, 0x67, 0x81, 0x88, 0x92,
-	0x1b, 0x94, 0x8b, 0x0e, 0xd7, 0x54, 0xc9, 0xdf, 0xf3, 0x2e, 0x1a, 0xfc, 0x3d, 0x89, 0xe0, 0x24,
-	0x98, 0x44, 0xe1, 0xed, 0x2c, 0x99, 0x7a, 0x2d, 0x15, 0x55, 0xc9, 0x90, 0x51, 0x11, 0xf1, 0x59,
-	0x2c, 0xa2, 0x89, 0x07, 0x24, 0x36, 0x38, 0xec, 0x3d, 0x68, 0xe5, 0xd1, 0x30, 0x0e, 0xc4, 0x2c,
-	0x43, 0xef, 0x72, 0xad, 0x63, 0x1e, 0x8f, 0x1f, 0x14, 0x12, 0x5e, 0x29, 0xf9, 0xbf, 0x5a, 0x00,
-	0x55, 0xeb, 0x4a, 0xf7, 0x13, 0x1c, 0x88, 0x83, 0x3c, 0x47, 0x41, 0x49, 0xed, 0xf0, 0x8a, 0x21,
-	0xdd, 0x67, 0xd1, 0x70, 0xa4, 0xc5, 0x36, 0x89, 0x0d, 0x8e, 0x4c, 0x6a, 0x9a, 0x45, 0x3a, 0xa9,
-	0x0e, 0x57, 0x84, 0x91, 0x1a, 0x97, 0xd8, 0x45, 0x6a, 0xba, 0x60, 0x27, 0x29, 0x25, 0xb2, 0xc1,
-	0xed, 0x24, 0x65, 0x6f, 0x41, 0x23, 0xa1, 0xae, 0x59, 0x21, 0xe0, 0xdd, 0x12, 0x38, 0x41, 0xe3,
-	0x4a, 0xe8, 0x7f, 0x6f, 0x41, 0xdb, 0x98, 0x1a, 0xf6, 0xce, 0x22, 0xe2, 0xf6, 0xde, 0xaa, 0xb6,
-	0x0c, 0x24, 0xcf, 0xc4, 0x7f, 0x7d, 0x09, 0xff, 0xa2, 0xb2, 0x19, 0x4d, 0x85, 0xdb, 0x39, 0x03,
-	0xb7, 0x5b, 0xe0, 0xf6, 0xbf, 0x84, 0x55, 0x73, 0xaa, 0xd8, 0x36, 0xac, 0x15, 0x53, 0x55, 0xf4,
-	0x9f, 0x45, 0xfd, 0xb7, 0xc8, 0x66, 0x5b, 0xd0, 0xd5, 0xdd, 0x5f, 0x6f, 0xd4, 0x05, 0xae, 0xff,
-	0x9b, 0x05, 0xab, 0xe6, 0xf4, 0xfd, 0xaf, 0x65, 0x62, 0xe0, 0x06, 0x61, 0xa8, 0xaa, 0xd4, 0xe2,
-	0xf4, 0xbb, 0x2a, 0x5d, 0xf3, 0xaf, 0x4a, 0xd7, 0x03, 0xb6, 0xbc, 0x02, 0x98, 0x07, 0x4d, 0x12,
-	0xeb, 0x29, 0x76, 0x78, 0x41, 0x96, 0x9e, 0xec, 0xca, 0x93, 0x7f, 0x0d, 0xda, 0x2f, 0x64, 0xec,
-	0x7f, 0x00, 0x8d, 0xa0, 0x28, 0x23, 0x9e, 0x62, 0x5f, 0x2f, 0xec, 0x16, 0xd7, 0x94, 0xe4, 0xe7,
-	0xf3, 0xe9, 0x71, 0x32, 0xd1, 0xef, 0x6b, 0xca, 0xff, 0xdd, 0x85, 0xc6, 0xf3, 0x90, 0xd5, 0x0f,
-	0x81, 0xfd, 0x8f, 0x0e, 0x81, 0xf3, 0xa2, 0x87, 0x40, 0x6d, 0x43, 0xb7, 0xd8, 0x86, 0x72, 0x0d,
-	0xc9, 0x10, 0x66, 0x02, 0x43, 0x2a, 0x8b, 0xc3, 0x4b, 0x9a, 0xbd, 0x0e, 0xad, 0x83, 0x47, 0x77,
-	0xbe, 0x50, 0xe5, 0x5d, 0x51, 0xc2, 0x83, 0x47, 0x77, 0x3e, 0xa1, 0x0a, 0x7b, 0xd0, 0x3c, 0x0e,
-	0x26, 0x81, 0xdc, 0x7a, 0x4d, 0x15, 0x8f, 0x26, 0x29, 0x17, 0x22, 0x10, 0xb3, 0x9c, 0xb6, 0x51,
-	0x83, 0x6b, 0xaa, 0xac, 0x40, 0xcb, 0xa8, 0xf5, 0x55, 0x80, 0x59, 0x1a, 0x06, 0x02, 0x1f, 0x46,
-	0x53, 0xa4, 0x1d, 0xe4, 0x70, 0x83, 0x23, 0xbb, 0x2b, 0x8a, 0x43, 0x3c, 0xf5, 0xda, 0xaa, 0xbb,
-	0x88, 0x90, 0x2f, 0x65, 0x81, 0x40, 0x6f, 0x95, 0xde, 0xa7, 0xdf, 0x6c, 0x13, 0xda, 0x61, 0x34,
-	0xc4, 0x5c, 0x60, 0x78, 0x1b, 0xd1, 0xeb, 0x90, 0xbe, 0xc9, 0xa2, 0x7d, 0x1c, 0x8c, 0x31, 0xe3,
-	0xd2, 0xb4, 0x4b, 0xa6, 0x15, 0x43, 0xbe, 0x39, 0x0a, 0xf2, 0x91, 0xb7, 0xa6, 0xd0, 0xc9, 0xdf,
-	0xd4, 0xfb, 0xd4, 0x1f, 0x87, 0x52, 0xb2, 0xae, 0xf6, 0x7e, 0xc5, 0x91, 0xf2, 0x7e, 0x86, 0x05,
-	0xfa, 0x0d, 0x85, 0xbe, 0xe2, 0x48, 0x4c, 0xc6, 0xf0, 0x79, 0x8c, 0x1e, 0x30, 0x59, 0xf2, 0x85,
-	0x01, 0x62, 0x4f, 0x27, 0xf2, 0x92, 0x7a, 0xa1, 0xe2, 0x54, 0xc7, 0xea, 0x99, 0x05, 0xeb, 0x9f,
-	0xce, 0x30, 0x9b, 0xab, 0xda, 0xde, 0xc4, 0x54, 0x8c, 0x5e, 0x72, 0x72, 0xd5, 0x2c, 0x3a, 0xe5,
-	0x2c, 0x5e, 0x05, 0x48, 0xb3, 0x68, 0x1a, 0x64, 0xf3, 0x7b, 0xa8, 0x5a, 0xa4, 0xc5, 0x0d, 0x8e,
-	0xac, 0x05, 0x1d, 0x44, 0x3d, 0xbe, 0x8a, 0xf0, 0xbf, 0x2b, 0x57, 0xe8, 0xbf, 0x81, 0xe9, 0xa5,
-	0xb6, 0x89, 0xff, 0x39, 0xac, 0x19, 0x50, 0xee, 0x47, 0xb9, 0x60, 0x5b, 0xe0, 0x4e, 0xa2, 0x5c,
-	0x22, 0x71, 0x96, 0x06, 0x84, 0xb4, 0x38, 0xc9, 0x17, 0x82, 0xb7, 0x17, 0x83, 0xf7, 0x7f, 0xb1,
-	0xe0, 0x15, 0xca, 0xff, 0x61, 0x94, 0x8b, 0x24, 0x9b, 0xd3, 0x34, 0x91, 0x87, 0x97, 0x0b, 0xb8,
-	0xee, 0xd7, 0x39, 0x3f, 0xe9, 0xae, 0x91, 0x74, 0xe9, 0x33, 0x8c, 0x32, 0xa4, 0x0f, 0x49, 0x1d,
-	0x7f, 0xc5, 0xf0, 0xb7, 0x00, 0x08, 0xea, 0xf3, 0xb6, 0xda, 0x33, 0x0b, 0xba, 0x95, 0x22, 0x05,
-	0x53, 0xcd, 0xae, 0x55, 0x9b, 0x5d, 0x0f, 0x9a, 0x41, 0xed, 0xaa, 0x14, 0xe4, 0x7f, 0x12, 0xc0,
-	0x11, 0xb4, 0x2a, 0x48, 0x9b, 0xb5, 0x0a, 0x16, 0x17, 0x56, 0xdd, 0x82, 0x17, 0xab, 0xdd, 0x57,
-	0xb0, 0xc6, 0xb1, 0x8f, 0x51, 0x2a, 0x8a, 0xd3, 0xca, 0xfc, 0xe2, 0xc6, 0xd4, 0x8f, 0xbc, 0x79,
-	0x61, 0xd8, 0x8e, 0x5c, 0xb1, 0xa2, 0x3f, 0x22, 0xa6, 0x8c, 0x7b, 0xd9, 0xbf, 0xa9, 0x50, 0xed,
-	0x2a, 0xc7, 0xd8, 0x55, 0xfe, 0x4f, 0x16, 0x5c, 0x5a, 0xf0, 0xfe, 0x37, 0x0f, 0xfb, 0x75, 0xd8,
-	0x88, 0xf1, 0xc9, 0xad, 0xb3, 0x6e, 0xfb, 0xb2, 0x40, 0x6a, 0x27, 0x93, 0x70, 0x41, 0x5b, 0x95,
-	0x65, 0x59, 0xe0, 0x7f, 0x63, 0xc1, 0xc6, 0x4d, 0x3c, 0x3d, 0x50, 0x9f, 0xba, 0x7a, 0xeb, 0xc8,
-	0xb9, 0x8a, 0x42, 0xdd, 0xcb, 0x76, 0x14, 0x9a, 0xbb, 0xde, 0xa6, 0xcf, 0x44, 0x73, 0xd7, 0x0f,
-	0xb2, 0xe4, 0x29, 0xc6, 0xfa, 0xd3, 0x57, 0x53, 0xe5, 0xae, 0x77, 0x8d, 0x5d, 0xef, 0x41, 0x33,
-	0xc4, 0xd3, 0x8f, 0x82, 0x29, 0x52, 0xc5, 0x5b, 0xbc, 0x20, 0xfd, 0xaf, 0x01, 0x2a, 0x10, 0x86,
-	0x77, 0x97, 0xbc, 0x9f, 0x71, 0xb9, 0xd9, 0x5e, 0x85, 0xc8, 0xa1, 0xba, 0x78, 0xba, 0x2e, 0x4b,
-	0xc1, 0x54, 0x58, 0x0d, 0xff, 0x6e, 0xdd, 0xff, 0xb7, 0x16, 0x74, 0x1e, 0x66, 0x41, 0x88, 0xda,
-	0x34, 0x67, 0xd7, 0xa0, 0x41, 0xa7, 0x61, 0xe1, 0xef, 0xb2, 0xea, 0x75, 0xae, 0xe4, 0x52, 0x71,
-	0x4a, 0x8a, 0xf6, 0xb9, 0x8a, 0x24, 0x67, 0x6f, 0x82, 0x33, 0x40, 0xd4, 0x87, 0xfa, 0x0c, 0x35,
-	0x29, 0xf5, 0x7f, 0xb6, 0xa0, 0x75, 0x24, 0x5b, 0xea, 0x6e, 0x3c, 0x48, 0x24, 0x60, 0xea, 0x2f,
-	0x0c, 0x8b, 0xc9, 0xd5, 0xa4, 0x3c, 0x2c, 0x72, 0xc5, 0xf4, 0x8c, 0xa2, 0x38, 0xdc, 0x64, 0x31,
-	0x1f, 0x56, 0x69, 0xcb, 0xf4, 0xca, 0x2c, 0x49, 0x95, 0x1a, 0x4f, 0xde, 0xfe, 0x01, 0xe2, 0x43,
-	0x82, 0xaf, 0x16, 0x6b, 0x49, 0x6b, 0xd9, 0x51, 0x20, 0xf4, 0x5f, 0x6e, 0x4a, 0x46, 0xb4, 0xff,
-	0xa3, 0x05, 0xeb, 0xba, 0xa5, 0x1f, 0xa4, 0x89, 0xa0, 0xcc, 0xb1, 0x2d, 0x68, 0x10, 0x72, 0x9d,
-	0xb1, 0xf5, 0x72, 0xd3, 0xea, 0x68, 0xb8, 0x12, 0xb3, 0x6d, 0x70, 0xd3, 0x0c, 0x4f, 0x74, 0xbe,
-	0x2e, 0x6b, 0xb5, 0x5a, 0xf6, 0x39, 0x69, 0xb0, 0x1d, 0x68, 0xf6, 0x67, 0x59, 0x86, 0xfa, 0x9b,
-	0xf9, 0x3c, 0xe5, 0x42, 0xc9, 0x1f, 0xc2, 0x86, 0x46, 0x65, 0x34, 0xd3, 0xdb, 0xda, 0xdd, 0xb9,
-	0x75, 0x54, 0xbe, 0xde, 0xad, 0x7c, 0x9d, 0x5b, 0xc8, 0x42, 0x63, 0x0f, 0xe4, 0x37, 0x93, 0x1e,
-	0xe5, 0x1b, 0x8f, 0x77, 0x87, 0x91, 0x18, 0xcd, 0x8e, 0x77, 0xfa, 0xc9, 0x74, 0x77, 0x7f, 0xbf,
-	0x1f, 0xef, 0xa6, 0x93, 0xd9, 0x30, 0x2a, 0xff, 0x09, 0x83, 0x34, 0xdd, 0x7d, 0x3a, 0xce, 0xd3,
-	0x44, 0xec, 0xd2, 0x93, 0xc7, 0x2b, 0xf4, 0xdf, 0x03, 0xfb, 0x7f, 0x06, 0x00, 0x00, 0xff, 0xff,
-	0x26, 0x73, 0x5d, 0xb9, 0x42, 0x10, 0x00, 0x00,
+var fileDescriptor_spot_442b6ff8ea939d3e = []byte{
+	// 1358 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xc4, 0x58, 0xcf, 0x6f, 0x1b, 0xc5,
+	0x17, 0xef, 0xfe, 0x70, 0x5c, 0xbf, 0xd4, 0x6e, 0x32, 0xcd, 0xb7, 0xdf, 0xa5, 0x40, 0x55, 0x2d,
+	0xa5, 0x44, 0x2d, 0x4a, 0x68, 0x7a, 0x40, 0x42, 0xe2, 0x10, 0x2b, 0x6d, 0x53, 0xd1, 0x52, 0x98,
+	0xfe, 0x38, 0xf4, 0x82, 0xb6, 0xbb, 0x2f, 0xf6, 0xca, 0xf6, 0xee, 0x6a, 0x77, 0x9c, 0xc4, 0x3d,
+	0x70, 0x01, 0x71, 0xe3, 0x86, 0x38, 0xf4, 0x8a, 0x38, 0x72, 0xe1, 0xaf, 0xe0, 0x86, 0xc4, 0x5f,
+	0x84, 0xe6, 0xcd, 0xec, 0xee, 0xac, 0xed, 0xd0, 0x96, 0x80, 0x38, 0xd5, 0xef, 0xd7, 0xcc, 0x67,
+	0xde, 0xe7, 0xfd, 0xd8, 0x14, 0xa0, 0xc8, 0x52, 0xb1, 0x95, 0xe5, 0xa9, 0x48, 0x59, 0x4b, 0xcc,
+	0x32, 0x2c, 0x2e, 0x75, 0x8f, 0x62, 0x91, 0x60, 0x51, 0x28, 0xad, 0xff, 0xb3, 0x03, 0xf0, 0x28,
+	0x4b, 0xc5, 0x6e, 0x28, 0xe2, 0x34, 0x61, 0x1f, 0x03, 0x8c, 0xe3, 0x49, 0x2c, 0x1e, 0xe6, 0x11,
+	0xe6, 0x9e, 0x75, 0xc5, 0xda, 0x5c, 0xdd, 0xf9, 0xdf, 0x16, 0x45, 0x6e, 0x49, 0xb7, 0xfb, 0x95,
+	0x71, 0xff, 0x0c, 0x37, 0x5c, 0xd9, 0x27, 0xb0, 0x3a, 0x09, 0xf2, 0x11, 0xea, 0x48, 0x9b, 0x22,
+	0x2f, 0x1a, 0x91, 0x0f, 0x6a, 0xeb, 0xfe, 0x19, 0x6e, 0x3a, 0xcb, 0xd8, 0x1c, 0x0f, 0xd3, 0x11,
+	0xaa, 0x58, 0x67, 0x21, 0x96, 0xd7, 0x56, 0x19, 0x6b, 0x38, 0xb3, 0x4f, 0xe1, 0x1c, 0x1e, 0x87,
+	0xc3, 0x20, 0x19, 0x60, 0x3f, 0x4e, 0x22, 0xcf, 0xa5, 0xe0, 0xff, 0x1b, 0xc1, 0xb7, 0x0d, 0xf3,
+	0xfe, 0x19, 0xde, 0x70, 0xa7, 0xf0, 0x44, 0xe4, 0xd3, 0x42, 0xe3, 0x6e, 0x2d, 0x86, 0x1b, 0x66,
+	0x0a, 0x37, 0x64, 0xf6, 0x10, 0x98, 0x96, 0x0d, 0x88, 0x5e, 0x9b, 0x0e, 0x79, 0x77, 0xf1, 0x90,
+	0xe6, 0x3b, 0x96, 0x84, 0xb2, 0x1e, 0xd8, 0x62, 0xe6, 0xad, 0x5c, 0xb1, 0x36, 0x5b, 0xdc, 0x16,
+	0xb3, 0x7e, 0x1b, 0x5a, 0x87, 0xc1, 0x78, 0x8a, 0xfe, 0xef, 0x36, 0xb4, 0x9f, 0x8d, 0x94, 0xd3,
+	0x3b, 0xd0, 0x09, 0xc2, 0x30, 0x9d, 0x26, 0xe2, 0xde, 0x1e, 0x71, 0xe4, 0xf2, 0x5a, 0xc1, 0x2e,
+	0x03, 0xa0, 0x18, 0xee, 0x46, 0x51, 0x8e, 0x45, 0x41, 0x44, 0x74, 0xb8, 0xa1, 0x61, 0x1b, 0xd0,
+	0x4a, 0xd2, 0x24, 0x44, 0xca, 0xb3, 0xcb, 0x95, 0x20, 0xcf, 0x14, 0xe9, 0x08, 0x93, 0x47, 0x38,
+	0x1e, 0x53, 0x12, 0xbb, 0xbc, 0x56, 0xb0, 0x4b, 0x70, 0x96, 0x84, 0xfe, 0x74, 0x46, 0x29, 0xea,
+	0xf2, 0x4a, 0x66, 0x17, 0x61, 0x25, 0x98, 0xc8, 0xbb, 0x09, 0xb6, 0xcb, 0xb5, 0x24, 0xf5, 0x79,
+	0x20, 0xe2, 0xf4, 0x26, 0xe5, 0xa3, 0xcb, 0xb5, 0x54, 0xe9, 0x77, 0xbc, 0xb3, 0x86, 0x7e, 0x47,
+	0x22, 0x38, 0x0c, 0xc6, 0x71, 0x74, 0x27, 0x4f, 0x27, 0x5e, 0x47, 0xbd, 0xaa, 0x52, 0xc8, 0x57,
+	0x91, 0xf0, 0x24, 0x11, 0xf1, 0xd8, 0x03, 0x32, 0x1b, 0x1a, 0xf6, 0x11, 0x74, 0x8a, 0x78, 0x90,
+	0x04, 0x62, 0x9a, 0xa3, 0xb7, 0x41, 0x04, 0x30, 0x4d, 0xc0, 0xb3, 0xd1, 0xa3, 0xd2, 0xc2, 0x6b,
+	0x27, 0xff, 0x57, 0x0b, 0x7a, 0xcd, 0x92, 0x96, 0x10, 0xc6, 0x78, 0x20, 0x76, 0x8b, 0x02, 0x05,
+	0x25, 0xb6, 0xcb, 0x6b, 0x85, 0x84, 0x90, 0xc7, 0x83, 0xa1, 0x36, 0xdb, 0x64, 0x36, 0x34, 0x32,
+	0xb1, 0x59, 0x1e, 0xeb, 0xc4, 0x3a, 0x5c, 0x09, 0x46, 0x7a, 0x5c, 0x52, 0x97, 0xe9, 0xe9, 0x81,
+	0x9d, 0x66, 0x94, 0xcc, 0x16, 0xb7, 0xd3, 0x8c, 0x5d, 0x85, 0x56, 0x4a, 0xd5, 0xb3, 0x42, 0xe0,
+	0x7b, 0x15, 0x78, 0x82, 0xc6, 0x95, 0xd1, 0x3f, 0x82, 0xf3, 0x73, 0xcd, 0x74, 0x4a, 0xd0, 0x35,
+	0x3c, 0x67, 0x09, 0x3c, 0xb7, 0x84, 0xe7, 0x47, 0xb0, 0x36, 0xdf, 0x4c, 0x6c, 0x13, 0xce, 0x97,
+	0xcd, 0x54, 0x96, 0x9b, 0x45, 0xe5, 0x36, 0xaf, 0x66, 0xd7, 0xa0, 0xa7, 0x8b, 0xbd, 0x59, 0x97,
+	0x73, 0x5a, 0xff, 0x37, 0x4b, 0x5f, 0x63, 0x36, 0xd9, 0x7f, 0xc9, 0x0a, 0x03, 0x37, 0x88, 0x22,
+	0x45, 0x4a, 0x87, 0xd3, 0xef, 0x9a, 0xa9, 0xf6, 0x5f, 0x31, 0x75, 0x07, 0x2e, 0x2e, 0xef, 0x7c,
+	0xe6, 0x41, 0x9b, 0x5c, 0x74, 0xf3, 0x3a, 0xbc, 0x14, 0xab, 0xdb, 0xec, 0xfa, 0x36, 0xff, 0x86,
+	0x62, 0xfc, 0xb5, 0x0e, 0xf0, 0xff, 0x70, 0xa1, 0x23, 0xbd, 0x5f, 0x75, 0x51, 0x73, 0xcc, 0xdb,
+	0x7f, 0x7b, 0xcc, 0x3b, 0x6f, 0x32, 0xe6, 0xd5, 0x6c, 0x73, 0xcb, 0xd9, 0x26, 0x87, 0x0a, 0x1e,
+	0x63, 0x38, 0x15, 0x18, 0x51, 0xc6, 0x1d, 0x5e, 0xc9, 0xec, 0x6d, 0xe8, 0xec, 0x3e, 0xbd, 0xfb,
+	0x95, 0x62, 0x6e, 0x45, 0x19, 0x77, 0x9f, 0xde, 0xfd, 0x82, 0xc8, 0xf3, 0xa0, 0xfd, 0x3c, 0x18,
+	0x07, 0x72, 0x86, 0xb5, 0xd5, 0xbb, 0xb4, 0x28, 0x69, 0x2d, 0x44, 0x20, 0xa6, 0x05, 0xcd, 0x96,
+	0x16, 0xd7, 0x52, 0x95, 0xd8, 0x8e, 0x41, 0xe3, 0x65, 0x80, 0x69, 0x16, 0x05, 0x02, 0x1f, 0xc7,
+	0x13, 0xa4, 0x89, 0xe2, 0x70, 0x43, 0x23, 0x0b, 0x27, 0x4e, 0x22, 0x3c, 0xf6, 0x56, 0x55, 0xe1,
+	0x90, 0x20, 0x4f, 0xca, 0x03, 0x81, 0xde, 0x39, 0x3a, 0x9f, 0x7e, 0xb3, 0x2b, 0xb0, 0x1a, 0xc5,
+	0x03, 0x2c, 0x04, 0x46, 0x77, 0x10, 0xbd, 0x2e, 0xf9, 0x9b, 0x2a, 0x9a, 0xae, 0xc1, 0x08, 0x73,
+	0x2e, 0x43, 0x7b, 0x14, 0x5a, 0x2b, 0xe4, 0x99, 0xc3, 0xa0, 0x18, 0x7a, 0xe7, 0x15, 0x3a, 0xf9,
+	0x9b, 0xca, 0x9a, 0x28, 0xdf, 0x97, 0x96, 0x35, 0x35, 0xc5, 0x6b, 0x8d, 0xb4, 0x87, 0x39, 0x96,
+	0xe8, 0xd7, 0x15, 0xfa, 0x5a, 0x23, 0x31, 0x19, 0xbd, 0xe5, 0x31, 0x3a, 0xc0, 0x54, 0xc9, 0x13,
+	0x0e, 0x10, 0xfb, 0x3a, 0x91, 0x17, 0xd4, 0x09, 0xb5, 0xa6, 0x5e, 0x3d, 0x2f, 0x2d, 0xd8, 0x90,
+	0xd4, 0x7e, 0x39, 0xc5, 0x7c, 0xa6, 0xf8, 0xdd, 0xc3, 0x4c, 0x0c, 0x4f, 0xd9, 0x98, 0xaa, 0xd5,
+	0x9c, 0xaa, 0xd5, 0x2e, 0x03, 0x64, 0x79, 0x3c, 0x09, 0xf2, 0xd9, 0x67, 0xa8, 0xca, 0xa4, 0xc3,
+	0x0d, 0x8d, 0xe4, 0x83, 0x56, 0x9c, 0xee, 0x4e, 0x25, 0xf8, 0xdf, 0x5b, 0xe6, 0x44, 0xfc, 0x27,
+	0x70, 0x9d, 0x6a, 0x60, 0xf8, 0x01, 0x5c, 0x98, 0x83, 0x73, 0x3f, 0x2e, 0x04, 0xbb, 0x0e, 0xee,
+	0x38, 0x2e, 0x24, 0x1a, 0x67, 0x69, 0xc3, 0x90, 0x27, 0x27, 0x9f, 0xb9, 0x44, 0xd8, 0xf3, 0x89,
+	0xf0, 0x7f, 0xb1, 0xe0, 0xad, 0x8a, 0x8f, 0xfd, 0xb8, 0x10, 0x69, 0x3e, 0xa3, 0x0e, 0xa3, 0x9b,
+	0x4e, 0xf7, 0xf8, 0xe6, 0xdd, 0xce, 0xc9, 0x24, 0xb8, 0x06, 0x09, 0xf2, 0xce, 0x28, 0xce, 0x91,
+	0x3e, 0x21, 0x75, 0x2e, 0x6a, 0x85, 0x7f, 0x5d, 0xed, 0x59, 0x82, 0xfb, 0xaa, 0x01, 0xf6, 0xd2,
+	0x02, 0xd6, 0x74, 0xa6, 0x47, 0xd5, 0x7d, 0x6d, 0x35, 0xfa, 0xda, 0x83, 0x76, 0xd0, 0x58, 0x28,
+	0xa5, 0xf8, 0xaf, 0x3c, 0xe4, 0x09, 0x74, 0xab, 0xe1, 0x4a, 0xb0, 0xae, 0x36, 0x58, 0x5d, 0x33,
+	0x58, 0x55, 0xab, 0xe0, 0xf5, 0xf8, 0xfc, 0xd6, 0x82, 0x35, 0x8e, 0x21, 0xc6, 0x99, 0x50, 0x05,
+	0x21, 0xc2, 0x21, 0xbb, 0x56, 0x2e, 0x19, 0xf5, 0x0d, 0xbe, 0x78, 0xb6, 0x32, 0xb3, 0x1d, 0x39,
+	0x90, 0x45, 0x38, 0x24, 0xa5, 0xcc, 0xc2, 0x72, 0x24, 0xa6, 0x53, 0x3d, 0xd9, 0x1c, 0x63, 0xb2,
+	0xf9, 0x3f, 0x5a, 0xd0, 0xd3, 0x30, 0xf6, 0xf0, 0xf8, 0x0d, 0x17, 0xfc, 0x87, 0xb0, 0x9e, 0xe0,
+	0xd1, 0xed, 0x65, 0x3b, 0x7e, 0xd1, 0x20, 0xbd, 0xd3, 0x71, 0x34, 0xe7, 0xad, 0x38, 0x5a, 0x34,
+	0xf8, 0xdf, 0x58, 0xb0, 0xbe, 0x87, 0xc7, 0xbb, 0xea, 0x0b, 0x57, 0x8f, 0x27, 0xd9, 0x78, 0x71,
+	0xa4, 0x0b, 0xdc, 0x8e, 0x23, 0x73, 0x29, 0xd8, 0xf4, 0x75, 0x68, 0x2e, 0x85, 0x83, 0x3c, 0x7d,
+	0x81, 0x89, 0xfe, 0xe2, 0xd5, 0x52, 0xb5, 0x14, 0x5c, 0x63, 0x29, 0x78, 0xd0, 0x8e, 0xf0, 0xf8,
+	0xf3, 0x60, 0x82, 0x44, 0x7f, 0x87, 0x97, 0xa2, 0xff, 0x35, 0x40, 0x0d, 0xc2, 0xb8, 0xdd, 0xa5,
+	0xdb, 0x97, 0x6c, 0x6e, 0xb6, 0x53, 0x23, 0x72, 0x88, 0x16, 0x4f, 0xd3, 0xb2, 0xf0, 0x98, 0x1a,
+	0xab, 0x71, 0xbf, 0xdb, 0xbc, 0xff, 0x3b, 0x0b, 0xba, 0x8f, 0xf3, 0x20, 0x42, 0x1d, 0x5a, 0xb0,
+	0x0f, 0xa0, 0x45, 0x3b, 0x44, 0x97, 0xc8, 0xfa, 0xc2, 0xe9, 0x5c, 0xd9, 0xa5, 0xe3, 0x84, 0x1c,
+	0xed, 0x13, 0x1d, 0xc9, 0xce, 0xde, 0x03, 0xe7, 0x00, 0x51, 0x6f, 0xf5, 0x25, 0x6e, 0xd2, 0xea,
+	0xff, 0x64, 0x41, 0x87, 0x6a, 0xf4, 0x5e, 0x72, 0x90, 0x4a, 0xc0, 0x54, 0x5a, 0x18, 0x95, 0xad,
+	0xac, 0x45, 0xb9, 0x81, 0xe4, 0xdc, 0xe9, 0x1b, 0xa4, 0x38, 0xdc, 0x54, 0x31, 0x1f, 0xce, 0xd1,
+	0xe8, 0xe9, 0x57, 0x59, 0x92, 0x2e, 0x0d, 0x9d, 0xfc, 0x48, 0x38, 0x40, 0x7c, 0x4c, 0xf0, 0xd5,
+	0xe4, 0xad, 0x64, 0x6d, 0x7b, 0x10, 0x08, 0xfd, 0x87, 0x9b, 0xb2, 0x91, 0xec, 0xff, 0xd0, 0x6c,
+	0x2a, 0xca, 0x9c, 0x6c, 0x2a, 0x42, 0x3e, 0xd7, 0x54, 0xd5, 0x6b, 0xb8, 0x32, 0xb3, 0x4d, 0x70,
+	0xb3, 0x1c, 0x0f, 0x75, 0xbe, 0x36, 0xb4, 0x5b, 0x23, 0xfb, 0x9c, 0x3c, 0xd8, 0x16, 0xb4, 0xc3,
+	0x69, 0x9e, 0xa3, 0xfe, 0x7e, 0x3e, 0xc9, 0xb9, 0x74, 0xf2, 0x07, 0xb0, 0x5e, 0xf7, 0x58, 0x59,
+	0x4c, 0xef, 0xeb, 0xeb, 0x4e, 0xe4, 0x51, 0xdd, 0x75, 0xa3, 0xbe, 0xeb, 0x44, 0x22, 0x4b, 0x8f,
+	0x9d, 0xb3, 0xb0, 0xf2, 0x62, 0x24, 0xff, 0xfa, 0xef, 0xdf, 0x7c, 0xb6, 0x3d, 0x88, 0xc5, 0x70,
+	0xfa, 0x7c, 0x2b, 0x4c, 0x27, 0xdb, 0xb7, 0x6e, 0x85, 0xc9, 0x76, 0x36, 0x9e, 0x0e, 0xe2, 0xea,
+	0x9f, 0x28, 0xc8, 0xb2, 0x6d, 0xe5, 0xbc, 0x4d, 0x07, 0x3e, 0x5f, 0xa1, 0xff, 0x1b, 0xb8, 0xf5,
+	0x67, 0x00, 0x00, 0x00, 0xff, 0xff, 0xbf, 0xca, 0xe2, 0x50, 0x3f, 0x10, 0x00, 0x00,
 }

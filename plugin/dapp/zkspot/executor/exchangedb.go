@@ -12,6 +12,7 @@ import (
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
 // Action action struct
@@ -73,11 +74,11 @@ func (a *SpotAction) GetIndex() int64 {
 }
 
 //GetKVSet get kv set
-func (a *SpotAction) GetKVSet(order *et.Order) (kvset []*types.KeyValue) {
+func (a *SpotAction) GetKVSet(order *et.SpotOrder) (kvset []*types.KeyValue) {
 	return GetOrderKvSet(order)
 }
 
-func GetOrderKvSet(order *et.Order) (kvset []*types.KeyValue) {
+func GetOrderKvSet(order *et.SpotOrder) (kvset []*types.KeyValue) {
 	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(order.OrderID), Value: types.Encode(order)})
 	return kvset
 }
@@ -157,8 +158,8 @@ func getFeeRate(acc *dexAccount) uint64 {
 	return 1e5
 }
 
-func (a *SpotAction) initLimitOrder() func(*et.Order) *et.Order {
-	return func(order *et.Order) *et.Order {
+func (a *SpotAction) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
+	return func(order *et.SpotOrder) *et.SpotOrder {
 		order.OrderID = a.GetIndex()
 		order.Index = a.GetIndex()
 		order.CreateTime = a.blocktime
@@ -188,7 +189,7 @@ func (a *SpotAction) getFees(fromaddr string, left, right uint32) (*feeDetail, e
 }
 
 //LimitOrder ...
-func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*types.Receipt, error) {
+func (a *SpotAction) LimitOrder(payload *et.SpotLimitOrder, entrustAddr string) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	err := checkLimitOrder(cfg, payload)
 	if err != nil {
@@ -246,7 +247,7 @@ func (a *SpotAction) LimitOrder(payload *et.LimitOrder, entrustAddr string) (*ty
 }
 
 //RevokeOrder ...
-func (a *SpotAction) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error) {
+func (a *SpotAction) RevokeOrder(payload *et.SpotRevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	order, err := findOrderByOrderID(a.statedb, a.localDB, payload.GetOrderID())
@@ -301,7 +302,7 @@ func (a *SpotAction) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error
 	order.UpdateTime = a.blocktime
 	order.RevokeHash = hex.EncodeToString(a.txhash)
 	kvs = append(kvs, a.GetKVSet(order)...)
-	re := &et.ReceiptExchange{
+	re := &et.ReceiptSpotMatch{
 		Order: order,
 		Index: a.GetIndex(),
 	}
@@ -316,14 +317,14 @@ func (a *SpotAction) RevokeOrder(payload *et.RevokeOrder) (*types.Receipt, error
 //1. The purchase price is higher than the market price, and the price is matched from low to high.
 //2. Sell orders are matched at prices lower than market prices.
 //3. Match the same prices on a first-in, first-out basis
-func (a *SpotAction) matchLimitOrder(payload *et.LimitOrder, entrustAddr string, taker *spotTaker) (*types.Receipt, error) {
+func (a *SpotAction) matchLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, taker *spotTaker) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
 	// A single transaction can match up to {MaxCount} orders, the maximum depth can be matched, the system has to protect itself
 	// TODO next-price, next-order-list
 	matcher1 := newMatcher(a.statedb, a.localDB, a.api)
-	taker.matches = &et.ReceiptExchange{
+	taker.matches = &et.ReceiptSpotMatch{
 		Order: taker.order,
 		Index: a.GetIndex(),
 	}
@@ -436,7 +437,7 @@ func (m *matcher) recordMatchCount() {
 	}
 }
 
-func (m *matcher) priceDone(payload *et.LimitOrder, marketDepth *et.MarketDepth) bool {
+func (m *matcher) priceDone(payload *et.SpotLimitOrder, marketDepth *et.SpotMarketDepth) bool {
 	if priceDone(payload, marketDepth) {
 		m.done = true
 		return true
@@ -444,7 +445,7 @@ func (m *matcher) priceDone(payload *et.LimitOrder, marketDepth *et.MarketDepth)
 	return false
 }
 
-func priceDone(payload *et.LimitOrder, marketDepth *et.MarketDepth) bool {
+func priceDone(payload *et.SpotLimitOrder, marketDepth *et.SpotMarketDepth) bool {
 	if payload.Op == et.OpBuy && marketDepth.Price > payload.GetPrice() {
 		return true
 	}
@@ -454,7 +455,7 @@ func priceDone(payload *et.LimitOrder, marketDepth *et.MarketDepth) bool {
 	return false
 }
 
-func (m *matcher) QueryMarketDepth(payload *et.LimitOrder) (*et.MarketDepthList, error) {
+func (m *matcher) QueryMarketDepth(payload *et.SpotLimitOrder) (*et.SpotMarketDepthList, error) {
 	if m.endPriceList {
 		m.done = true
 		return nil, nil
@@ -474,7 +475,7 @@ func (m *matcher) QueryMarketDepth(payload *et.LimitOrder) (*et.MarketDepthList,
 	return marketDepthList, nil
 }
 
-func (m *matcher) findOrderIDListByPrice(payload *et.LimitOrder, marketDepth *et.MarketDepth) (*et.OrderList, error) {
+func (m *matcher) findOrderIDListByPrice(payload *et.SpotLimitOrder, marketDepth *et.SpotMarketDepth) (*et.SpotOrderList, error) {
 	direction := et.ListASC // 撮合按时间先后顺序
 	price := marketDepth.Price
 	if price != m.lastOrderPrice {
@@ -485,7 +486,7 @@ func (m *matcher) findOrderIDListByPrice(payload *et.LimitOrder, marketDepth *et
 	orderList, err := findOrderIDListByPrice(m.localdb, payload.GetLeftAsset(), payload.GetRightAsset(), price, OpSwap(payload.Op), direction, m.orderKey)
 	if err != nil {
 		if err == types.ErrNotFound {
-			return &et.OrderList{List: []*et.Order{}, PrimaryKey: ""}, nil
+			return &et.SpotOrderList{List: []*et.SpotOrder{}, PrimaryKey: ""}, nil
 		}
 		elog.Error("findOrderIDListByPrice error" /*"height", a.height, */, "symbol", payload.GetLeftAsset(), "price", marketDepth.Price, "op", OpSwap(payload.Op), "error", err)
 		return nil, err
@@ -507,13 +508,13 @@ func (m *matcher) isEndOrderList(price int64) bool {
 // Query the status database according to the order number
 // Localdb deletion sequence: delete the cache in real time first, and modify the DB uniformly during block generation.
 // The cache data will be deleted. However, if the cache query fails, the deleted data can still be queried in the DB
-func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.Order, error) {
+func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.SpotOrder, error) {
 	data, err := statedb.Get(calcOrderKey(orderID))
 	if err != nil {
 		elog.Error("findOrderByOrderID.Get", "orderID", orderID, "err", err.Error())
 		return nil, err
 	}
-	var order et.Order
+	var order et.SpotOrder
 	err = types.Decode(data, &order)
 	if err != nil {
 		elog.Error("findOrderByOrderID.Decode", "orderID", orderID, "err", err.Error())
@@ -523,7 +524,7 @@ func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.Orde
 	return &order, nil
 }
 
-func findOrderIDListByPrice(localdb dbm.KV, left, right uint32, price int64, op, direction int32, primaryKey string) (*et.OrderList, error) {
+func findOrderIDListByPrice(localdb dbm.KV, left, right uint32, price int64, op, direction int32, primaryKey string) (*et.SpotOrderList, error) {
 	table := NewMarketOrderTable(localdb)
 	prefix := []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
 
@@ -540,9 +541,9 @@ func findOrderIDListByPrice(localdb dbm.KV, left, right uint32, price int64, op,
 		}
 		return nil, err
 	}
-	var orderList et.OrderList
+	var orderList et.SpotOrderList
 	for _, row := range rows {
-		order := row.Data.(*et.Order)
+		order := row.Data.(*et.SpotOrder)
 		// The replacement has been done
 		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		orderList.List = append(orderList.List, order)
@@ -565,7 +566,7 @@ func Direction(op int32) int32 {
 
 //QueryMarketDepth 这里primaryKey当作主键索引来用，
 //The first query does not need to fill in the value, pay according to the price from high to low, selling orders according to the price from low to high query
-func QueryMarketDepth(localdb dbm.KV, left, right uint32, op int32, primaryKey string, count int32) (*et.MarketDepthList, error) {
+func QueryMarketDepth(localdb dbm.KV, left, right uint32, op int32, primaryKey string, count int32) (*et.SpotMarketDepthList, error) {
 	table := NewMarketDepthTable(localdb)
 	prefix := []byte(fmt.Sprintf("%08d:%08d:%d", left, right, op))
 	if count == 0 {
@@ -583,9 +584,9 @@ func QueryMarketDepth(localdb dbm.KV, left, right uint32, op int32, primaryKey s
 		return nil, err
 	}
 
-	var list et.MarketDepthList
+	var list et.SpotMarketDepthList
 	for _, row := range rows {
-		list.List = append(list.List, row.Data.(*et.MarketDepth))
+		list.List = append(list.List, row.Data.(*et.SpotMarketDepth))
 	}
 	if len(rows) == int(count) {
 		list.PrimaryKey = string(rows[len(rows)-1].Primary)
@@ -603,7 +604,7 @@ func QueryHistoryOrderList(localdb dbm.KV, left, right uint32, primaryKey string
 	}
 	var rows []*tab.Row
 	var err error
-	var orderList et.OrderList
+	var orderList et.SpotOrderList
 HERE:
 	if primaryKey == "" { // First query, the default display of the latest transaction record
 		rows, err = table.ListIndex(indexName, prefix, nil, count, direction)
@@ -618,7 +619,7 @@ HERE:
 		return &orderList, nil
 	}
 	for _, row := range rows {
-		order := row.Data.(*et.Order)
+		order := row.Data.(*et.SpotOrder)
 		// This table contains orders completed,revoked so filtering is required
 		if order.Status == et.Revoked {
 			continue
@@ -662,9 +663,9 @@ func QueryOrderList(localdb dbm.KV, addr string, status, count, direction int32,
 		elog.Error("QueryOrderList.", "addr", addr, "err", err.Error())
 		return nil, err
 	}
-	var orderList et.OrderList
+	var orderList et.SpotOrderList
 	for _, row := range rows {
-		order := row.Data.(*et.Order)
+		order := row.Data.(*et.SpotOrder)
 		order.Executed = order.GetLimitOrder().Amount - order.Balance
 		orderList.List = append(orderList.List, order)
 	}
@@ -674,7 +675,7 @@ func QueryOrderList(localdb dbm.KV, addr string, status, count, direction int32,
 	return &orderList, nil
 }
 
-func queryMarketDepth(marketTable *tab.Table, left, right uint32, op int32, price int64) (*et.MarketDepth, error) {
+func queryMarketDepth(marketTable *tab.Table, left, right uint32, op int32, price int64) (*et.SpotMarketDepth, error) {
 	primaryKey := []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
 	row, err := marketTable.GetData(primaryKey)
 	if err != nil {
@@ -684,7 +685,7 @@ func queryMarketDepth(marketTable *tab.Table, left, right uint32, op int32, pric
 		}
 		return nil, err
 	}
-	return row.Data.(*et.MarketDepth), nil
+	return row.Data.(*et.SpotMarketDepth), nil
 }
 
 //SafeMul Safe multiplication of large numbers, prevent overflow
@@ -701,7 +702,7 @@ func SafeAdd(x, y int64) int64 {
 }
 
 //Calculate the average transaction price
-func caclAVGPrice(order *et.Order, price int64, amount int64) int64 {
+func caclAVGPrice(order *et.SpotOrder, price int64, amount int64) int64 {
 	x := big.NewInt(0).Mul(big.NewInt(order.AVGPrice), big.NewInt(order.GetLimitOrder().Amount-order.GetBalance()))
 	y := big.NewInt(0).Mul(big.NewInt(price), big.NewInt(amount))
 	total := big.NewInt(0).Add(x, y)
@@ -849,7 +850,7 @@ func formatInterface(data interface{}) int64 {
 // dex1 -> accountid -> tokenids 是一个对象
 //  理论上, 对象越小越快, 但交易涉及两个资产. 如果一个资产是一个对象的. 要处理两个对象.
 //  先实现再说
-func (a *SpotAction) Deposit(payload *et.ZkDeposit) (*types.Receipt, error) {
+func (a *SpotAction) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 
 	chain33Addr := payload.GetChain33Addr()
 	amount := payload.GetAmount()
@@ -884,7 +885,7 @@ func (a *SpotAction) CalcMaxActive(token uint32, amount string) (uint64, error) 
 	return acc.acc.Balance[idx].Balance, nil
 }
 
-func (a *SpotAction) Withdraw(payload *et.ZkWithdraw, amountWithFee uint64) (*types.Receipt, error) {
+func (a *SpotAction) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*types.Receipt, error) {
 
 	chain33Addr := a.fromaddr
 	/*

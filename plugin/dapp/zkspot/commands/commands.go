@@ -14,8 +14,8 @@ import (
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	"github.com/33cn/plugin/plugin/dapp/zkspot/wallet"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 	"github.com/pkg/errors"
@@ -382,7 +382,6 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 }
-
 
 func fullExitCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -891,8 +890,6 @@ func getTokenBalance(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-
-
 func getZkCommitProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "zkCommit",
@@ -916,7 +913,7 @@ func getZkCommitProof(cmd *cobra.Command, args []string) {
 
 	params.Execer = zt.Zksync
 	req := &zt.ZkQueryReq{
-		ProofId:   proofId,
+		ProofId: proofId,
 	}
 
 	params.FuncName = "GetCommitProodByProofId"

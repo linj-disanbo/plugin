@@ -75,23 +75,23 @@ func NewHistoryOrderTable(kvdb db.KV) *table.Table {
 
 //OrderRow table meta 结构
 type OrderRow struct {
-	*ety.Order
+	*ety.SpotOrder
 }
 
 //NewOrderRow 新建一个meta 结构
 func NewOrderRow() *OrderRow {
-	return &OrderRow{Order: &ety.Order{}}
+	return &OrderRow{SpotOrder: &ety.SpotOrder{}}
 }
 
 //CreateRow ...
 func (r *OrderRow) CreateRow() *table.Row {
-	return &table.Row{Data: &ety.Order{}}
+	return &table.Row{Data: &ety.SpotOrder{}}
 }
 
 //SetPayload 设置数据
 func (r *OrderRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*ety.Order); ok {
-		r.Order = txdata
+	if txdata, ok := data.(*ety.SpotOrder); ok {
+		r.SpotOrder = txdata
 		return nil
 	}
 	return types.ErrTypeAsset
@@ -111,23 +111,23 @@ func (r *OrderRow) Get(key string) ([]byte, error) {
 
 //HistoryOrderRow table meta 结构
 type HistoryOrderRow struct {
-	*ety.Order
+	*ety.SpotOrder
 }
 
 //NewHistoryOrderRow ...
 func NewHistoryOrderRow() *HistoryOrderRow {
-	return &HistoryOrderRow{Order: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
+	return &HistoryOrderRow{SpotOrder: &ety.SpotOrder{Value: &ety.SpotOrder_LimitOrder{LimitOrder: &ety.SpotLimitOrder{}}}}
 }
 
 //CreateRow ...
 func (m *HistoryOrderRow) CreateRow() *table.Row {
-	return &table.Row{Data: &ety.Order{Value: &ety.Order_LimitOrder{LimitOrder: &ety.LimitOrder{}}}}
+	return &table.Row{Data: &ety.SpotOrder{Value: &ety.SpotOrder_LimitOrder{LimitOrder: &ety.SpotLimitOrder{}}}}
 }
 
 //SetPayload 设置数据
 func (m *HistoryOrderRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*ety.Order); ok {
-		m.Order = txdata
+	if txdata, ok := data.(*ety.SpotOrder); ok {
+		m.SpotOrder = txdata
 		return nil
 	}
 	return types.ErrTypeAsset
@@ -147,23 +147,23 @@ func (m *HistoryOrderRow) Get(key string) ([]byte, error) {
 
 //MarketDepthRow table meta 结构
 type MarketDepthRow struct {
-	*ety.MarketDepth
+	*ety.SpotMarketDepth
 }
 
 //NewMarketDepthRow 新建一个meta 结构
 func NewMarketDepthRow() *MarketDepthRow {
-	return &MarketDepthRow{MarketDepth: &ety.MarketDepth{}}
+	return &MarketDepthRow{SpotMarketDepth: &ety.SpotMarketDepth{}}
 }
 
 //CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
 func (m *MarketDepthRow) CreateRow() *table.Row {
-	return &table.Row{Data: &ety.MarketDepth{}}
+	return &table.Row{Data: &ety.SpotMarketDepth{}}
 }
 
 //SetPayload 设置数据
 func (m *MarketDepthRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*ety.MarketDepth); ok {
-		m.MarketDepth = txdata
+	if txdata, ok := data.(*ety.SpotMarketDepth); ok {
+		m.SpotMarketDepth = txdata
 		return nil
 	}
 	return types.ErrTypeAsset

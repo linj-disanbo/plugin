@@ -7,8 +7,9 @@ import (
 	log "github.com/33cn/chain33/common/log/log15"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	"github.com/33cn/plugin/plugin/dapp/zkspot/wallet"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
 )
@@ -23,7 +24,7 @@ var (
 	zlog = log.New("module", "zkspot.executor")
 )
 
-var driverName = zt.Zksync
+var driverName = et.Zksync
 
 // Init register dapp
 func Init(name string, cfg *types.Chain33Config, sub []byte) {
@@ -61,7 +62,7 @@ func (z *zkspot) GetDriverName() string {
 
 // CheckTx 实现自定义检验交易接口，供框架调用
 func (z *zkspot) CheckTx(tx *types.Transaction, index int) error {
-	action := new(zt.ZksyncAction)
+	action := new(et.ZksyncAction1)
 	if err := types.Decode(tx.Payload, action); err != nil {
 		return err
 	}
@@ -95,7 +96,7 @@ func (z *zkspot) CheckTx(tx *types.Transaction, index int) error {
 	case zt.TyFullExitAction:
 		signature = action.GetFullExit().GetSignature()
 		msg = wallet.GetFullExitMsg(action.GetFullExit())
-	case zt.TyLimitOrderAction:
+	case et.TyLimitOrderAction:
 		cfg := z.GetAPI().GetConfig()
 		err := SpotCheckTx(cfg, tx, index)
 		if err != nil {
