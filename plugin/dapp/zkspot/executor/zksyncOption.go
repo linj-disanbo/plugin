@@ -1430,12 +1430,10 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 	if fromLeaf == nil {
 		return nil, errors.New("account not exist")
 	}
-	// maker 没有获得 Signature , 如果需要, 可以补上
-	if payload.Signature != nil {
-		err = authVerification(payload.Signature.PubKey, fromLeaf.PubKey)
-		if err != nil {
-			return nil, errors.Wrapf(err, "authVerification")
-		}
+
+	err = authVerification(payload.Signature.PubKey, fromLeaf.PubKey)
+	if err != nil {
+		return nil, errors.Wrapf(err, "authVerification")
 	}
 
 	fromToken, err := GetTokenByAccountIdAndTokenId(a.statedb, payload.FromAccountId, payload.TokenId, info)
