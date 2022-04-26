@@ -31,10 +31,12 @@ func (z *zkspot) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, in
 		return nil, err
 	}
 	amount2, ok := big.NewInt(0).SetString(payload.Amount, 10)
+	feeInt, _ := new(big.Int).SetString(zt.FeeMap[zt.TyWithdrawAction], 10)
+	totalAmount := new(big.Int).Add(amount2, feeInt)
 	if !ok {
 		return nil, et.ErrAssetBalance
 	}
-	if amount2.Uint64() > maxActive {
+	if totalAmount.Uint64() > maxActive {
 		return nil, et.ErrDexNotEnough
 	}
 
@@ -43,7 +45,7 @@ func (z *zkspot) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, in
 	if err != nil {
 		return nil, err
 	}
-	receipt2, err := dex1.Withdraw(payload)
+	receipt2, err := dex1.Withdraw(payload, totalAmount.Uint64())
 	if err != nil {
 		return nil, err
 	}
