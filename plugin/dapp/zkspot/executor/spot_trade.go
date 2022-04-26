@@ -116,7 +116,7 @@ func (s *spotTaker) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo 
 // RightToken: buyer, seller -> fee-bank
 func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	if s.acc.acc.Addr == maker.acc.acc.Addr {
-		return s.selfSettlement(tradeBalance)
+		return s.selfSettlement(maker, tradeBalance)
 	}
 
 	copyAcc := dupAccount(s.acc.acc)
@@ -180,6 +180,7 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 			Maker: maker.acc.acc,
 			Fee:   s.accFee.acc,
 		},
+		MakerOrder: maker.order.GetLimitOrder().Order,
 	}
 
 	log1 := types.ReceiptLog{
@@ -190,7 +191,7 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 }
 
 // taker/maker the same user
-func (s *spotTaker) selfSettlement(tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (s *spotTaker) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	copyAcc := dupAccount(s.acc.acc)
 	copyFeeAcc := dupAccount(s.accFee.acc)
 
@@ -232,6 +233,7 @@ func (s *spotTaker) selfSettlement(tradeBalance *et.MatchInfo) ([]*types.Receipt
 			Maker: s.acc.acc,
 			Fee:   s.accFee.acc,
 		},
+		MakerOrder: maker.order.GetLimitOrder().Order,
 	}
 
 	log1 := types.ReceiptLog{

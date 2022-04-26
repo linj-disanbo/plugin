@@ -259,6 +259,8 @@ message ReceiptSpotTrade {
   MatchInfo Match = 1;
   TradeAccounts prev = 2;
   TradeAccounts current = 3;
+  // 加入zk order, 在电路验证需要
+  ZkOrder makerOrder = 4;
 }
 
 message ReceiptDexAccount {
