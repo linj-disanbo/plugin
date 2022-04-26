@@ -1396,7 +1396,6 @@ func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *et.SpotLimitOrder, trade
 		if err != nil {
 			return nil, err
 		}
-		_ = receipt1 // TODO
 		logs = append(logs, receipt1.Logs...)
 		kvs = append(kvs, receipt1.KV...)
 	}
@@ -1569,7 +1568,7 @@ func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptS
 		Amount:        new(big.Int).SetInt64(makerPay).String(),
 		FromAccountId: trade.Current.Maker.Id,
 		ToAccountId:   payload1.Order.AccountID,
-		// Signature:     payload1.Order.Signature, TODO if need
+		Signature:     trade.MakerOrder.Signature,
 	}
 	takerF := &zt.ZkTransfer{
 		TokenId:       uint64(payload1.RightAsset),
@@ -1583,7 +1582,7 @@ func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptS
 		Amount:        new(big.Int).SetInt64(trade.Match.FeeMater).String(),
 		FromAccountId: trade.Current.Maker.Id,
 		ToAccountId:   trade.Current.Fee.Id,
-		// Signature:     payload1.Order.Signature, TODO if need
+		Signature:     trade.MakerOrder.Signature,
 	}
 	transfers = append(transfers, taker1)
 	transfers = append(transfers, maker1)
