@@ -1364,7 +1364,7 @@ func (a *Action) SpotMatch(payload *et.SpotLimitOrder, list *types.Receipt) (*ty
 }
 
 // A 和 B 交换 = transfer(A,B) + transfer(B,A) + transfer(A,fee) + transfer(B,fee)
-// A 和 A 交换 = transfer(A,fee), 两个订单都是 A 发的
+// A 和 A 交换 = transfer(A,A) 0 + transfer(A,A) 0 + transfer(A,fee) + transfer(B,fee)
 // fee 先不处理, 因为交易本身就收了手续费
 func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
@@ -1387,7 +1387,7 @@ func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *et.SpotLimitOrder, trade
 	}
 
 	// A 和 B 交易, 构造4个transfer, 使用transfer 实现
-	// A 和 A 交易, 构造1个transfer, 收取手续费
+	// A 和 A 交易, 构造4个transfer, 0 swap *2  收取手续费*2
 	transfers := a.swapGenTransfer(payload1, trade)
 	// operationInfo, localKvs 通过 zklog 获得
 	zklog := &zt.ZkReceiptLog{OperationInfo: operationInfo}
@@ -1532,18 +1532,7 @@ func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptS
 	// A 和 A 交易
 	var transfers []*zt.ZkTransfer
 	if trade.Current.Maker.Addr == trade.Current.Taker.Addr {
-		fee1 := new(big.Int).SetInt64(trade.Match.FeeTaker)
-		fee2 := new(big.Int).SetInt64(trade.Match.FeeMater)
-		totalAmount := new(big.Int).Add(fee1, fee2).String()
-		t := &zt.ZkTransfer{
-			TokenId:       uint64(payload1.RightAsset),
-			Amount:        totalAmount,
-			FromAccountId: payload1.Order.AccountID,
-			ToAccountId:   trade.Current.Fee.Id,
-			Signature:     payload1.Order.Signature,
-		}
-		transfers = append(transfers, t)
-		return transfers
+		return a.selfSwapGenTransfer(payload1, trade)
 	}
 
 	// A 和 B 交易, 构造4个transfer, 使用transfer 实现
@@ -1551,6 +1540,52 @@ func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptS
 	takerTokenID, makerTokenID := payload1.LeftAsset, payload1.RightAsset
 	if payload1.Op == et.OpBuy {
 		takerPay, makerPay = makerPay, takerPay
+		takerTokenID, makerTokenID = makerTokenID, takerTokenID
+	}
+
+	taker1 := &zt.ZkTransfer{
+		TokenId:       uint64(takerTokenID),
+		Amount:        new(big.Int).SetInt64(takerPay).String(),
+		FromAccountId: payload1.Order.AccountID,
+		ToAccountId:   trade.Current.Maker.Id,
+		Signature:     payload1.Order.Signature,
+	}
+	maker1 := &zt.ZkTransfer{
+		TokenId:       uint64(makerTokenID),
+		Amount:        new(big.Int).SetInt64(makerPay).String(),
+		FromAccountId: trade.Current.Maker.Id,
+		ToAccountId:   payload1.Order.AccountID,
+		Signature:     trade.MakerOrder.Signature,
+	}
+	takerF := &zt.ZkTransfer{
+		TokenId:       uint64(payload1.RightAsset),
+		Amount:        new(big.Int).SetInt64(trade.Match.FeeTaker).String(),
+		FromAccountId: payload1.Order.AccountID,
+		ToAccountId:   trade.Current.Fee.Id,
+		Signature:     payload1.Order.Signature,
+	}
+	makerF := &zt.ZkTransfer{
+		TokenId:       uint64(payload1.RightAsset),
+		Amount:        new(big.Int).SetInt64(trade.Match.FeeMater).String(),
+		FromAccountId: trade.Current.Maker.Id,
+		ToAccountId:   trade.Current.Fee.Id,
+		Signature:     trade.MakerOrder.Signature,
+	}
+	transfers = append(transfers, taker1)
+	transfers = append(transfers, maker1)
+	transfers = append(transfers, takerF)
+	transfers = append(transfers, makerF)
+	return transfers
+}
+
+// A 和 A 交易时, 也需要构造4个transfer
+// maker/taker 由于是同一个帐号, 所以takerPay makerPay 为0
+func (a *Action) selfSwapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) []*zt.ZkTransfer {
+	var transfers []*zt.ZkTransfer
+	// A 和 A 交易, 构造4个transfer, 使用transfer 实现
+	takerPay, makerPay := int64(0), int64(0)
+	takerTokenID, makerTokenID := payload1.LeftAsset, payload1.RightAsset
+	if payload1.Op == et.OpBuy {
 		takerTokenID, makerTokenID = makerTokenID, takerTokenID
 	}
 
