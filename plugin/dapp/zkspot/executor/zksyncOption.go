@@ -1391,19 +1391,36 @@ func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *et.SpotLimitOrder, trade
 	transfers := a.swapGenTransfer(payload1, trade)
 	// operationInfo, localKvs 通过 zklog 获得
 	zklog := &zt.ZkReceiptLog{OperationInfo: operationInfo}
-	for _, transfer1 := range transfers {
-		receipt1, err := a.swapByTransfer(transfer1, payload1, trade, info, zklog)
-		if err != nil {
-			return nil, err
-		}
-		logs = append(logs, receipt1.Logs...)
-		kvs = append(kvs, receipt1.KV...)
+	//for _, transfer1 := range transfers {
+	receipt1, err := a.swapByTransfer(transfers[0], payload1, trade, info, zklog)
+	if err != nil {
+		return nil, err
 	}
+	logs = append(logs, receipt1.Logs...)
+	kvs = append(kvs, receipt1.KV...)
+	receipt2, err := a.swapByTransfer(transfers[1], payload1, trade, info, zklog)
+	if err != nil {
+		return nil, err
+	}
+	logs = append(logs, receipt2.Logs...)
+	kvs = append(kvs, receipt2.KV...)
+	//}
 
 	receiptLog := &types.ReceiptLog{Ty: zt.TyTransferLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 
+	feelog1, err := a.MakeFeeLog(transfers[2].Amount, info, transfers[2].TokenId, transfers[2].Signature)
+	if err != nil {
+		return nil, err
+	}
+	feelog2, err := a.MakeFeeLog(transfers[3].Amount, info, transfers[3].TokenId, transfers[3].Signature)
+	if err != nil {
+		return nil, err
+	}
+
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	receipts = mergeReceipt(receipts, feelog1)
+	receipts = mergeReceipt(receipts, feelog2)
 	return receipts, nil
 }
 
