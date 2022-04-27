@@ -1406,7 +1406,7 @@ func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *et.SpotLimitOrder, trade
 	kvs = append(kvs, receipt2.KV...)
 	//}
 
-	receiptLog := &types.ReceiptLog{Ty: zt.TyTransferLog, Log: types.Encode(zklog)}
+	receiptLog := &types.ReceiptLog{Ty: zt.TySwapLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 
 	feelog1, err := a.MakeFeeLog(transfers[2].Amount, info, transfers[2].TokenId, transfers[2].Signature)
