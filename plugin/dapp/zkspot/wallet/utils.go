@@ -372,16 +372,12 @@ func GetLimitOrderMsg(payload *zst.SpotLimitOrder) *zt.ZkMsg {
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.AccountID), zt.TokenBitWidth)...)
 	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.Order.EthAddress), 16)
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.Nonce), zt.AccountBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.TokenSell)), zt.AccountBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.TokenBuy)), zt.AccountBitWidth)...)
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.Amount), zt.AccountBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio1)), zt.AccountBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio2)), zt.AccountBitWidth)...)
-
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.ValidFrom), zt.AccountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.ValidUntil), zt.AccountBitWidth)...)
 
 	copy(binaryData, pubData)
 
