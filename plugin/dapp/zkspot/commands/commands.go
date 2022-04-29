@@ -14,6 +14,7 @@ import (
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
+	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	"github.com/33cn/plugin/plugin/dapp/zkspot/wallet"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
@@ -57,6 +58,8 @@ func ZksyncCmd() *cobra.Command {
 		getContractAccountCmd(),
 		getTokenBalanceCmd(),
 		getZkCommitProofCmd(),
+		limitOrderCmd(),
+		revokeOrderCmd(),
 	)
 	return cmd
 }
@@ -922,4 +925,127 @@ func getZkCommitProof(cmd *cobra.Command, args []string) {
 	var resp zt.ZkCommitProof
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
+}
+
+func limitOrderCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "zkLimitOrder",
+		Short: "create limit order transaction",
+		Run:   limitOrder,
+	}
+	limitOrderFlag(cmd)
+	return cmd
+}
+
+func markRequired(cmd *cobra.Command, params ...string) {
+	for _, param := range params {
+		_ = cmd.MarkFlagRequired(param)
+	}
+}
+
+// ratio: p * 1e8, 1e8
+func limitOrderFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint32P("leftTokenId", "l", 0, "left token id")
+	cmd.Flags().Uint32P("rightTokenId", "t", 0, "right token id")
+	cmd.Flags().Uint64P("price", "p", 0, "price 1e8 lt = p rt ")
+	cmd.Flags().Uint64P("amount", "a", 0, "to buy/sell amount of left token")
+	cmd.Flags().StringP("op", "o", "1", "1/buy, 2/sell")
+
+	// zkorder part
+	cmd.Flags().Uint64P("accountId", "", 0, "accountid of self")
+	cmd.Flags().StringP("ethAddress", "", "", "eth address of self")
+
+	markRequired(cmd, "leftTokenId", "rightTokenId", "price", "amount", "op", "accountId", "ethAddress")
+}
+
+func limitOrder(cmd *cobra.Command, args []string) {
+
+	lt, _ := cmd.Flags().GetUint32("leftTokenId")
+	rt, _ := cmd.Flags().GetUint32("rightTokenId")
+	price, _ := cmd.Flags().GetUint64("price")
+	amount, _ := cmd.Flags().GetUint64("amount")
+	op, _ := cmd.Flags().GetString("op")
+	opInt := 1
+	// buy: L:R = price/1 = R1:R2
+	buy := lt
+	sell := rt
+	ratio1 := int64(price)
+	ratio2 := int64(1e8)
+	if op == "2" || op == "sell" {
+		opInt = 2
+		buy = rt
+		sell = lt
+		ratio1, ratio2 = ratio2, ratio1
+	}
+	accountid, _ := cmd.Flags().GetUint64("accountId")
+	ethAddress, _ := cmd.Flags().GetString("ethAddress")
+
+	zkorder := et.ZkOrder{
+		AccountID:  accountid,
+		EthAddress: ethAddress,
+		TokenSell:  sell,
+		TokenBuy:   buy,
+		Amount:     amount,
+		Ratio1:     uint32(ratio1),
+		Ratio2:     uint32(ratio2),
+	}
+	// sign
+
+	payload := &et.SpotLimitOrder{
+		LeftAsset:  lt,
+		RightAsset: rt,
+		Price:      int64(price),
+		Amount:     int64(amount),
+		Op:         int32(opInt),
+		Order:      &zkorder,
+	}
+	exec := et.Zksync
+	paraName, _ := cmd.Flags().GetString("paraName")
+	if strings.HasPrefix(paraName, pt.ParaPrefix) {
+		exec = paraName + et.Zksync
+	}
+	params := &rpctypes.CreateTxIn{
+		Execer:     exec,
+		ActionName: "SpotLimitOrder",
+		Payload:    types.MustPBToJSON(payload),
+	}
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func revokeOrderCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "zkLimitOrder",
+		Short: "create revoke limit order transaction",
+		Run:   revokeOrder,
+	}
+	revokeOrderFlag(cmd)
+	return cmd
+}
+
+func revokeOrderFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("orderid", "o", 0, "order id")
+	cmd.MarkFlagRequired("orderid")
+}
+
+func revokeOrder(cmd *cobra.Command, args []string) {
+	orderid, _ := cmd.Flags().GetUint64("orderid")
+
+	payload := &et.SpotRevokeOrder{
+		OrderID: int64(orderid),
+	}
+	exec := et.Zksync
+	paraName, _ := cmd.Flags().GetString("paraName")
+	if strings.HasPrefix(paraName, pt.ParaPrefix) {
+		exec = paraName + et.Zksync
+	}
+	params := &rpctypes.CreateTxIn{
+		Execer:     exec,
+		ActionName: "SpotRevokeOrder",
+		Payload:    types.MustPBToJSON(payload),
+	}
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
