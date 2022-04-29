@@ -14,7 +14,7 @@ import (
 	"github.com/33cn/chain33/types"
 	wcom "github.com/33cn/chain33/wallet/common"
 
-	//zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/consensys/gnark-crypto/ecc/bn254/fr/mimc"
 	"github.com/consensys/gnark-crypto/ecc/bn254/twistededwards/eddsa"
@@ -114,7 +114,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 		return
 	}
 
-	action := new(zt.ZksyncAction)
+	action := new(et.ZksyncAction1)
 	if err = types.Decode(tx.Payload, action); err != nil {
 		return
 	}
@@ -216,6 +216,15 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		forceQuit.Signature = signInfo
+	case et.TyLimitOrderAction:
+		limitOrder := action.GetLimitOrder()
+		msg = GetLimitOrderMsg(limitOrder)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		limitOrder.Order.Signature = signInfo
 	}
 
 	tx.Payload = types.Encode(action)
