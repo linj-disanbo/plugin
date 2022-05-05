@@ -39,7 +39,7 @@ func newSpotDex() *SpotDex {
 }
 
 func genAccountKey(dexType []byte, addr string, id uint64) []byte {
-	return []byte(fmt.Sprintf("%s:%s", dexType, addr))
+	return []byte(fmt.Sprintf("%s:%d", dexType, id))
 }
 
 func LoadSpotAccount(addr string, id uint64, db dbm.KV) (*dexAccount, error) {

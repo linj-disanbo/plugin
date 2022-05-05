@@ -850,14 +850,14 @@ func formatInterface(data interface{}) int64 {
 // dex1 -> accountid -> tokenids 是一个对象
 //  理论上, 对象越小越快, 但交易涉及两个资产. 如果一个资产是一个对象的. 要处理两个对象.
 //  先实现再说
-func (a *SpotAction) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
+func (a *SpotAction) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Receipt, error) {
 
 	chain33Addr := payload.GetChain33Addr()
 	amount := payload.GetAmount()
 
 	// TODO tid 哪里定义, 里面不需要知道tid 是什么, 在合约里 id1 换 id2
 
-	acc, err := a.LoadDexAccount(chain33Addr)
+	acc, err := a.LoadDexAccount(chain33Addr, accountID)
 	if err != nil {
 		return nil, err
 	}
@@ -869,12 +869,12 @@ func (a *SpotAction) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error) {
 	return acc.Mint(uint32(payload.TokenId), amount2.Uint64())
 }
 
-func (a *SpotAction) LoadDexAccount(chain33addr string) (*dexAccount, error) {
-	return LoadSpotAccount(chain33addr, 1, a.statedb)
+func (a *SpotAction) LoadDexAccount(chain33addr string, accountID uint64) (*dexAccount, error) {
+	return LoadSpotAccount(chain33addr, accountID, a.statedb)
 }
 
-func (a *SpotAction) CalcMaxActive(token uint32, amount string) (uint64, error) {
-	acc, err := LoadSpotAccount(a.fromaddr, 1, a.statedb)
+func (a *SpotAction) CalcMaxActive(accountID uint64, token uint32, amount string) (uint64, error) {
+	acc, err := LoadSpotAccount(a.fromaddr, accountID, a.statedb)
 	if err != nil {
 		return 0, err
 	}
@@ -898,7 +898,7 @@ func (a *SpotAction) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*ty
 	*/
 	// TODO tid 哪里定义, 里面不需要知道tid 是什么, 在合约里 id1 换 id2
 
-	acc, err := a.LoadDexAccount(chain33Addr)
+	acc, err := a.LoadDexAccount(chain33Addr, payload.AccountId)
 	if err != nil {
 		return nil, err
 	}

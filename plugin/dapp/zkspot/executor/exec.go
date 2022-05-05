@@ -10,14 +10,14 @@ import (
 
 func (z *zkspot) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	r, err := action.Deposit(payload)
+	r, err, accountID := action.Deposit(payload)
 	if err != nil {
 		return r, err
 	}
 	list := SampleDeposit( /* r *types.Receipt */ )
 	_ = list
 	action2 := NewSpotDex(z, tx, index)
-	r2, err := action2.Deposit(payload /* , list */) // TODO 增加参数
+	r2, err := action2.Deposit(payload, accountID) // TODO 增加参数
 	if err != nil {
 		return r, err
 	}
@@ -26,7 +26,7 @@ func (z *zkspot) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, inde
 
 func (z *zkspot) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	dex1 := NewSpotDex(z, tx, index)
-	maxActive, err := dex1.CalcMaxActive(uint32(payload.TokenId), payload.Amount)
+	maxActive, err := dex1.CalcMaxActive(payload.AccountId, uint32(payload.TokenId), payload.Amount)
 	if err != nil {
 		return nil, err
 	}
