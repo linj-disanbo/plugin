@@ -16,7 +16,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 	chain33Addr string, accountId uint64, toAccountId uint64) ([]byte, error) {
 	var payload []byte
 	switch actionTy {
-	case zt.TyDepositAction:
+	case zst.TyDepositAction:
 		deposit := &zt.ZkDeposit{
 			TokenId:     tokenId,
 			Amount:      amount,

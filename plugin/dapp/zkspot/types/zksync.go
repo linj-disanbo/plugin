@@ -16,7 +16,7 @@ import (
 // action类型id和name，这些常量可以自定义修改
 const (
 	TyNoopAction           = 0
-	TyDepositAction        = 1  //eth存款
+	TyDepositAction        = 14 //eth存款
 	TyWithdrawAction       = 2  //eth取款
 	TyTransferAction       = 3  //转账
 	TyTransferToNewAction  = 4  //向新地址转账
