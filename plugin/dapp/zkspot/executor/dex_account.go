@@ -101,6 +101,22 @@ func (acc *dexAccount) newToken(tid uint32, amount uint64) int {
 	return len(acc.acc.Balance) - 1
 }
 
+func (acc *dexAccount) getBalance(tid uint32) uint64 {
+	idx := acc.findTokenIndex(tid)
+	if idx == -1 {
+		return 0
+	}
+	return acc.acc.Balance[idx].Balance
+}
+
+func (acc *dexAccount) getFrozen(tid uint32) uint64 {
+	idx := acc.findTokenIndex(tid)
+	if idx == -1 {
+		return 0
+	}
+	return acc.acc.Balance[idx].Frozen
+}
+
 func (acc *dexAccount) doMint(tid uint32, amount uint64) error {
 	idx := acc.findTokenIndex(tid)
 	if idx == -1 {

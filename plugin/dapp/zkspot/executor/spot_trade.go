@@ -24,15 +24,22 @@ type spotMaker struct {
 	spotTrader
 }
 
-func (s *spotTaker) FrozenTokenForLimitOrder() (*types.Receipt, error) {
+// buy 按最大量锁定
+// 由于锁定手续费, 需要跟踪在taker状态下的成交价格, 所以不锁定手续费, 但需要判断余额按最大的手续费是够的.
+func (s *spotTaker) FrozenTokenForLimitOrder(order *et.SpotOrder) (*types.Receipt, error) {
 	precision := s.cfg.GetCoinPrecision()
 	or := s.order.GetLimitOrder()
 	if or.GetOp() == et.OpBuy {
 		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
-		fee := calcMtfFee(amount, int32(getFeeRate(s.acc)))
+		fee := calcMtfFee(amount, int32(order.TakerRate))
 		total := SafeAdd(amount, int64(fee))
 
-		receipt, err := s.acc.Frozen(or.RightAsset, uint64(total))
+		if s.acc.getBalance(or.RightAsset) < uint64(total) {
+			elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", total)
+			return nil, et.ErrAssetBalance
+		}
+
+		receipt, err := s.acc.Frozen(or.RightAsset, uint64(amount))
 		if err != nil {
 			elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
 			return nil, et.ErrAssetBalance
@@ -50,17 +57,21 @@ func (s *spotTaker) FrozenTokenForLimitOrder() (*types.Receipt, error) {
 	return receipt, nil
 }
 
-func (s *spotTaker) UnFrozenFeeForLimitOrder() (*types.Receipt, error) {
+func (s *spotTaker) FrozenFeeForLimitOrder() (*types.Receipt, error) {
 	or := s.order.GetLimitOrder()
 	if or.GetOp() != et.OpBuy {
 		return nil, nil
 	}
+
 	precision := s.cfg.GetCoinPrecision()
-	// takerFee - makerFee
-	actvieFee := SafeMul(or.GetAmount(), int64(s.order.TakerRate-s.order.Rate), precision)
-	receipt, err := s.acc.Active(or.RightAsset, uint64(actvieFee))
+	amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
+	fee := calcMtfFee(amount, int32(s.order.Rate))
+	if fee == 0 { // 剩余量少, 算出来, 手续费低
+		return nil, nil
+	}
+	receipt, err := s.acc.Frozen(or.RightAsset, uint64(fee))
 	if err != nil {
-		elog.Error("UnFrozenFeeForLimitOrder", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", actvieFee)
+		elog.Error("FrozenFeeForLimitOrder", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", fee)
 		return nil, et.ErrAssetBalance
 	}
 	return receipt, nil
@@ -151,7 +162,7 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 		if err != nil {
 			return nil, nil, err
 		}
-		err = s.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker))
+		err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker))
 		if err != nil {
 			return nil, nil, err
 		}
