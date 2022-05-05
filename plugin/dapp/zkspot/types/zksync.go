@@ -182,6 +182,11 @@ var (
 		TyRevokeOrderLog:  {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyRevokeOrderLog"},
 		TyExchangeBindLog: {Ty: reflect.TypeOf(ReceiptDexBind{}), Name: "TyExchangeBindLog"},
 		TySpotTradeLog:    {Ty: reflect.TypeOf(ReceiptSpotTrade{}), Name: "TySpotTradeLog"},
+		// dex account
+		TyDexAccountFrozen: {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountFrozen"},
+		TyDexAccountActive: {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountActive"},
+		TyDexAccountBurn:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountBurn"},
+		TyDexAccountMint:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountMint"},
 	}
 
 	FeeMap = map[int64]string{
