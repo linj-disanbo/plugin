@@ -135,7 +135,7 @@ func withdraw(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyWithdrawAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(et.TyWithdrawAction, tokenId, amount, "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -175,7 +175,7 @@ func treeToContract(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTreeToContractAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(et.TyTreeToContractAction, tokenId, amount, "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -215,7 +215,7 @@ func contractToTree(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyContractToTreeAction, tokenId, amount, "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(et.TyContractToTreeAction, tokenId, amount, "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -258,7 +258,7 @@ func transfer(cmd *cobra.Command, args []string) {
 	toAccountId, _ := cmd.Flags().GetUint64("toAccountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTransferAction, tokenId, amount, "", "", "", accountId, toAccountId)
+	payload, err := wallet.CreateRawTx(et.TyTransferAction, tokenId, amount, "", "", "", accountId, toAccountId)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -303,7 +303,7 @@ func transferToNew(cmd *cobra.Command, args []string) {
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyTransferToNewAction, tokenId, amount, "", toEthAddress, chain33Addr, accountId, 0)
+	payload, err := wallet.CreateRawTx(et.TyTransferToNewAction, tokenId, amount, "", toEthAddress, chain33Addr, accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -340,7 +340,7 @@ func forceExit(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyForceExitAction, tokenId, "0", "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(et.TyForceExitAction, tokenId, "0", "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -374,7 +374,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TySetPubKeyAction, 0, "0", "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(et.TySetPubKeyAction, 0, "0", "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return
@@ -411,7 +411,7 @@ func fullExit(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(zt.TyFullExitAction, tokenId, "0", "", "", "", accountId, 0)
+	payload, err := wallet.CreateRawTx(et.TyFullExitAction, tokenId, "0", "", "", "", accountId, 0)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
 		return

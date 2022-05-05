@@ -18,14 +18,14 @@ const (
 	TyNoopAction           = 0
 	TyDepositAction        = 14 //eth存款
 	TyWithdrawAction       = 2  //eth取款
-	TyTransferAction       = 3  //转账
-	TyTransferToNewAction  = 4  //向新地址转账
-	TyForceExitAction      = 5  //强制退出
-	TySetPubKeyAction      = 6  //设置公钥
-	TyFullExitAction       = 7  //从L1完全退出
-	TySwapAction           = 8  //交换
-	TyContractToTreeAction = 9  //合约账户转入叶子
-	TyTreeToContractAction = 10 //叶子账户转入合约
+	TyTransferAction       = 5  //转账
+	TyTransferToNewAction  = 6  //向新地址转账
+	TyForceExitAction      = 7  //强制退出
+	TySetPubKeyAction      = 8  //设置公钥
+	TyFullExitAction       = 9  //从L1完全退出
+	TySwapAction           = 10 //交换
+	TyContractToTreeAction = 3  //合约账户转入叶子
+	TyTreeToContractAction = 4  //叶子账户转入合约
 	TyFeeAction            = 11 //手续费
 
 	//非电路action

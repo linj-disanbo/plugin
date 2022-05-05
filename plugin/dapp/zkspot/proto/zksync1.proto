@@ -20,17 +20,17 @@ message ZksyncAction1 {
     ZkSetPubKey setPubKey = 8;
     ZkFullExit  fullExit = 9;
     ZkSwap  swap = 10;
-    ZkVerifyKey         setVerifyKey = 11;
-    ZkCommitProof         commitProof  = 12;
-    ZkVerifier  setVerifier = 13;
+    ZkVerifyKey         setVerifyKey = 102;
+    ZkCommitProof         commitProof  = 103;
+    ZkVerifier  setVerifier = 104;
     ZkDeposit  deposit = 14;
 
     // spot
-    SpotLimitOrder  limitOrder = 101;
-    SpotMarketOrder marketOrder = 102;
-    SpotRevokeOrder revokeOrder = 103;
-    SpotExchangeBind exchangeBind = 104;
-    SpotEntrustOrder entrustOrder = 105;
-    SpotEntrustRevokeOrder entrustRevokeOrder = 107;
+    SpotLimitOrder  limitOrder = 201;
+    SpotMarketOrder marketOrder = 202;
+    SpotRevokeOrder revokeOrder = 203;
+    SpotExchangeBind exchangeBind = 204;
+    SpotEntrustOrder entrustOrder = 205;
+    SpotEntrustRevokeOrder entrustRevokeOrder = 207;
   } 
 }

@@ -24,28 +24,28 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			Chain33Addr: chain33Addr,
 		}
 		payload = types.MustPBToJSON(deposit)
-	case zt.TyWithdrawAction:
+	case zst.TyWithdrawAction:
 		withdraw := &zt.ZkWithdraw{
 			TokenId:   tokenId,
 			Amount:    amount,
 			AccountId: accountId,
 		}
 		payload = types.MustPBToJSON(withdraw)
-	case zt.TyContractToTreeAction:
+	case zst.TyContractToTreeAction:
 		contractToLeaf := &zt.ZkContractToTree{
 			TokenId:   tokenId,
 			Amount:    amount,
 			AccountId: accountId,
 		}
 		payload = types.MustPBToJSON(contractToLeaf)
-	case zt.TyTreeToContractAction:
+	case zst.TyTreeToContractAction:
 		leafToContract := &zt.ZkTreeToContract{
 			TokenId:   tokenId,
 			Amount:    amount,
 			AccountId: accountId,
 		}
 		payload = types.MustPBToJSON(leafToContract)
-	case zt.TyTransferAction:
+	case zst.TyTransferAction:
 		transfer := &zt.ZkTransfer{
 			TokenId:       tokenId,
 			Amount:        amount,
@@ -53,7 +53,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			ToAccountId:   toAccountId,
 		}
 		payload = types.MustPBToJSON(transfer)
-	case zt.TyTransferToNewAction:
+	case zst.TyTransferToNewAction:
 		transferToNew := &zt.ZkTransferToNew{
 			TokenId:          tokenId,
 			Amount:           amount,
@@ -62,24 +62,24 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 			ToChain33Address: chain33Addr,
 		}
 		payload = types.MustPBToJSON(transferToNew)
-	case zt.TyForceExitAction:
+	case zst.TyForceExitAction:
 		forceExit := &zt.ZkForceExit{
 			TokenId:   tokenId,
 			AccountId: accountId,
 		}
 		payload = types.MustPBToJSON(forceExit)
-	case zt.TySetPubKeyAction:
+	case zst.TySetPubKeyAction:
 		setPubKey := &zt.ZkSetPubKey{
 			AccountId: accountId,
 		}
 		payload = types.MustPBToJSON(setPubKey)
-	case zt.TyFullExitAction:
+	case zst.TyFullExitAction:
 		fullExit := &zt.ZkFullExit{
 			TokenId:   tokenId,
 			AccountId: accountId,
 		}
 		payload = types.MustPBToJSON(fullExit)
-	case zt.TySetVerifierAction:
+	case zst.TySetVerifierAction:
 		fullExit := &zt.ZkVerifier{
 			Verifiers: strings.Split(chain33Addr, ","),
 		}
@@ -165,7 +165,7 @@ func GetDepositMsg(payload *zt.ZkDeposit) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyDepositAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TyDepositAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	amount, _ := new(big.Int).SetString(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
@@ -191,7 +191,7 @@ func GetWithdrawMsg(payload *zt.ZkWithdraw) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyWithdrawAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TyWithdrawAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	amount, _ := new(big.Int).SetString(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
@@ -212,7 +212,7 @@ func GetTreeToContractMsg(payload *zt.ZkTreeToContract) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTreeToContractAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TyTreeToContractAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	amount, _ := new(big.Int).SetString(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
@@ -233,7 +233,7 @@ func GetContractToTreeMsg(payload *zt.ZkContractToTree) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyContractToTreeAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TyContractToTreeAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	amount, _ := new(big.Int).SetString(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
@@ -254,7 +254,7 @@ func GetTransferMsg(payload *zt.ZkTransfer) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTransferAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TyTransferAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	amount, _ := new(big.Int).SetString(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
@@ -277,7 +277,7 @@ func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTransferToNewAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TyTransferToNewAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	amount, _ := new(big.Int).SetString(payload.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
@@ -306,7 +306,7 @@ func GetForceExitMsg(payload *zt.ZkForceExit) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyForceExitAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TyForceExitAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
 
@@ -325,7 +325,7 @@ func GetSetPubKeyMsg(payload *zt.ZkSetPubKey) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TySetPubKeyAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TySetPubKeyAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
 
 	pubKeyX, _ := new(big.Int).SetString(payload.PubKey.X, 10)
@@ -348,7 +348,7 @@ func GetFullExitMsg(payload *zt.ZkFullExit) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyFullExitAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TyFullExitAction), zt.TxTypeBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.TokenId), zt.TokenBitWidth)...)
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.AccountId), zt.AccountBitWidth)...)
 
