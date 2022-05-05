@@ -946,7 +946,7 @@ func markRequired(cmd *cobra.Command, params ...string) {
 // ratio: p * 1e8, 1e8
 func limitOrderFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint32P("leftTokenId", "l", 0, "left token id")
-	cmd.Flags().Uint32P("rightTokenId", "t", 0, "right token id")
+	cmd.Flags().Uint32P("rightTokenId", "r", 0, "right token id")
 	cmd.Flags().Uint64P("price", "p", 0, "price 1e8 lt = p rt ")
 	cmd.Flags().Uint64P("amount", "a", 0, "to buy/sell amount of left token")
 	cmd.Flags().StringP("op", "o", "1", "1/buy, 2/sell")
@@ -1006,7 +1006,7 @@ func limitOrder(cmd *cobra.Command, args []string) {
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     exec,
-		ActionName: "SpotLimitOrder",
+		ActionName: "LimitOrder",
 		Payload:    types.MustPBToJSON(payload),
 	}
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -1016,7 +1016,7 @@ func limitOrder(cmd *cobra.Command, args []string) {
 
 func revokeOrderCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "zkLimitOrder",
+		Use:   "zkRevokeOrder",
 		Short: "create revoke limit order transaction",
 		Run:   revokeOrder,
 	}
@@ -1042,7 +1042,7 @@ func revokeOrder(cmd *cobra.Command, args []string) {
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     exec,
-		ActionName: "SpotRevokeOrder",
+		ActionName: "RevokeOrder",
 		Payload:    types.MustPBToJSON(payload),
 	}
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
