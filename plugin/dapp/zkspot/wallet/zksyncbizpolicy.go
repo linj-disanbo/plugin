@@ -27,7 +27,7 @@ var (
 )
 
 func init() {
-	wcom.RegisterPolicy("zt.Zkspot", New())
+	wcom.RegisterPolicy(et.Zksync, New())
 }
 
 // New 创建一盒钱包业务策略
@@ -129,7 +129,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	var msg *zt.ZkMsg
 	var signInfo *zt.ZkSignature
 	switch action.GetTy() {
-	case zt.TyDepositAction:
+	case et.TyDepositAction:
 		deposit := action.GetDeposit()
 		msg = GetDepositMsg(deposit)
 		signInfo, err = SignTx(msg, privateKey)
@@ -138,7 +138,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		deposit.Signature = signInfo
-	case zt.TyWithdrawAction:
+	case et.TyWithdrawAction:
 		withDraw := action.GetWithdraw()
 		msg = GetWithdrawMsg(withDraw)
 		signInfo, err = SignTx(msg, privateKey)
@@ -147,7 +147,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		withDraw.Signature = signInfo
-	case zt.TyContractToTreeAction:
+	case et.TyContractToTreeAction:
 		contractToLeaf := action.GetContractToTree()
 		msg = GetContractToTreeMsg(contractToLeaf)
 		signInfo, err = SignTx(msg, privateKey)
@@ -156,7 +156,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		contractToLeaf.Signature = signInfo
-	case zt.TyTreeToContractAction:
+	case et.TyTreeToContractAction:
 		leafToContract := action.GetTreeToContract()
 		msg = GetTreeToContractMsg(leafToContract)
 		signInfo, err = SignTx(msg, privateKey)
@@ -165,7 +165,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		leafToContract.Signature = signInfo
-	case zt.TyTransferAction:
+	case et.TyTransferAction:
 		transfer := action.GetTransfer()
 		msg = GetTransferMsg(transfer)
 		signInfo, err = SignTx(msg, privateKey)
@@ -174,7 +174,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		transfer.Signature = signInfo
-	case zt.TyTransferToNewAction:
+	case et.TyTransferToNewAction:
 		transferToNew := action.GetTransferToNew()
 		msg = GetTransferToNewMsg(transferToNew)
 		signInfo, err = SignTx(msg, privateKey)
@@ -183,7 +183,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		transferToNew.Signature = signInfo
-	case zt.TyForceExitAction:
+	case et.TyForceExitAction:
 		forceQuit := action.GetForceExit()
 		msg = GetForceExitMsg(forceQuit)
 		signInfo, err = SignTx(msg, privateKey)
@@ -192,7 +192,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		forceQuit.Signature = signInfo
-	case zt.TySetPubKeyAction:
+	case et.TySetPubKeyAction:
 		setPubKey := action.GetSetPubKey()
 		//如果是添加公钥的操作，则默认设置这里生成的公钥 todo:要是未来修改可以自定义公钥，这里需要删除
 		pubKey := &zt.ZkPubKey{
@@ -207,7 +207,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		setPubKey.Signature = signInfo
-	case zt.TyFullExitAction:
+	case et.TyFullExitAction:
 		forceQuit := action.GetFullExit()
 		msg = GetFullExitMsg(forceQuit)
 		signInfo, err = SignTx(msg, privateKey)
