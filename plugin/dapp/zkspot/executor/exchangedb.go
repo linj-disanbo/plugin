@@ -593,7 +593,7 @@ func QueryMarketDepth(localdb dbm.KV, left, right uint32, op int32, primaryKey s
 		rows, err = table.ListIndex("price", prefix, []byte(primaryKey), count, Direction(op))
 	}
 	if err != nil {
-		elog.Error("QueryMarketDepth.", "left", left, "right", right, "err", err.Error())
+		elog.Error("QueryMarketDepth.", "prefix", string(prefix), "left", left, "right", right, "err", err.Error())
 		return nil, err
 	}
 
