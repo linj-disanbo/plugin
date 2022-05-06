@@ -1404,7 +1404,6 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 	}
 	logs = append(logs, receipt2.Logs...)
 	kvs = append(kvs, receipt2.KV...)
-	//}
 
 	receiptLog := &types.ReceiptLog{Ty: zt.TySwapLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
