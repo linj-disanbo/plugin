@@ -262,7 +262,7 @@ func (acc *dexAccount) doTranfer(accTo *dexAccount, token uint32, balance uint64
 	}
 	idxTo := accTo.findTokenIndex(token)
 	if idxTo < 0 {
-		idxTo = acc.newToken(token, 0)
+		idxTo = accTo.newToken(token, 0)
 	}
 
 	if acc.acc.Balance[idx].Balance < balance {
@@ -282,7 +282,7 @@ func (acc *dexAccount) doFrozenTranfer(accTo *dexAccount, token uint32, amount u
 	}
 	idxTo := accTo.findTokenIndex(token)
 	if idxTo < 0 {
-		idxTo = acc.newToken(token, 0)
+		idxTo = accTo.newToken(token, 0)
 	}
 
 	if acc.acc.Balance[idx].Frozen < amount {
