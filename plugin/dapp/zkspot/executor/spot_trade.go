@@ -83,16 +83,19 @@ func (s *spotTaker) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyVa
 
 	receipt3, kvs3, err := maker.orderTraded(&matchDetail, s.order)
 	if err != nil {
+		elog.Error("maker.orderTraded", "err", err)
 		return receipt3, kvs3, err
 	}
 
 	receipt2, kvs2, err := s.orderTraded(&matchDetail, maker.order)
 	if err != nil {
+		elog.Error("taker.orderTraded", "err", err)
 		return receipt2, kvs2, err
 	}
 
 	receipt, kvs, err := s.settlement(maker, &matchDetail)
 	if err != nil {
+		elog.Error("settlement", "err", err)
 		return receipt, kvs, err
 	}
 
@@ -134,40 +137,48 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 	copyAccMaker := dupAccount(maker.acc.acc)
 	copyFeeAcc := dupAccount(s.accFee.acc)
 
-	leftToken, rightToken := uint32(1), uint32(2)
+	leftToken, rightToken := s.order.GetLimitOrder().LeftAsset, s.order.GetLimitOrder().RightAsset
 	var err error
 	if s.order.GetLimitOrder().Op == et.OpSell {
 		err = s.acc.doFrozenTranfer(maker.acc, leftToken, uint64(tradeBalance.LeftBalance))
 		if err != nil {
+			elog.Error("settlement", "sell.doFrozenTranfer1", err)
 			return nil, nil, err
 		}
 		err = maker.acc.doFrozenTranfer(s.acc, rightToken, uint64(tradeBalance.RightBalance))
 		if err != nil {
+			elog.Error("settlement", "sell.doFrozenTranfer2", err)
 			return nil, nil, err
 		}
 		err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker))
 		if err != nil {
+			elog.Error("settlement", "sell.doTranfer", err)
 			return nil, nil, err
 		}
 		err = maker.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMater))
 		if err != nil {
+			elog.Error("settlement", "sell.doFrozenTranfer3", err)
 			return nil, nil, err
 		}
 	} else {
 		err = s.acc.doFrozenTranfer(maker.acc, rightToken, uint64(tradeBalance.RightBalance))
 		if err != nil {
+			elog.Error("settlement", "buy.doFrozenTranfer1", err)
 			return nil, nil, err
 		}
 		err = maker.acc.doFrozenTranfer(s.acc, leftToken, uint64(tradeBalance.LeftBalance))
 		if err != nil {
+			elog.Error("settlement", "buy.doFrozenTranfer2", err)
 			return nil, nil, err
 		}
 		err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker))
 		if err != nil {
+			elog.Error("settlement", "buy.doTranfer1", err)
 			return nil, nil, err
 		}
 		err = maker.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMater))
 		if err != nil {
+			elog.Error("settlement", "buy.doTranfer2", err)
 			return nil, nil, err
 		}
 	}
@@ -206,17 +217,15 @@ func (s *spotTaker) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo)
 	copyAcc := dupAccount(s.acc.acc)
 	copyFeeAcc := dupAccount(s.accFee.acc)
 
-	leftToken, rightToken := uint32(1), uint32(2)
+	leftToken, rightToken := s.order.GetLimitOrder().LeftAsset, s.order.GetLimitOrder().RightAsset
 	err := s.acc.doActive(leftToken, uint64(tradeBalance.LeftBalance))
 	if err != nil {
 		return nil, nil, err
 	}
-	// taker 是buy, takerFee是冻结的, makerFee 是活动的
+	// taker 是buy, takerFee是活动的, makerFee 是活动的
 	// taker 是sell, takerFee是活动的, makerFee 是冻结的
 	rightAmount := tradeBalance.RightBalance
-	if s.order.GetLimitOrder().Op == et.OpBuy {
-		rightAmount += tradeBalance.FeeTaker
-	} else {
+	if s.order.GetLimitOrder().Op == et.OpSell {
 		rightAmount += tradeBalance.FeeMater
 	}
 	err = s.acc.doActive(rightToken, uint64(rightAmount))
@@ -324,7 +333,9 @@ func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *spotTaker) ([]*typ
 	}
 
 	logs, kvs, err = taker.Trade(&maker)
-	return logs, kvs, nil
+	elog.Info("try match2", "activeId", taker.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.Addr, "passiveAddr",
+		matchorder.Addr, "amount", matched, "price", taker.order.GetLimitOrder().Price)
+	return logs, kvs, err
 }
 
 type orderInit func(*et.SpotOrder) *et.SpotOrder
