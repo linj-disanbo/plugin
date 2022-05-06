@@ -1351,7 +1351,7 @@ func (a *Action) SpotMatch(payload *et.SpotLimitOrder, list *types.Receipt) (*ty
 			if err != nil {
 				return nil, err
 			}
-			receipt2, err := a.Swap(nil, payload, &trade)
+			receipt2, err := a.Swap(payload, &trade)
 			if err != nil {
 				return nil, err
 			}
@@ -1366,7 +1366,7 @@ func (a *Action) SpotMatch(payload *et.SpotLimitOrder, list *types.Receipt) (*ty
 // A 和 B 交换 = transfer(A,B) + transfer(B,A) + transfer(A,fee) + transfer(B,fee)
 // A 和 A 交换 = transfer(A,A) 0 + transfer(A,A) 0 + transfer(A,fee) + transfer(B,fee)
 // fee 先不处理, 因为交易本身就收了手续费
-func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (*types.Receipt, error) {
+func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -1382,8 +1382,8 @@ func (a *Action) Swap(payload *zt.ZkTransfer, payload1 *et.SpotLimitOrder, trade
 		TokenID:     uint64(payload1.LeftAsset),
 		Amount:      new(big.Int).SetInt64(payload1.Amount).String(),
 		FeeAmount:   "0",
-		SigData:     payload.Signature,
-		AccountID:   payload.FromAccountId,
+		SigData:     payload1.GetOrder().Signature,
+		AccountID:   payload1.Order.AccountID,
 	}
 
 	// A 和 B 交易, 构造4个transfer, 使用transfer 实现
