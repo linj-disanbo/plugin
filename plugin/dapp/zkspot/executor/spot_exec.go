@@ -34,31 +34,31 @@ func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.SpotLimitOrder, tx *type
 }
 
 //市价交易
-func (e *exchange) Exec_MarketOrder(payload *exchangetypes.SpotMarketOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_MarketOrder(payload *exchangetypes.SpotMarketOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	//TODO marketOrder
 	return nil, types.ErrActionNotSupport
 }
 
 // 撤单
-func (e *exchange) Exec_RevokeOrder(payload *exchangetypes.SpotRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := NewSpotAction(e, tx, index)
+func (e *zkspot) Exec_RevokeOrder(payload *exchangetypes.SpotRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewSpotDex(e, tx, index)
 	return action.RevokeOrder(payload)
 }
 
 // 绑定委托交易地址
-func (e *exchange) Exec_ExchangeBind(payload *exchangetypes.SpotExchangeBind, tx *types.Transaction, index int) (*types.Receipt, error) {
-	actiondb := NewSpotAction(e, tx, index)
+func (e *zkspot) Exec_ExchangeBind(payload *exchangetypes.SpotExchangeBind, tx *types.Transaction, index int) (*types.Receipt, error) {
+	actiondb := NewSpotDex(e, tx, index)
 	return actiondb.ExchangeBind(payload)
 }
 
 // 委托交易
-func (e *exchange) Exec_EntrustOrder(payload *exchangetypes.SpotEntrustOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := NewSpotAction(e, tx, index)
+func (e *zkspot) Exec_EntrustOrder(payload *exchangetypes.SpotEntrustOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewSpotDex(e, tx, index)
 	return action.EntrustOrder(payload)
 }
 
 // 委托撤单
-func (e *exchange) Exec_EntrustRevokeOrder(payload *exchangetypes.SpotEntrustRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := NewSpotAction(e, tx, index)
+func (e *zkspot) Exec_EntrustRevokeOrder(payload *exchangetypes.SpotEntrustRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := NewSpotDex(e, tx, index)
 	return action.EntrustRevokeOrder(payload)
 }

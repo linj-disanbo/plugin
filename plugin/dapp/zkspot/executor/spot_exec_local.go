@@ -13,27 +13,27 @@ import (
 * Non-critical data, local storage (localDB), used for auxiliary query, high efficiency
  */
 
-func (e *exchange) ExecLocal_LimitOrder(payload *ety.SpotLimitOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (e *zkspot) ExecLocal_LimitOrder(payload *ety.SpotLimitOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.interExecLocal(tx, receiptData, index)
 }
 
-func (e *exchange) ExecLocal_MarketOrder(payload *ety.SpotMarketOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (e *zkspot) ExecLocal_MarketOrder(payload *ety.SpotMarketOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.interExecLocal(tx, receiptData, index)
 }
 
-func (e *exchange) ExecLocal_RevokeOrder(payload *ety.SpotRevokeOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (e *zkspot) ExecLocal_RevokeOrder(payload *ety.SpotRevokeOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.interExecLocal(tx, receiptData, index)
 }
 
-func (e *exchange) ExecLocal_EntrustOrder(payload *ety.SpotLimitOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (e *zkspot) ExecLocal_EntrustOrder(payload *ety.SpotLimitOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.interExecLocal(tx, receiptData, index)
 }
 
-func (e *exchange) ExecLocal_EntrustRevokeOrder(payload *ety.SpotMarketOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (e *zkspot) ExecLocal_EntrustRevokeOrder(payload *ety.SpotMarketOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return e.interExecLocal(tx, receiptData, index)
 }
 
-func (e *exchange) interExecLocal(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (e *zkspot) interExecLocal(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
 	historyTable := NewHistoryOrderTable(e.GetLocalDB())
 	marketTable := NewMarketDepthTable(e.GetLocalDB())
@@ -44,6 +44,7 @@ func (e *exchange) interExecLocal(tx *types.Transaction, receiptData *types.Rece
 			case ety.TyMarketOrderLog, ety.TyRevokeOrderLog, ety.TyLimitOrderLog:
 				receipt := &ety.ReceiptSpotMatch{}
 				if err := types.Decode(log.Log, receipt); err != nil {
+					elog.Error("updateIndex", "log.type.decode", err)
 					return nil, err
 				}
 				e.updateIndex(marketTable, orderTable, historyTable, receipt)
@@ -76,6 +77,7 @@ func (e *exchange) interExecLocal(tx *types.Transaction, receiptData *types.Rece
 	dbSet = e.addAutoRollBack(tx, dbSet.KV)
 	localDB := e.GetLocalDB()
 	for _, kv1 := range dbSet.KV {
+		//elog.Info("updateIndex", "localDB.Set", string(kv1.Key))
 		err := localDB.Set(kv1.Key, kv1.Value)
 		if err != nil {
 			elog.Error("updateIndex", "localDB.Set", err.Error())
@@ -86,13 +88,14 @@ func (e *exchange) interExecLocal(tx *types.Transaction, receiptData *types.Rece
 }
 
 // Set automatic rollback
-func (e *exchange) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
+func (e *zkspot) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
 	dbSet := &types.LocalDBSet{}
 	dbSet.KV = e.AddRollbackKV(tx, tx.Execer, kv)
 	return dbSet
 }
 
-func (e *exchange) updateIndex(marketTable, orderTable, historyTable *table.Table, receipt *ety.ReceiptSpotMatch) (kvs []*types.KeyValue) {
+func (e *zkspot) updateIndex(marketTable, orderTable, historyTable *table.Table, receipt *ety.ReceiptSpotMatch) (kvs []*types.KeyValue) {
+	elog.Info("updateIndex", "order.status", receipt.Order.Status)
 	switch receipt.Order.Status {
 	case ety.Ordered:
 		err := e.updateOrder(marketTable, orderTable, historyTable, receipt.GetOrder(), receipt.GetIndex())
@@ -122,7 +125,7 @@ func (e *exchange) updateIndex(marketTable, orderTable, historyTable *table.Tabl
 	return
 }
 
-func (e *exchange) updateOrder(marketTable, orderTable, historyTable *table.Table, order *ety.SpotOrder, index int64) error {
+func (e *zkspot) updateOrder(marketTable, orderTable, historyTable *table.Table, order *ety.SpotOrder, index int64) error {
 	left := order.GetLimitOrder().GetLeftAsset()
 	right := order.GetLimitOrder().GetRightAsset()
 	op := order.GetLimitOrder().GetOp()
@@ -196,7 +199,7 @@ func (e *exchange) updateOrder(marketTable, orderTable, historyTable *table.Tabl
 	}
 	return nil
 }
-func (e *exchange) updateMatchOrders(marketTable, orderTable, historyTable *table.Table, order *ety.SpotOrder, matchOrders []*ety.SpotOrder, index int64) error {
+func (e *zkspot) updateMatchOrders(marketTable, orderTable, historyTable *table.Table, order *ety.SpotOrder, matchOrders []*ety.SpotOrder, index int64) error {
 	left := order.GetLimitOrder().GetLeftAsset()
 	right := order.GetLimitOrder().GetRightAsset()
 	op := order.GetLimitOrder().GetOp()
