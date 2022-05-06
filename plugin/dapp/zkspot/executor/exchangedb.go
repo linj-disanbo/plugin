@@ -13,6 +13,7 @@ import (
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/pkg/errors"
 )
 
 // Action action struct
@@ -194,6 +195,19 @@ func (a *SpotAction) LimitOrder(payload *et.SpotLimitOrder, entrustAddr string) 
 	err := checkLimitOrder(cfg, payload)
 	if err != nil {
 		return nil, err
+	}
+
+	info, err := generateTreeUpdateInfo(a.statedb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+	}
+	leaf, err := GetLeafByAccountId(a.statedb, payload.Order.AccountID, info)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
+	}
+	err = authVerification(payload.Order.Signature.PubKey, leaf.GetPubKey())
+	if err != nil {
+		return nil, errors.Wrapf(err, "authVerification")
 	}
 
 	fees, err := a.getFees(a.fromaddr, payload.LeftAsset, payload.RightAsset)
