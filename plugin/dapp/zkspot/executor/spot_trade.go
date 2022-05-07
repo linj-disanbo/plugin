@@ -24,9 +24,10 @@ type spotMaker struct {
 	spotTrader
 }
 
-// buy 按最大量锁定
-// 由于锁定手续费, 需要跟踪在taker状态下的成交价格, 所以不锁定手续费, 但需要判断余额按最大的手续费是够的.
-func (s *spotTaker) FrozenTokenForLimitOrder(order *et.SpotOrder) (*types.Receipt, error) {
+// buy 按最大量判断余额是否够
+// 因为在吃单时, 价格是变动的, 所以实际锁定的量是会浮动的
+// 实现上, 按最大量判断余额是否够, 在成交时, 按实际需要量扣除. 最后变成挂单时, 进行锁定
+func (s *spotTaker) CheckTokenAmountForLimitOrder(order *et.SpotOrder) error {
 	precision := s.cfg.GetCoinPrecision()
 	or := s.order.GetLimitOrder()
 	if or.GetOp() == et.OpBuy {
@@ -36,42 +37,39 @@ func (s *spotTaker) FrozenTokenForLimitOrder(order *et.SpotOrder) (*types.Receip
 
 		if s.acc.getBalance(or.RightAsset) < uint64(total) {
 			elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", total)
-			return nil, et.ErrAssetBalance
+			return et.ErrAssetBalance
 		}
-
-		receipt, err := s.acc.Frozen(or.RightAsset, uint64(amount))
-		if err != nil {
-			elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
-			return nil, et.ErrAssetBalance
-		}
-		return receipt, nil
 	}
 
 	/* if payload.GetOp() == et.OpSell */
 	amount := or.GetAmount()
-	receipt, err := s.acc.Frozen(or.LeftAsset, uint64(or.GetAmount()))
-	if err != nil {
+	if s.acc.getBalance(or.LeftAsset) < uint64(amount) {
 		elog.Error("limit check left balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
-		return nil, et.ErrAssetBalance
+		return et.ErrAssetBalance
 	}
-	return receipt, nil
+
+	return nil
 }
 
-func (s *spotTaker) FrozenFeeForLimitOrder() (*types.Receipt, error) {
+func (s *spotTaker) FrozenForLimitOrder() (*types.Receipt, error) {
 	or := s.order.GetLimitOrder()
-	if or.GetOp() != et.OpBuy {
-		return nil, nil
+	if or.GetOp() == et.OpSell {
+		receipt, err := s.acc.Frozen(or.LeftAsset, uint64(s.order.Balance))
+		if err != nil {
+			elog.Error("limit frozen left balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", s.order.Balance)
+			return nil, et.ErrAssetBalance
+		}
+		return receipt, err
 	}
 
 	precision := s.cfg.GetCoinPrecision()
-	amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
+	amount := SafeMul(s.order.Balance, or.GetPrice(), precision)
 	fee := calcMtfFee(amount, int32(s.order.Rate))
-	if fee == 0 { // 剩余量少, 算出来, 手续费低
-		return nil, nil
-	}
-	receipt, err := s.acc.Frozen(or.RightAsset, uint64(fee))
+	total := SafeAdd(amount, fee)
+
+	receipt, err := s.acc.Frozen(or.RightAsset, uint64(total))
 	if err != nil {
-		elog.Error("FrozenFeeForLimitOrder", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", fee)
+		elog.Error("FrozenForLimitOrder", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", total)
 		return nil, et.ErrAssetBalance
 	}
 	return receipt, nil
@@ -140,9 +138,9 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 	leftToken, rightToken := s.order.GetLimitOrder().LeftAsset, s.order.GetLimitOrder().RightAsset
 	var err error
 	if s.order.GetLimitOrder().Op == et.OpSell {
-		err = s.acc.doFrozenTranfer(maker.acc, leftToken, uint64(tradeBalance.LeftBalance))
+		err = s.acc.doTranfer(maker.acc, leftToken, uint64(tradeBalance.LeftBalance))
 		if err != nil {
-			elog.Error("settlement", "sell.doFrozenTranfer1", err)
+			elog.Error("settlement", "sell.doTranfer1", err)
 			return nil, nil, err
 		}
 		err = maker.acc.doFrozenTranfer(s.acc, rightToken, uint64(tradeBalance.RightBalance))
@@ -152,18 +150,18 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 		}
 		err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker))
 		if err != nil {
-			elog.Error("settlement", "sell.doTranfer", err)
+			elog.Error("settlement", "sell-fee.doTranfer", err)
 			return nil, nil, err
 		}
 		err = maker.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMater))
 		if err != nil {
-			elog.Error("settlement", "sell.doFrozenTranfer3", err)
+			elog.Error("settlement", "sell-fee.doFrozenTranfer3", err)
 			return nil, nil, err
 		}
 	} else {
-		err = s.acc.doFrozenTranfer(maker.acc, rightToken, uint64(tradeBalance.RightBalance))
+		err = s.acc.doTranfer(maker.acc, rightToken, uint64(tradeBalance.RightBalance))
 		if err != nil {
-			elog.Error("settlement", "buy.doFrozenTranfer1", err)
+			elog.Error("settlement", "buy.doTranfer1", err)
 			return nil, nil, err
 		}
 		err = maker.acc.doFrozenTranfer(s.acc, leftToken, uint64(tradeBalance.LeftBalance))
@@ -173,12 +171,12 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 		}
 		err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker))
 		if err != nil {
-			elog.Error("settlement", "buy.doTranfer1", err)
+			elog.Error("settlement", "buy-fee.doTranfer1", err)
 			return nil, nil, err
 		}
 		err = maker.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMater))
 		if err != nil {
-			elog.Error("settlement", "buy.doTranfer2", err)
+			elog.Error("settlement", "buy-fee.doTranfer2", err)
 			return nil, nil, err
 		}
 	}

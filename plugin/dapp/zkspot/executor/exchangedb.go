@@ -239,18 +239,18 @@ func (a *SpotAction) LimitOrder(payload *et.SpotLimitOrder, entrustAddr string) 
 		accFee: accFee,
 	}
 
-	receipt1, err := taker.FrozenTokenForLimitOrder(order)
+	err = taker.CheckTokenAmountForLimitOrder(order)
 	if err != nil {
 		return nil, err
 	}
 
-	receipt2, err := a.matchLimitOrder(payload, entrustAddr, &taker)
+	receipt1, err := a.matchLimitOrder(payload, entrustAddr, &taker)
 	if err != nil {
 		return nil, err
 	}
-	receipt1 = mergeReceipt(receipt1, receipt2)
-	if taker.order.Status != et.Completed && taker.order.GetLimitOrder().Op == et.OpBuy {
-		receipt3, err := taker.FrozenFeeForLimitOrder()
+
+	if taker.order.Status != et.Completed {
+		receipt3, err := taker.FrozenForLimitOrder()
 		if err != nil {
 			return nil, err
 		}
