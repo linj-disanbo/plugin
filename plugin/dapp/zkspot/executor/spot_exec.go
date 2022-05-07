@@ -1,6 +1,8 @@
 package executor
 
 import (
+	"time"
+
 	"github.com/33cn/chain33/types"
 	exchangetypes "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
@@ -17,7 +19,7 @@ func checkZkSignature() error {
 // 限价交易
 func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.SpotLimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	// checkTx will check payload and zk Signature
-
+	start := time.Now()
 	action := NewSpotDex(e, tx, index)
 	r, err := action.LimitOrder(payload, "")
 	if err != nil {
@@ -25,11 +27,17 @@ func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.SpotLimitOrder, tx *type
 	}
 	// 构造 LimitOrder 的结算清单
 	list := GetSpotMatch(r)
+	end := time.Now()
+	elog.Error("zkspot Exec_LimitOrder.LimitOrder", "cost", end.Sub(start))
+
 	action2 := NewAction(e, tx, index)
 	r2, err := action2.SpotMatch(payload, list)
 	if err != nil {
 		return r, err
 	}
+	end2 := time.Now()
+	elog.Error("zkspot Exec_LimitOrder.SpotMatch", "cost", end2.Sub(start))
+
 	return mergeReceipt(r, r2), nil
 }
 
