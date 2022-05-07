@@ -36,15 +36,16 @@ func (s *spotTaker) CheckTokenAmountForLimitOrder(order *et.SpotOrder) error {
 		total := SafeAdd(amount, int64(fee))
 
 		if s.acc.getBalance(or.RightAsset) < uint64(total) {
-			elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", total)
+			elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "b", s.acc.getBalance(or.RightAsset), "need", total)
 			return et.ErrAssetBalance
 		}
+		return nil
 	}
 
 	/* if payload.GetOp() == et.OpSell */
 	amount := or.GetAmount()
 	if s.acc.getBalance(or.LeftAsset) < uint64(amount) {
-		elog.Error("limit check left balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
+		elog.Error("limit check left balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "b", s.acc.getBalance(or.LeftAsset), "need", amount)
 		return et.ErrAssetBalance
 	}
 
