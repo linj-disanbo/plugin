@@ -226,8 +226,6 @@ message DexAccountBalance {
   uint32 id = 1; 
   uint64 balance = 2;
   uint64 frozen = 3;
-  string addr = 4;
-  string dexName = 5;
 }
 
 // 用户代币的数量
