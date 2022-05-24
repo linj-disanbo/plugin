@@ -250,7 +250,7 @@ message MatchInfo {
 	int64 rightBalance = 3;
   // fee use right token
 	int64 feeTaker = 4;
-	int64 feeMater = 5;
+	int64 feeMaker = 5;
 }
 
 message ReceiptSpotTrade {
