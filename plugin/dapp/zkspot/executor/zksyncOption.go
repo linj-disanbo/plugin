@@ -1604,6 +1604,8 @@ func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptS
 	transfers = append(transfers, taker1)
 	transfers = append(transfers, maker1)
 	transfers = append(transfers, fee1)
+	elog.Error("swapGenTransfer", "takerPay", takerPay, "takerRcv", takerRcv,
+		"makerPay", makerPay, "makerRcv", makerRcv)
 	return transfers
 }
 

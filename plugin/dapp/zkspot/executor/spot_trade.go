@@ -119,7 +119,7 @@ func (s *spotTaker) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo 
 	info.LeftBalance = balance
 	info.RightBalance = SafeMul(balance, maker.order.GetLimitOrder().Price, s.cfg.GetCoinPrecision())
 	info.FeeTaker = SafeMul(info.RightBalance, int64(s.order.TakerRate), s.cfg.GetCoinPrecision())
-	info.FeeMater = SafeMul(info.RightBalance, int64(maker.order.Rate), s.cfg.GetCoinPrecision())
+	info.FeeMaker = SafeMul(info.RightBalance, int64(maker.order.Rate), s.cfg.GetCoinPrecision())
 	return info
 }
 
@@ -154,7 +154,7 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 			elog.Error("settlement", "sell-fee.doTranfer", err)
 			return nil, nil, err
 		}
-		err = maker.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMater))
+		err = maker.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMaker))
 		if err != nil {
 			elog.Error("settlement", "sell-fee.doFrozenTranfer3", err)
 			return nil, nil, err
@@ -175,7 +175,7 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 			elog.Error("settlement", "buy-fee.doTranfer1", err)
 			return nil, nil, err
 		}
-		err = maker.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMater))
+		err = maker.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMaker))
 		if err != nil {
 			elog.Error("settlement", "buy-fee.doTranfer2", err)
 			return nil, nil, err
@@ -225,13 +225,13 @@ func (s *spotTaker) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo)
 	// taker 是sell, takerFee是活动的, makerFee 是冻结的
 	rightAmount := tradeBalance.RightBalance
 	if s.order.GetLimitOrder().Op == et.OpSell {
-		rightAmount += tradeBalance.FeeMater
+		rightAmount += tradeBalance.FeeMaker
 	}
 	err = s.acc.doActive(rightToken, uint64(rightAmount))
 	if err != nil {
 		return nil, nil, err
 	}
-	err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker+tradeBalance.FeeMater))
+	err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker+tradeBalance.FeeMaker))
 	if err != nil {
 		return nil, nil, err
 	}
@@ -292,7 +292,7 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOr
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
-	m.order.DigestedFee += matchDetail.FeeMater
+	m.order.DigestedFee += matchDetail.FeeMaker
 	m.order.AVGPrice = caclAVGPrice(m.order, m.order.GetLimitOrder().Price, matched)
 
 	m.order.UpdateTime = takerOrder.UpdateTime
