@@ -1414,33 +1414,35 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 	receiptLog := &types.ReceiptLog{Ty: zt.TySwapLog, Log: types.Encode(zklog)}
 	logs = append(logs, receiptLog)
 
-	feelog1, err := a.MakeFeeLog(transfers[2].Amount, info, transfers[2].TokenId, transfers[2].Signature)
-	if err != nil {
-		return nil, err
-	}
-	feelog2, err := a.MakeFeeLog(transfers[3].Amount, info, transfers[3].TokenId, transfers[3].Signature)
+	feelog1, err := a.MakeFeeLog(transfers[2].AmountIn, info, transfers[2].TokenId, transfers[2].Signature)
 	if err != nil {
 		return nil, err
 	}
 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	receipts = mergeReceipt(receipts, feelog1)
-	receipts = mergeReceipt(receipts, feelog2)
 	return receipts, nil
 }
 
 // 将参加放到 ZkTransfer, 可以方便的修改 Transfer的实现
-func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade, info *TreeUpdateInfo, zklog *zt.ZkReceiptLog) (*types.Receipt, error) {
+func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade, info *TreeUpdateInfo, zklog *zt.ZkReceiptLog) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
 	operationInfo := zklog.OperationInfo
 	//加上手续费
-	amountInt, _ := new(big.Int).SetString(payload.Amount, 10)
-	totalAmount := amountInt.String()
+	amountOutTmp, _ := new(big.Int).SetString(payload.AmountOut, 10)
+	amountOut := amountOutTmp.String()
 
-	err := checkParam(totalAmount)
+	amountInTmp, _ := new(big.Int).SetString(payload.AmountIn, 10)
+	amountIn := amountInTmp.String()
+
+	err := checkParam(amountOut)
+	if err != nil {
+		return nil, errors.Wrapf(err, "checkParam")
+	}
+	err = checkParam(amountIn)
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
@@ -1462,7 +1464,7 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetTokenByAccountIdAndTokenId")
 	}
-	err = checkAmount(fromToken, payload.GetAmount())
+	err = checkAmount(fromToken, amountOut)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.checkAmount")
 	}
@@ -1476,7 +1478,7 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 	before := getBranchByReceipt1(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId, payload.TokenId)
 	// after
 	//更新fromLeaf
-	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub)
+	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), amountOut, zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -1488,7 +1490,7 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after := getBranchByReceipt1(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId, payload.TokenId)
+	after := getBranchByReceipt1(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, payload.GetAmountOut(), payload.FromAccountId, payload.TokenId)
 
 	branch := &zt.OperationPairBranch{
 		Before: before,
@@ -1518,7 +1520,7 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 	before = getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, balance, payload.ToAccountId, payload.TokenId)
 	// 2after
 	//更新toLeaf
-	tokvs, toLocal, err := UpdateLeaf(a.statedb, a.localDB, info, toLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
+	tokvs, toLocal, err := UpdateLeaf(a.statedb, a.localDB, info, toLeaf.GetAccountId(), payload.GetTokenId(), amountIn, zt.Add)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -1529,7 +1531,7 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	after = getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, receipt.Token.Balance, payload.ToAccountId, payload.TokenId)
+	after = getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, payload.GetAmountIn(), payload.ToAccountId, payload.TokenId)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -1550,98 +1552,95 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 	return receipts, nil
 }
 
-func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) []*zt.ZkTransfer {
+func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) []*et.ZkTransferWithFee {
 	// A 和 A 交易
-	var transfers []*zt.ZkTransfer
+	var transfers []*et.ZkTransferWithFee
 	if trade.Current.Maker.Addr == trade.Current.Taker.Addr {
 		return a.selfSwapGenTransfer(payload1, trade)
 	}
 
-	// A 和 B 交易, 构造4个transfer, 使用transfer 实现
-	takerPay, makerPay := trade.Match.LeftBalance, trade.Match.RightBalance
+	// A 和 B 交易
+	// Sell
 	takerTokenID, makerTokenID := payload1.LeftAsset, payload1.RightAsset
+	takerPay, makerRcv := trade.Match.LeftBalance, trade.Match.LeftBalance
+
+	rightBalance := trade.Match.RightBalance
+	takerRcv := rightBalance - trade.Match.FeeTaker
+	makerPay := rightBalance + trade.Match.FeeMaker
+	fee := trade.Match.FeeMaker + trade.Match.FeeTaker
+
 	if payload1.Op == et.OpBuy {
-		takerPay, makerPay = makerPay, takerPay
 		takerTokenID, makerTokenID = makerTokenID, takerTokenID
+		takerRcv, makerPay = trade.Match.LeftBalance, trade.Match.LeftBalance
+
+		takerPay, makerRcv = rightBalance+trade.Match.FeeTaker, rightBalance-trade.Match.FeeMaker
 	}
 
-	taker1 := &zt.ZkTransfer{
+	taker1 := &et.ZkTransferWithFee{
 		TokenId:       uint64(takerTokenID),
-		Amount:        new(big.Int).SetInt64(takerPay).String(),
+		AmountOut:     new(big.Int).SetInt64(takerPay).String(),
 		FromAccountId: payload1.Order.AccountID,
 		ToAccountId:   trade.Current.Maker.Id,
 		Signature:     payload1.Order.Signature,
+		AmountIn:      new(big.Int).SetInt64(makerRcv).String(),
 	}
-	maker1 := &zt.ZkTransfer{
+	maker1 := &et.ZkTransferWithFee{
 		TokenId:       uint64(makerTokenID),
-		Amount:        new(big.Int).SetInt64(makerPay).String(),
+		AmountOut:     new(big.Int).SetInt64(makerPay).String(),
 		FromAccountId: trade.Current.Maker.Id,
 		ToAccountId:   payload1.Order.AccountID,
 		Signature:     trade.MakerOrder.Signature,
+		AmountIn:      new(big.Int).SetInt64(takerRcv).String(),
 	}
-	takerF := &zt.ZkTransfer{
+	fee1 := &et.ZkTransferWithFee{
 		TokenId:       uint64(payload1.RightAsset),
-		Amount:        new(big.Int).SetInt64(trade.Match.FeeTaker).String(),
+		AmountOut:     new(big.Int).SetInt64(0).String(),
 		FromAccountId: payload1.Order.AccountID,
 		ToAccountId:   trade.Current.Fee.Id,
 		Signature:     payload1.Order.Signature,
+		AmountIn:      new(big.Int).SetInt64(fee).String(),
 	}
-	makerF := &zt.ZkTransfer{
-		TokenId:       uint64(payload1.RightAsset),
-		Amount:        new(big.Int).SetInt64(trade.Match.FeeMater).String(),
-		FromAccountId: trade.Current.Maker.Id,
-		ToAccountId:   trade.Current.Fee.Id,
-		Signature:     trade.MakerOrder.Signature,
-	}
+
 	transfers = append(transfers, taker1)
 	transfers = append(transfers, maker1)
-	transfers = append(transfers, takerF)
-	transfers = append(transfers, makerF)
+	transfers = append(transfers, fee1)
 	return transfers
 }
 
 // A 和 A 交易时, 也需要构造4个transfer
 // maker/taker 由于是同一个帐号, 所以takerPay makerPay 为0
-func (a *Action) selfSwapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) []*zt.ZkTransfer {
-	var transfers []*zt.ZkTransfer
-	// A 和 A 交易, 构造4个transfer, 使用transfer 实现
-	takerPay, makerPay := int64(0), int64(0)
-	takerTokenID, makerTokenID := payload1.LeftAsset, payload1.RightAsset
-	if payload1.Op == et.OpBuy {
-		takerTokenID, makerTokenID = makerTokenID, takerTokenID
-	}
+func (a *Action) selfSwapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) []*et.ZkTransferWithFee {
+	// A 和 A 交易, 构造3个transfer, 使用transfer 实现
+	var transfers []*et.ZkTransferWithFee
+	leftPay, rightPay := int64(0), trade.Match.FeeTaker+trade.Match.FeeMaker
 
-	taker1 := &zt.ZkTransfer{
-		TokenId:       uint64(takerTokenID),
-		Amount:        new(big.Int).SetInt64(takerPay).String(),
+	left := &et.ZkTransferWithFee{
+		TokenId:       uint64(payload1.LeftAsset),
+		AmountOut:     new(big.Int).SetInt64(leftPay).String(),
 		FromAccountId: payload1.Order.AccountID,
 		ToAccountId:   trade.Current.Maker.Id,
 		Signature:     payload1.Order.Signature,
+		AmountIn:      new(big.Int).SetInt64(leftPay).String(),
 	}
-	maker1 := &zt.ZkTransfer{
-		TokenId:       uint64(makerTokenID),
-		Amount:        new(big.Int).SetInt64(makerPay).String(),
+	right := &et.ZkTransferWithFee{
+		TokenId:       uint64(payload1.RightAsset),
+		AmountOut:     new(big.Int).SetInt64(rightPay).String(),
 		FromAccountId: trade.Current.Maker.Id,
 		ToAccountId:   payload1.Order.AccountID,
 		Signature:     trade.MakerOrder.Signature,
+		AmountIn:      new(big.Int).SetInt64(0).String(),
 	}
-	takerF := &zt.ZkTransfer{
+	fee := &et.ZkTransferWithFee{
 		TokenId:       uint64(payload1.RightAsset),
-		Amount:        new(big.Int).SetInt64(trade.Match.FeeTaker).String(),
+		AmountOut:     new(big.Int).SetInt64(0).String(),
 		FromAccountId: payload1.Order.AccountID,
 		ToAccountId:   trade.Current.Fee.Id,
 		Signature:     payload1.Order.Signature,
+		AmountIn:      new(big.Int).SetInt64(rightPay).String(),
 	}
-	makerF := &zt.ZkTransfer{
-		TokenId:       uint64(payload1.RightAsset),
-		Amount:        new(big.Int).SetInt64(trade.Match.FeeMater).String(),
-		FromAccountId: trade.Current.Maker.Id,
-		ToAccountId:   trade.Current.Fee.Id,
-		Signature:     trade.MakerOrder.Signature,
-	}
-	transfers = append(transfers, taker1)
-	transfers = append(transfers, maker1)
-	transfers = append(transfers, takerF)
-	transfers = append(transfers, makerF)
+
+	transfers = append(transfers, left)
+	transfers = append(transfers, right)
+	transfers = append(transfers, fee)
 	return transfers
 }
