@@ -1,6 +1,6 @@
 syntax = "proto3";
 import "spot.proto";
-//import "witness.proto";
+import "witness.proto";
 import "zksync.proto";
 //import "common.proto";
 
@@ -33,4 +33,13 @@ message ZksyncAction1 {
     SpotEntrustOrder entrustOrder = 205;
     SpotEntrustRevokeOrder entrustRevokeOrder = 207;
   } 
+}
+
+message ZkTransferWithFee {
+    uint64 tokenId = 1;
+    string amountOut = 2;
+    uint64 fromAccountId = 3;
+    string amountIn = 4;
+    uint64 toAccountId = 5;
+    ZkSignature signature = 6;
 }
