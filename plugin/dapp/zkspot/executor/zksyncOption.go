@@ -209,6 +209,10 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64) 
 }
 
 func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAddr string, chain33Addr string, pubKey *zt.ZkPubKey, balance string, accountId uint64) *zt.OperationMetaBranch {
+	return getBranchByReceipt1(receipt, info, ethAddr, chain33Addr, pubKey, balance, accountId, info.TokenID)
+}
+
+func getBranchByReceipt1(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAddr string, chain33Addr string, pubKey *zt.ZkPubKey, balance string, accountId uint64, tokenId uint64) *zt.OperationMetaBranch {
 	info.Roots = append(info.Roots, receipt.TreeProof.RootHash)
 
 	treePath := &zt.SiblingPath{
@@ -229,7 +233,7 @@ func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAd
 		return &zt.OperationMetaBranch{
 			AccountWitness: accountW,
 			TokenWitness: &zt.TokenWitness{
-				ID:      info.TokenID,
+				ID:      uint64(tokenId),
 				Balance: "0",
 			},
 		}
@@ -241,7 +245,7 @@ func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, info *zt.OperationInfo, ethAd
 		Helper: receipt.TokenProof.GetHelpers(),
 	}
 	tokenW := &zt.TokenWitness{
-		ID:      info.TokenID,
+		ID:      uint64(tokenId),
 		Balance: balance,
 		Sibling: tokenPath,
 	}
@@ -1388,7 +1392,9 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 
 	// A 和 B 交易, 构造4个transfer, 使用transfer 实现
 	// A 和 A 交易, 构造4个transfer, 0 swap *2  收取手续费*2
+	zklog.Debug("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
 	transfers := a.swapGenTransfer(payload1, trade)
+	zklog.Debug("swapGenTransfer", "tokenid0", transfers[0].TokenId, "tokenid1", transfers[1].TokenId)
 	// operationInfo, localKvs 通过 zklog 获得
 	zklog := &zt.ZkReceiptLog{OperationInfo: operationInfo}
 	//for _, transfer1 := range transfers {
@@ -1467,7 +1473,7 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId)
+	before := getBranchByReceipt1(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId, payload.TokenId)
 	// after
 	//更新fromLeaf
 	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub)
@@ -1482,7 +1488,7 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId)
+	after := getBranchByReceipt1(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId, payload.TokenId)
 
 	branch := &zt.OperationPairBranch{
 		Before: before,
@@ -1509,7 +1515,7 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 	} else {
 		balance = receipt.Token.Balance
 	}
-	before = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, balance, payload.ToAccountId)
+	before = getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, balance, payload.ToAccountId, payload.TokenId)
 	// 2after
 	//更新toLeaf
 	tokvs, toLocal, err := UpdateLeaf(a.statedb, a.localDB, info, toLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
@@ -1523,7 +1529,7 @@ func (a *Action) swapByTransfer(payload *zt.ZkTransfer, payload1 *et.SpotLimitOr
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	after = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, receipt.Token.Balance, payload.ToAccountId)
+	after = getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, receipt.Token.Balance, payload.ToAccountId, payload.TokenId)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
