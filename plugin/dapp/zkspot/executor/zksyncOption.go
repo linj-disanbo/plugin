@@ -1478,7 +1478,7 @@ func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, payload1 *et.Spot
 	before := getBranchByReceipt1(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId, payload.TokenId)
 	// after
 	//更新fromLeaf
-	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), amountOut, zt.Sub)
+	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.TokenId, amountOut, zt.Sub)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -1517,7 +1517,7 @@ func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, payload1 *et.Spot
 	} else {
 		balance = receipt.Token.Balance
 	}
-	before = getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, balance, payload.ToAccountId, payload.TokenId)
+	before2 := getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, balance, payload.ToAccountId, payload.TokenId)
 	// 2after
 	//更新toLeaf
 	tokvs, toLocal, err := UpdateLeaf(a.statedb, a.localDB, info, toLeaf.GetAccountId(), payload.GetTokenId(), amountIn, zt.Add)
@@ -1531,7 +1531,7 @@ func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, payload1 *et.Spot
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	after = getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, payload.GetAmountIn(), payload.ToAccountId, payload.TokenId)
+	after2 := getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, payload.GetAmountIn(), payload.ToAccountId, payload.TokenId)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
@@ -1539,11 +1539,11 @@ func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, payload1 *et.Spot
 	}
 	kvs = append(kvs, kv)
 
-	branch = &zt.OperationPairBranch{
-		Before: before,
-		After:  after,
+	branch2 := &zt.OperationPairBranch{
+		Before: before2,
+		After:  after2,
 	}
-	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch)
+	operationInfo.OperationBranches = append(operationInfo.GetOperationBranches(), branch2)
 
 	// 返回 operationInfo (本来就是引用zklog) localKvs
 	zklog.LocalKvs = append(zklog.LocalKvs, localKvs...)
