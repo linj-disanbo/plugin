@@ -23,7 +23,13 @@ message ZksyncAction1 {
     ZkVerifyKey         setVerifyKey = 102;
     ZkCommitProof         commitProof  = 103;
     ZkVerifier  setVerifier = 104;
-    ZkDeposit  deposit = 14;
+    ZkDeposit  deposit = 199;
+
+    ZkSetFee    setFee = 14;
+    ZkMintNFT     mintNFT = 16;
+    ZkWithdrawNFT withdrawNFT = 17;
+    ZkTransferNFT transferNFT = 18;
+
 
     // spot
     SpotLimitOrder  limitOrder = 201;

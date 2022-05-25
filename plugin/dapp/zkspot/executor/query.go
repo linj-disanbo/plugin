@@ -105,12 +105,12 @@ func (z *zkspot) Query_GetLastCommitProof(in *types.ReqNil) (types.Message, erro
 }
 
 //Query_GetLastOnChainProof 获取最新的包含OnChainPubData的Proof
-func (z *zksync) Query_GetLastOnChainProof(in *types.ReqNil) (types.Message, error) {
+func (z *zkspot) Query_GetLastOnChainProof(in *types.ReqNil) (types.Message, error) {
        return getLastOnChainProofData(z.GetStateDB())
 }
 
 //Query_GetTreeInitRoot 获取系统初始tree root
-func (z *zksync) Query_GetTreeInitRoot(in *types.ReqAddrs) (types.Message, error) {
+func (z *zkspot) Query_GetTreeInitRoot(in *types.ReqAddrs) (types.Message, error) {
        if in == nil {
                return nil, types.ErrInvalidParam
        }
@@ -233,7 +233,7 @@ func (z *zkspot) Query_GetCommitProodByProofId(in *zt.ZkQueryReq) (types.Message
 }
 
 // Query_GetNFTStatus 获取nft by id
-func (z *zksync) Query_GetNFTStatus(in *zt.ZkQueryReq) (types.Message, error) {
+func (z *zkspot) Query_GetNFTStatus(in *zt.ZkQueryReq) (types.Message, error) {
        if in == nil {
                return nil, types.ErrInvalidParam
        }
@@ -250,7 +250,7 @@ func (z *zksync) Query_GetNFTStatus(in *zt.ZkQueryReq) (types.Message, error) {
 }
 
 //Query_GetNFTId get nft id by content hash
-func (z *zksync) Query_GetNFTId(in *types.ReqString) (types.Message, error) {
+func (z *zkspot) Query_GetNFTId(in *types.ReqString) (types.Message, error) {
        if in == nil {
                return nil, types.ErrInvalidParam
        }
@@ -267,7 +267,7 @@ func (z *zksync) Query_GetNFTId(in *types.ReqString) (types.Message, error) {
 }
 
 // Query_GetProofList 根据proofId fetch 后续证明
-func (z *zksync) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, error) {
+func (z *zkspot) Query_GetProofList(in *zt.ZkFetchProofList) (types.Message, error) {
        if in == nil {
                return nil, types.ErrInvalidParam
        }

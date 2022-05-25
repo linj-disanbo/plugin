@@ -41,18 +41,18 @@ func (z *zkspot) ExecDelLocal_FullExit(payload *zt.ZkFullExit, tx *types.Transac
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
-func (z *zksync) ExecDelLocal_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zkspot) ExecDelLocal_MintNFT(payload *zt.ZkMintNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
-func (z *zksync) ExecDelLocal_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zkspot) ExecDelLocal_WithdrawNFT(payload *zt.ZkWithdrawNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
-func (z *zksync) ExecDelLocal_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zkspot) ExecDelLocal_TransferNFT(payload *zt.ZkTransferNFT, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }
 
-func (z *zksync) ExecDelLocal_CommitProof(payload *zt.ZkCommitProof, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+func (z *zkspot) ExecDelLocal_CommitProof(payload *zt.ZkCommitProof, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	return z.execAutoDelLocal(tx, receiptData)
 }

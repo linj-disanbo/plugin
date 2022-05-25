@@ -229,7 +229,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		limitOrder.Order.Signature = signInfo
-       case zt.TyMintNFTAction:
+       case et.TyMintNFTAction:
                nft := action.GetMintNFT()
                msg := GetMintNFTMsg(nft)
                signInfo, err = SignTx(msg, privateKey)
@@ -238,7 +238,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
                        return
                }
                nft.Signature = signInfo
-       case zt.TyTransferNFTAction:
+       case et.TyTransferNFTAction:
                nft := action.GetTransferNFT()
                msg := GetTransferNFTMsg(nft)
                signInfo, err = SignTx(msg, privateKey)
@@ -247,7 +247,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
                        return
                }
                nft.Signature = signInfo
-       case zt.TyWithdrawNFTAction:
+       case et.TyWithdrawNFTAction:
                nft := action.GetWithdrawNFT()
                msg := GetWithdrawNFTMsg(nft)
                signInfo, err = SignTx(msg, privateKey)
@@ -300,7 +300,6 @@ func (policy *zkspotPolicy) OnAddBlockTx(block *types.BlockDetail, tx *types.Tra
 	txdetail.Txhash = tx.Hash()
 
 	pubkey := block.Block.Txs[index].Signature.GetPubkey()
-	addr := address.BytesToBtcAddress(0, pubkey)
 	txdetail.Fromaddr = address.PubKeyToAddr(address.DefaultID, pubkey)
 
 	txdetailbyte := types.Encode(txdetail)

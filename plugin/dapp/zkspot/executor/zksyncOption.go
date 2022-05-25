@@ -645,8 +645,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
         if !checkIsNormalToken(payload.TokenId) {
-                return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNF
-TTokenId)
+                return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
         }
 
 	fee := zt.FeeMap[zt.TyTransferAction]
@@ -697,8 +696,7 @@ TTokenId)
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKey
-s, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
+	before := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
 	//更新fromLeaf
 	fromKvs, fromLocal, err := UpdateLeaf(a.statedb, a.localDB, info, fromLeaf.GetAccountId(), payload.GetTokenId(), totalAmount, zt.Sub)
 	if err != nil {
@@ -712,8 +710,7 @@ s, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys
-, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)	
+	after := getBranchByReceipt(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, fromLeaf.ProxyPubKeys, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)	
 
 	branch := &zt.OperationPairBranch{
 		Before: before,
@@ -740,8 +737,7 @@ s, payload.FromAccountId, payload.TokenId, receipt.Token.Balance)
 	} else {
 		balance = receipt.Token.Balance
 	}
-	before = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, payloa
-d.ToAccountId, payload.TokenId, balance)
+	before = getBranchByReceipt(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, toLeaf.ProxyPubKeys, payload.ToAccountId, payload.TokenId, balance)
 
 	//更新toLeaf
 	tokvs, toLocal, err := UpdateLeaf(a.statedb, a.localDB, info, toLeaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
@@ -2284,7 +2280,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 }
 
 
-unc getNFTById(db dbm.KV, id uint64) (*zt.ZkNFTTokenStatus, error) {
+func getNFTById(db dbm.KV, id uint64) (*zt.ZkNFTTokenStatus, error) {
         if id <= zt.SystemNFTTokenId {
                 return nil, errors.Wrapf(types.ErrInvalidParam, "nft id =%d should big than default %d", id, zt.SystemNFTTokenId)
         }

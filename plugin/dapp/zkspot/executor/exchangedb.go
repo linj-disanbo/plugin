@@ -197,9 +197,9 @@ func (a *SpotAction) LimitOrder(payload *et.SpotLimitOrder, entrustAddr string) 
 		return nil, err
 	}
 
-	info, err := generateTreeUpdateInfo(a.statedb)
+	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo")
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
 	leaf, err := GetLeafByAccountId(a.statedb, payload.Order.AccountID, info)
 	if err != nil {

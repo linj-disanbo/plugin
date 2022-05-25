@@ -7,7 +7,7 @@ import (
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
 const (

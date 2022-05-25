@@ -16,7 +16,7 @@ import (
 // action类型id和name，这些常量可以自定义修改
 const (
 	TyNoopAction           = 0
-	TyDepositAction        = 14 //eth存款
+	TyDepositAction        = 199 //eth存款
 	TyWithdrawAction       = 2  //eth取款
 	TyTransferAction       = 5  //转账
 	TyTransferToNewAction  = 6  //向新地址转账
@@ -216,15 +216,15 @@ var (
 		TyFullExitLog:           {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyFullExitLog"},
 		TySwapLog:               {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TySwapLog"},
 		TyFeeLog:                {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyFeeLog"},
-                TyMintNFTLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyMintNFTLog"},
-                TyWithdrawNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
-                TyTransferNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferNFTLog"},
+                TyMintNFTLog:            {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyMintNFTLog"},
+                TyWithdrawNFTLog:        {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
+                TyTransferNFTLog:        {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTransferNFTLog"},
 
 		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(zt.ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
 		TyCommitProofLog:        {Ty: reflect.TypeOf(zt.ReceiptCommitProof{}), Name: "TyCommitProof"},
 		TySetVerifierLog:        {Ty: reflect.TypeOf(zt.ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
 		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(zt.ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
-		TySetFeeLog:             {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
+		TySetFeeLog:             {Ty: reflect.TypeOf(zt.ReceiptSetFee{}), Name: "TySetFeeLog"},
 
 		// spot
 		TyLimitOrderLog:   {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyLimitOrderLog"},
