@@ -26,13 +26,21 @@ message SiblingPath {
   repeated string helper  = 2;
 }
 
+message AccountProxyPubKeys {
+  //代理地址都由用户自己指定，不能由代理地址指定，代理地址只能处理有限指定的操作
+  ZkPubKey normal = 1;
+  ZkPubKey system = 2;
+  ZkPubKey super  = 3;
+}
+
 message AccountWitness {
   uint64 ID             = 1;
   string ethAddr        = 2;
   string chain33Addr    = 3;
   string tokenTreeRoot  = 4; //sub chain token tree root
-  ZkPubKey pubKey         = 5;
+  ZkPubKey pubKey       = 5;
   SiblingPath sibling   = 6;
+  AccountProxyPubKeys proxyPubKeys  = 7;
 
 }
 
@@ -82,8 +90,8 @@ message OperationSpecialInfo {
 }
 
 message OrderPricePair {
-  uint64 sell = 1;
-  uint64 buy  = 2;
+  string sell = 1;
+  string buy  = 2;
 }
 
 message OperationSpecialData {
@@ -95,5 +103,8 @@ message OperationSpecialData {
   repeated uint64 tokenID    = 6;
   repeated OrderPricePair pricePair  = 7;
   ZkSignature sigData         = 8;
+  repeated string contentHash = 9;
+  uint64   pubKeyType         = 10;
+  ZkPubKey pubKey             = 11;
 
 }

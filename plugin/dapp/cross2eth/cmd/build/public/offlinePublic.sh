@@ -140,7 +140,7 @@ function lock_eth_multisign() {
         local bridgeBankBalance=$2
         local multisignBalance=$3
         # eth 等待 2 个区块
-        sleep 4
+        sleep 10
         #        eth_block_wait 2
 
         result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}")
@@ -160,7 +160,7 @@ function lock_ethereum_usdt_multisign() {
         local multisignBalance=$3
 
         # eth 等待 2 个区块
-        sleep 4
+        sleep 10
 
         result=$(${CLIA} ethereum balance -o "${ethereumBridgeBank}" -t "${ethereumUSDTERC20TokenAddr}")
         cli_ret "${result}" "balance" ".balance" "${bridgeBankBalance}"
@@ -250,7 +250,7 @@ function OfflineDeploy() {
         ethereumBridgeRegistryOnETH="${ethereumBridgeRegistry}"
         ethereumMultisignAddrOnETH="${ethereumMultisignAddr}"
 
-        sed -i '12,18s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnETH}"'"/g' "./relayer.toml"
+        sed -i '14,21s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnETH}"'"/g' "./relayer.toml"
 
         Boss4xCLI=${Boss4xCLIbsc}
         CLIA=${CLIAbsc}
@@ -262,7 +262,7 @@ function OfflineDeploy() {
         ethereumBridgeRegistryOnBSC="${ethereumBridgeRegistry}"
         ethereumMultisignAddrOnBSC="${ethereumMultisignAddr}"
 
-        sed -i '20,26s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnBSC}"'"/g' "./relayer.toml"
+        sed -i '23,30s/BridgeRegistry=.*/BridgeRegistry="'"${ethereumBridgeRegistryOnBSC}"'"/g' "./relayer.toml"
     }
 
     echo -e "${GRE}=========== $FUNCNAME end ===========${NOC}"

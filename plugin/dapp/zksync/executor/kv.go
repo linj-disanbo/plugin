@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
 
@@ -10,15 +11,24 @@ func GetAccountIdPrimaryKey(accountId uint64) []byte {
 }
 
 func GetLocalChain33EthPrimaryKey(chain33Addr string, ethAddr string) []byte {
-	return []byte(fmt.Sprintf("%s", chain33Addr+"-"+ethAddr))
+	return []byte(fmt.Sprintf("%s-%s", address.FormatAddrKey(chain33Addr), address.FormatAddrKey(ethAddr)))
 }
 
 func GetChain33EthPrimaryKey(chain33Addr string, ethAddr string) []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+chain33Addr+"-"+ethAddr))
+	return []byte(fmt.Sprintf("%s%s-%s", KeyPrefixStateDB, address.FormatAddrKey(chain33Addr),
+		address.FormatAddrKey(ethAddr)))
 }
 
 func GetTokenPrimaryKey(accountId uint64, tokenId uint64) []byte {
 	return []byte(fmt.Sprintf("%s%022d%s%022d", KeyPrefixStateDB+"token-", accountId, "-", tokenId))
+}
+
+func GetNFTIdPrimaryKey(nftTokenId uint64) []byte {
+	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"nftTokenId-", nftTokenId))
+}
+
+func GetNFTHashPrimaryKey(nftHash string) []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"nftHash-"+nftHash))
 }
 
 func GetRootIndexPrimaryKey(rootIndex uint64) []byte {
@@ -41,12 +51,12 @@ func getVerifier() []byte {
 	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+zt.ZkVerifierKey))
 }
 
-func getLastCommitProofKey() []byte {
-	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"commitProof"))
+func getLastProofKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastProof"))
 }
 
-func getHeightCommitProofKey(blockHeight uint64) []byte {
-	return []byte(fmt.Sprintf("%s%022d", KeyPrefixStateDB+"proofHeight", blockHeight))
+func getLastOnChainProofIdKey() []byte {
+	return []byte(fmt.Sprintf("%s", KeyPrefixStateDB+"lastOnChainProofId"))
 }
 
 func getValidatorsKey() []byte {
@@ -67,4 +77,8 @@ func getRootCommitProofKey(root string) []byte {
 
 func getHistoryAccountTreeKey(proofId, accountId uint64) []byte {
 	return []byte(fmt.Sprintf("%016d.%16d", proofId, accountId))
+}
+
+func getZkFeeKey(actionTy int32, tokenId uint64) []byte {
+	return []byte(fmt.Sprintf("%016d.%16d", actionTy, tokenId))
 }

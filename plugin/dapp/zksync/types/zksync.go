@@ -26,11 +26,15 @@ const (
 	TyContractToTreeAction = 9  //合约账户转入叶子
 	TyTreeToContractAction = 10 //叶子账户转入合约
 	TyFeeAction            = 11 //手续费
+	TyMintNFTAction        = 12
+	TyWithdrawNFTAction    = 13
+	TyTransferNFTAction    = 14
 
 	//非电路action
 	TySetVerifyKeyAction = 102 //设置电路验证key
 	TyCommitProofAction  = 103 //提交zk proof
 	TySetVerifierAction  = 104 //设置验证者
+	TySetFeeAction       = 105 //设置手续费
 
 	NameNoopAction           = "Noop"
 	NameDepositAction        = "Deposit"
@@ -44,10 +48,14 @@ const (
 	NameFullExitAction       = "FullExit"
 	NameSwapAction           = "Swap"
 	NameFeeAction            = "Fee"
+	NameMintNFTAction        = "MintNFT"
+	NameWithdrawNFTACTION    = "WithdrawNFT"
+	NameTransferNFTAction    = "TransferNFT"
 
 	NameSetVerifyKeyAction = "SetVerifyKey"
 	NameCommitProofAction  = "CommitProof"
 	NameSetVerifierAction  = "SetVerifier"
+	NameSetFeeAction       = "SetFee"
 )
 
 // log类型id值
@@ -64,11 +72,15 @@ const (
 	TyContractToTreeLog = 109 //合约账户转入叶子
 	TyTreeToContractLog = 110 //叶子账户转入合约
 	TyFeeLog            = 111 //手续费
+	TyMintNFTLog        = 112 //铸造NFT
+	TyWithdrawNFTLog    = 113 //L2提款NFT到L1
+	TyTransferNFTLog    = 114 //L2提款NFT到L1
 
 	TySetVerifyKeyLog       = 202 //设置电路验证key
 	TyCommitProofLog        = 203 //提交zk proof
 	TySetVerifierLog        = 204 //设置验证者
 	TySetEthPriorityQueueId = 205 //设置 eth上 priority queue id;
+	TySetFeeLog             = 206
 )
 
 const (
@@ -88,14 +100,15 @@ const ZkVerifierKey = "verifier"
 
 //msg宽度
 const (
-	TxTypeBitWidth      = 8   //1byte
-	AccountBitWidth     = 32  //4byte
-	TokenBitWidth       = 16  //2byte
-	AmountBitWidth      = 128 //16byte
-	AddrBitWidth        = 160 //20byte
-	Chain33AddrBitWidth = 256 //20byte
-	PubKeyBitWidth      = 256 //32byte
-	FeeAmountBitWidth   = 72  //fee op凑满one chunk=128bit，最大10byte
+	TxTypeBitWidth    = 8  //1byte
+	AccountBitWidth   = 32 //4byte
+	TokenBitWidth     = 32 //4byte for support NFT id
+	NFTAmountBitWidth = 16
+	AmountBitWidth    = 128 //16byte
+	AddrBitWidth      = 160 //20byte
+	HashBitWidth      = 256 //32byte
+	PubKeyBitWidth    = 256 //32byte
+	FeeAmountBitWidth = 56  //fee op凑满one chunk=128bit，最大10byte
 
 	PacAmountManBitWidth = 35 //amount mantissa part, 比如12340000,只取1234部分，0000用exponent表示
 	PacAmountExpBitWidth = 5  //amount exponent part
@@ -128,8 +141,34 @@ const (
 	FullExitChunks      = 3
 	SwapChunks          = 4
 	NoopChunks          = 1
-	ChangePubKeyChunks  = 5
+	SetPubKeyChunks     = 5
 	FeeChunks           = 1
+	SetProxyAddrChunks  = 5
+	MintNFTChunks       = 5
+	WithdrawNFTChunks   = 6
+	TransferNFTChunks   = 3
+)
+
+const (
+	//SystemFeeAccountId 此账户作为缺省收费账户
+	SystemFeeAccountId = 1
+	//SystemNFTAccountId 此特殊账户没有私钥，只记录并产生NFT token资产，不会有小于NFTTokenId的FT token记录
+	SystemNFTAccountId = 2
+	//SystemNFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
+	SystemNFTTokenId = 256 //2^8,
+
+)
+
+//ERC protocol
+const (
+	ZKERC1155 = 1
+	ZKERC721  = 2
+)
+
+const (
+	NormalProxyPubKey = 1
+	SystemProxyPubKey = 2
+	SuperProxyPubKey  = 3
 )
 
 var (
@@ -150,6 +189,10 @@ var (
 		NameSetVerifyKeyAction:   TySetVerifyKeyAction,
 		NameCommitProofAction:    TyCommitProofAction,
 		NameSetVerifierAction:    TySetVerifierAction,
+		NameSetFeeAction:         TySetFeeAction,
+		NameMintNFTAction:        TyMintNFTAction,
+		NameWithdrawNFTACTION:    TyWithdrawNFTAction,
+		NameTransferNFTAction:    TyTransferNFTAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -165,10 +208,14 @@ var (
 		TyFullExitLog:           {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFullExitLog"},
 		TySwapLog:               {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TySwapLog"},
 		TyFeeLog:                {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyFeeLog"},
+		TyMintNFTLog:            {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyMintNFTLog"},
+		TyWithdrawNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
+		TyTransferNFTLog:        {Ty: reflect.TypeOf(ZkReceiptLog{}), Name: "TyTransferNFTLog"},
 		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
 		TyCommitProofLog:        {Ty: reflect.TypeOf(ReceiptCommitProof{}), Name: "TyCommitProof"},
 		TySetVerifierLog:        {Ty: reflect.TypeOf(ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
 		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
+		TySetFeeLog:             {Ty: reflect.TypeOf(ReceiptSetFee{}), Name: "TySetFeeLog"},
 	}
 
 	FeeMap = map[int64]string{
@@ -178,6 +225,9 @@ var (
 		TyForceExitAction:     "1000000",
 		TyFullExitAction:      "1000000",
 		TySwapAction:          "100000",
+		TyMintNFTAction:       "100",
+		TyWithdrawNFTAction:   "100",
+		TyTransferNFTAction:   "100",
 	}
 )
 

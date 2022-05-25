@@ -14,6 +14,7 @@ message SyncTxConfig {
   int64 startSyncSequence   = 11;
   string startSyncHash      = 12;
   int64 keepAliveDuration  = 13;
+  repeated string chain33RpcUrls = 14;
 }
 
 message Log {
@@ -59,6 +60,7 @@ message RelayerConfig {
   string remindUrl                    = 10;   // 代理打币地址金额不够时发生提醒短信的 url
   string remindClientErrorUrl         = 11;
   repeated string remindEmail         = 12;
+  int64 delayedSendTime               = 13;
 }
 
 message SyncTxReceiptConfig {

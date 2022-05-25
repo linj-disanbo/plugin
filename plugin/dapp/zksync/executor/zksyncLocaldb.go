@@ -2,6 +2,7 @@ package executor
 
 import (
 	"encoding/hex"
+
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
@@ -37,6 +38,9 @@ func (z *zksync) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 			zt.TyForceExitLog,
 			zt.TyFullExitLog,
 			zt.TySwapLog,
+			zt.TyMintNFTLog,
+			zt.TyTransferNFTLog,
+			zt.TyWithdrawNFTLog,
 			zt.TyFeeLog:
 			var zklog zt.ZkReceiptLog
 			err := types.Decode(log.GetLog(), &zklog)
@@ -92,7 +96,7 @@ func (z *zksync) execCommitProofLocal(payload *zt.ZkCommitProof, tx *types.Trans
 	proofTable := NewCommitProofTable(z.GetLocalDB())
 
 	set := &types.LocalDBSet{}
-
+	payload.CommitBlockHeight = z.GetHeight()
 	err := proofTable.Replace(payload)
 	if err != nil {
 		return nil, err
