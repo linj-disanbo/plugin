@@ -98,6 +98,15 @@ func (z *zkspot) CheckTx(tx *types.Transaction, index int) error {
 	case et.TyFullExitAction:
 		signature = action.GetFullExit().GetSignature()
 		msg = wallet.GetFullExitMsg(action.GetFullExit())
+       case zt.TyMintNFTAction:
+                signature = action.GetMintNFT().GetSignature()
+                msg = wallet.GetMintNFTMsg(action.GetMintNFT())
+        case zt.TyWithdrawNFTAction:
+                signature = action.GetWithdrawNFT().GetSignature()
+                msg = wallet.GetWithdrawNFTMsg(action.GetWithdrawNFT())
+        case zt.TyTransferNFTAction:
+                signature = action.GetTransferNFT().GetSignature()
+                msg = wallet.GetTransferNFTMsg(action.GetTransferNFT())
 	case et.TyLimitOrderAction:
 		cfg := z.GetAPI().GetConfig()
 		err := SpotCheckTx(cfg, tx, index)

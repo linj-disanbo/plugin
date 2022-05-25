@@ -2,11 +2,12 @@ package executor
 
 import (
 	"fmt"
+	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
-	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 const (
@@ -61,9 +62,9 @@ func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 	if key == "address" {
 		return GetLocalChain33EthPrimaryKey(r.GetChain33Addr(), r.GetEthAddress()), nil
 	} else if key == "chain33_address" {
-		return []byte(fmt.Sprintf("%s", r.GetChain33Addr())), nil
+		return []byte(fmt.Sprintf("%s", address.FormatAddrKey(r.GetChain33Addr()))), nil
 	} else if key == "eth_address" {
-		return []byte(fmt.Sprintf("%s", r.GetEthAddress())), nil
+		return []byte(fmt.Sprintf("%s", address.FormatAddrKey(r.GetEthAddress()))), nil
 	}
 	return nil, types.ErrNotFound
 }
@@ -124,7 +125,7 @@ var opt_commit_proof = &table.Option{
 	Prefix:  KeyPrefixLocalDB,
 	Name:    "proof",
 	Primary: "proofId",
-	Index:   []string{"height", "root"},
+	Index:   []string{"endHeight", "root", "commitHeight", "onChainId"},
 }
 
 // NewCommitProofTable ...
@@ -160,14 +161,25 @@ func (r *CommitProofRow) SetPayload(data types.Message) error {
 	return types.ErrTypeAsset
 }
 
+func (r *CommitProofRow) isProofNeedOnChain() int {
+	if len(r.GetOnChainPubDatas()) > 0 {
+		return 1
+	}
+	return 0
+}
+
 //Get 按照indexName 查询 indexValue
 func (r *CommitProofRow) Get(key string) ([]byte, error) {
 	if key == "proofId" {
 		return []byte(fmt.Sprintf("%016d", r.GetProofId())), nil
 	} else if key == "root" {
 		return []byte(fmt.Sprintf("%s", r.GetNewTreeRoot())), nil
-	} else if key == "height" {
+	} else if key == "endHeight" {
 		return []byte(fmt.Sprintf("%016d", r.GetBlockEnd())), nil
+	} else if key == "commitHeight" {
+		return []byte(fmt.Sprintf("%016d", r.GetCommitBlockHeight())), nil
+	} else if key == "onChainId" {
+		return []byte(fmt.Sprintf("%016d", r.GetOnChainProofId())), nil
 	}
 	return nil, types.ErrNotFound
 }

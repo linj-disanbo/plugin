@@ -38,6 +38,9 @@ func (z *zkspot) execLocalZksync(tx *types.Transaction, receiptData *types.Recei
 			zt.TyForceExitLog,
 			zt.TyFullExitLog,
 			zt.TySwapLog,
+                        zt.TyMintNFTLog,
+                        zt.TyTransferNFTLog,
+                        zt.TyWithdrawNFTLog,
 			zt.TyFeeLog:
 			var zklog zt.ZkReceiptLog
 			err := types.Decode(log.GetLog(), &zklog)
@@ -93,7 +96,7 @@ func (z *zkspot) execCommitProofLocal(payload *zt.ZkCommitProof, tx *types.Trans
 	proofTable := NewCommitProofTable(z.GetLocalDB())
 
 	set := &types.LocalDBSet{}
-
+	payload.CommitBlockHeight = z.GetHeight()
 	err := proofTable.Replace(payload)
 	if err != nil {
 		return nil, err

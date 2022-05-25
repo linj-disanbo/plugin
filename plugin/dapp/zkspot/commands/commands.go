@@ -62,6 +62,10 @@ func ZksyncCmd() *cobra.Command {
 		getZkCommitProofCmd(),
 		limitOrderCmd(),
 		revokeOrderCmd(),
+		setTokenFeeCmd(),
+		queryCmd(),
+		//NFT
+		nftCmd(),
 	)
 	return cmd
 }
@@ -85,6 +89,8 @@ func depositFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("ethAddress")
 	cmd.Flags().StringP("chain33Addr", "c", "", "deposit chain33Addr")
 	cmd.MarkFlagRequired("chain33Addr")
+	cmd.Flags().Uint64P("queueId", "i", 0, "eth queue id")
+	cmd.MarkFlagRequired("queueId")
 
 }
 
@@ -93,17 +99,21 @@ func deposit(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetString("amount")
 	ethAddress, _ := cmd.Flags().GetString("ethAddress")
 	chain33Addr, _ := cmd.Flags().GetString("chain33Addr")
+	queueId, _ := cmd.Flags().GetUint64("queueId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(et.TyDepositAction, tokenId, amount, ethAddress, "", chain33Addr, 0, 0)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
-		return
+
+	deposit := &zt.ZkDeposit{
+		TokenId:            tokenId,
+		Amount:             amount,
+		EthAddress:         ethAddress,
+		Chain33Addr:        chain33Addr,
+		EthPriorityQueueId: int64(queueId),
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     ExecName,
+		Execer:     zt.Zksync,
 		ActionName: "Deposit",
-		Payload:    payload,
+		Payload:    types.MustPBToJSON(deposit),
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -124,7 +134,7 @@ func withdrawFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().StringP("amount", "a", "0", "withdraw amount")
 	cmd.MarkFlagRequired("amount")
-	cmd.Flags().Uint64P("accountId", "", 0, "withdraw accountId")
+	cmd.Flags().Uint64P("accountId", "i", 0, "withdraw accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
@@ -151,7 +161,7 @@ func withdraw(cmd *cobra.Command, args []string) {
 
 func treeToContractCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "treeToContract",
+		Use:   "tree2contract",
 		Short: "get treeToContract tx",
 		Run:   treeToContract,
 	}
@@ -191,7 +201,7 @@ func treeToContract(cmd *cobra.Command, args []string) {
 
 func contractToTreeCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "contractToTree",
+		Use:   "contract2tree",
 		Short: "get contractToTree tx",
 		Run:   contractToTree,
 	}
@@ -274,7 +284,7 @@ func transfer(cmd *cobra.Command, args []string) {
 
 func transferToNewCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "transferToNew",
+		Use:   "transfer2new",
 		Short: "get transferToNew tx",
 		Run:   transferToNew,
 	}
@@ -319,8 +329,8 @@ func transferToNew(cmd *cobra.Command, args []string) {
 
 func forceExitCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "forceExit",
-		Short: "get forceExit tx",
+		Use:   "forceexit",
+		Short: "withdraw by other addr",
 		Run:   forceExit,
 	}
 	forceExitFlag(cmd)
@@ -328,9 +338,9 @@ func forceExitCmd() *cobra.Command {
 }
 
 func forceExitFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("tokenId", "t", 1, "forceExit tokenId")
+	cmd.Flags().Uint64P("tokenId", "t", 1, "target tokenId")
 	cmd.MarkFlagRequired("tokenId")
-	cmd.Flags().Uint64P("accountId", "a", 0, "forceExit accountId")
+	cmd.Flags().Uint64P("accountId", "a", 0, "target accountId")
 	cmd.MarkFlagRequired("accountId")
 
 }
@@ -356,8 +366,8 @@ func forceExit(cmd *cobra.Command, args []string) {
 
 func setPubKeyCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "setPubKey",
-		Short: "get setPubKey tx",
+		Use:   "pubkey",
+		Short: "set pubkey",
 		Run:   setPubKey,
 	}
 	setPubKeyFlag(cmd)
@@ -368,19 +378,36 @@ func setPubKeyFlag(cmd *cobra.Command) {
 	cmd.Flags().Uint64P("accountId", "a", 0, "setPubKeyFlag accountId")
 	cmd.MarkFlagRequired("accountId")
 
+	cmd.Flags().Uint64P("pubkeyT", "t", 0, "self default:0, proxy pubkey ty: 1: normal,2:system,3:super")
+
+	cmd.Flags().StringP("pubkeyX", "x", "", "proxy pubkey x value")
+	cmd.Flags().StringP("pubkeyY", "y", "", "proxy pubkey y value")
+
 }
 
 func setPubKey(cmd *cobra.Command, args []string) {
 	accountId, _ := cmd.Flags().GetUint64("accountId")
+	pubkeyT, _ := cmd.Flags().GetUint64("pubkeyT")
+	pubkeyX, _ := cmd.Flags().GetString("pubkeyX")
+	pubkeyY, _ := cmd.Flags().GetString("pubkeyY")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(et.TySetPubKeyAction, 0, "0", "", "", "", accountId, 0)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
+	if pubkeyT > 0 && (len(pubkeyX) == 0 || len(pubkeyY) == 0) {
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("set proxy pubkey, need set pubkeyX pubkeyY"))
 		return
 	}
+
+	pubkey := &zt.ZkSetPubKey{
+		AccountId: accountId,
+		PubKeyTy:  pubkeyT,
+		PubKey: &zt.ZkPubKey{
+			X: pubkeyX,
+			Y: pubkeyY,
+		},
+	}
+	payload := types.MustPBToJSON(pubkey)
 	params := &rpctypes.CreateTxIn{
-		Execer:     ExecName,
+		Execer:     zt.Zksync,
 		ActionName: "SetPubKey",
 		Payload:    payload,
 	}
@@ -390,7 +417,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 
 func fullExitCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "fullExit",
+		Use:   "fullexit",
 		Short: "get fullExit tx",
 		Run:   fullExit,
 	}
@@ -403,23 +430,26 @@ func fullExitFlag(cmd *cobra.Command) {
 	cmd.MarkFlagRequired("tokenId")
 	cmd.Flags().Uint64P("accountId", "a", 0, "fullExit accountId")
 	cmd.MarkFlagRequired("accountId")
-
+	cmd.Flags().Uint64P("queueId", "i", 0, "eth queue id")
+	cmd.MarkFlagRequired("queueId")
 }
 
 func fullExit(cmd *cobra.Command, args []string) {
 	tokenId, _ := cmd.Flags().GetUint64("tokenId")
 	accountId, _ := cmd.Flags().GetUint64("accountId")
+	queueId, _ := cmd.Flags().GetUint64("queueId")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	payload, err := wallet.CreateRawTx(et.TyFullExitAction, tokenId, "0", "", "", "", accountId, 0)
-	if err != nil {
-		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "createRawTx"))
-		return
+
+	fullExit := &zt.ZkFullExit{
+		TokenId:            tokenId,
+		AccountId:          accountId,
+		EthPriorityQueueId: int64(queueId),
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     ExecName,
+		Execer:     zt.Zksync,
 		ActionName: "FullExit",
-		Payload:    payload,
+		Payload:    types.MustPBToJSON(fullExit),
 	}
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
@@ -448,9 +478,9 @@ func verifyKey(cmd *cobra.Command, args []string) {
 	payload := &zt.ZkVerifyKey{
 		Key: vkey,
 	}
-	exec := ExecName
+	exec := zt.Zksync
 	if strings.HasPrefix(paraName, pt.ParaPrefix) {
-		exec = paraName + ExecName
+		exec = paraName + zt.Zksync
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     exec,
@@ -461,6 +491,7 @@ func verifyKey(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 }
+
 
 func setOperatorCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -485,9 +516,9 @@ func setOperator(cmd *cobra.Command, args []string) {
 	payload := &zt.ZkVerifier{
 		Verifiers: strings.Split(operator, "-"),
 	}
-	exec := ExecName
+	exec := zt.Zksync
 	if strings.HasPrefix(paraName, pt.ParaPrefix) {
-		exec = paraName + ExecName
+		exec = paraName + zt.Zksync
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     exec,
@@ -502,7 +533,7 @@ func setOperator(cmd *cobra.Command, args []string) {
 func commitProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "commit",
-		Short: "commit proof",
+		Short: "commit proof test",
 		Run:   commitProof,
 	}
 	addCommitProofCmdFlags(cmd)
@@ -548,9 +579,9 @@ func commitProof(cmd *cobra.Command, args []string) {
 		Proof:       proof,
 		PubDatas:    strings.Split(pubdata, "-"),
 	}
-	exec := ExecName
+	exec := zt.Zksync
 	if strings.HasPrefix(paraName, pt.ParaPrefix) {
-		exec = paraName + ExecName
+		exec = paraName + zt.Zksync
 	}
 	params := &rpctypes.CreateTxIn{
 		Execer:     exec,
@@ -564,8 +595,8 @@ func commitProof(cmd *cobra.Command, args []string) {
 
 func getChain33AddrCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "getChain33Addr",
-		Short: "get chain33 address by privateKey",
+		Use:   "l2addr",
+		Short: "get chain33 l2 address by privateKey",
 		Run:   getChain33Addr,
 	}
 	getChain33AddrFlag(cmd)
@@ -574,10 +605,14 @@ func getChain33AddrCmd() *cobra.Command {
 
 func getChain33AddrFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("private", "k", "", "private key")
+	_ = cmd.MarkFlagRequired("private")
+
+	cmd.Flags().BoolP("pubkey", "p", false, "print pubkey")
 }
 
 func getChain33Addr(cmd *cobra.Command, args []string) {
 	privateKeyString, _ := cmd.Flags().GetString("private")
+	pubkey, _ := cmd.Flags().GetBool("pubkey")
 	privateKeyBytes, err := common.FromHex(privateKeyString)
 	if err != nil {
 		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "hex.DecodeString"))
@@ -585,13 +620,46 @@ func getChain33Addr(cmd *cobra.Command, args []string) {
 	}
 	privateKey, err := eddsa.GenerateKey(bytes.NewReader(privateKeyBytes))
 
+	if err != nil {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(err, "eddsa.GenerateKey"))
+		return
+	}
+
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.X.String()))
 	hash.Write(zt.Str2Byte(privateKey.PublicKey.A.Y.String()))
-	hStr := hex.EncodeToString(hash.Sum(nil))
-	fmt.Println(hStr)
-	//dStr := zt.HexAddr2Decimal(hStr)
-	//fmt.Println(dStr)
+	fmt.Println(hex.EncodeToString(hash.Sum(nil)))
+	if pubkey {
+		fmt.Println("pubKey.X:", privateKey.PublicKey.A.X.String())
+		fmt.Println("pubKey.Y:", privateKey.PublicKey.A.Y.String())
+	}
+
+}
+
+func queryCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "query",
+		Short: "query related cmd",
+	}
+	cmd.AddCommand(queryAccountCmd())
+	cmd.AddCommand(queryProofCmd())
+
+	return cmd
+}
+
+func queryAccountCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "account",
+		Short: "query account related cmd",
+	}
+	cmd.AddCommand(getAccountTreeCmd())
+	cmd.AddCommand(getAccountByIdCmd())
+	cmd.AddCommand(getAccountByEthCmd())
+	cmd.AddCommand(getAccountByChain33Cmd())
+	cmd.AddCommand(getContractAccountCmd())
+	cmd.AddCommand(getTokenBalanceCmd())
+
+	return cmd
 }
 
 func getAccountTreeCmd() *cobra.Command {
@@ -612,7 +680,7 @@ func getAccountTree(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = ExecName
+	params.Execer = zt.Zksync
 	req := new(types.ReqNil)
 
 	params.FuncName = "GetAccountTree"
@@ -623,107 +691,10 @@ func getAccountTree(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
-func getTxProofCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "proof",
-		Short: "get tx proof",
-		Run:   getTxProof,
-	}
-	getTxProofFlag(cmd)
-	return cmd
-}
-
-func getTxProofFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "", 0, "zkspot proof height")
-	cmd.MarkFlagRequired("height")
-	cmd.Flags().Uint32P("index", "i", 0, "tx index")
-	cmd.MarkFlagRequired("index")
-}
-
-func getTxProof(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	height, _ := cmd.Flags().GetUint64("height")
-	index, _ := cmd.Flags().GetUint32("index")
-
-	var params rpctypes.Query4Jrpc
-
-	params.Execer = ExecName
-	req := &zt.ZkQueryReq{
-		BlockHeight: height,
-		TxIndex:     index,
-	}
-
-	params.FuncName = "GetTxProof"
-	params.Payload = types.MustPBToJSON(req)
-
-	var resp zt.OperationInfo
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
-	ctx.Run()
-}
-
-func getTxProofByHeightCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "proofs",
-		Short: "get block proofs",
-		Run:   getTxProofByHeight,
-	}
-	getTxProofByHeightFlag(cmd)
-	return cmd
-}
-
-func getTxProofByHeightFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("height", "", 0, "zkspot proof height")
-	cmd.MarkFlagRequired("height")
-}
-
-func getTxProofByHeight(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-	height, _ := cmd.Flags().GetUint64("height")
-
-	var params rpctypes.Query4Jrpc
-
-	params.Execer = ExecName
-	req := &zt.ZkQueryReq{
-		BlockHeight: height,
-	}
-
-	params.FuncName = "GetTxProofByHeight"
-	params.Payload = types.MustPBToJSON(req)
-
-	var resp zt.ZkQueryResp
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
-	ctx.Run()
-}
-
-func getLastCommitProofCmd() *cobra.Command {
-	cmd := &cobra.Command{
-		Use:   "proofstate",
-		Short: "get last committed proof",
-		Run:   getLastCommitProof,
-	}
-
-	return cmd
-}
-
-func getLastCommitProof(cmd *cobra.Command, args []string) {
-	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
-
-	var params rpctypes.Query4Jrpc
-
-	params.Execer = ExecName
-
-	params.FuncName = "GetLastCommitProof"
-	params.Payload = types.MustPBToJSON(&types.ReqNil{})
-
-	var resp zt.CommitProofState
-	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
-	ctx.Run()
-}
-
 func getAccountByIdCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "account",
-		Short: "get zkspot account by id",
+		Use:   "id",
+		Short: "get zksync account by id",
 		Run:   getAccountById,
 	}
 	getAccountByIdFlag(cmd)
@@ -731,7 +702,7 @@ func getAccountByIdCmd() *cobra.Command {
 }
 
 func getAccountByIdFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("accountId", "a", 0, "zkspot accountId")
+	cmd.Flags().Uint64P("accountId", "a", 0, "zksync accountId")
 	cmd.MarkFlagRequired("accountId")
 }
 
@@ -741,7 +712,7 @@ func getAccountById(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = ExecName
+	params.Execer = zt.Zksync
 	req := &zt.ZkQueryReq{
 		AccountId: accountId,
 	}
@@ -757,7 +728,7 @@ func getAccountById(cmd *cobra.Command, args []string) {
 func getAccountByEthCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "accountE",
-		Short: "get zkspot account by ethAddress",
+		Short: "get zksync account by ethAddress",
 		Run:   getAccountByEth,
 	}
 	getAccountByEthFlag(cmd)
@@ -765,7 +736,7 @@ func getAccountByEthCmd() *cobra.Command {
 }
 
 func getAccountByEthFlag(cmd *cobra.Command) {
-	cmd.Flags().StringP("ethAddress", "e", " ", "zkspot account ethAddress")
+	cmd.Flags().StringP("ethAddress", "e", " ", "zksync account ethAddress")
 	cmd.MarkFlagRequired("ethAddress")
 }
 
@@ -775,7 +746,7 @@ func getAccountByEth(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = ExecName
+	params.Execer = zt.Zksync
 	req := &zt.ZkQueryReq{
 		EthAddress: ethAddress,
 	}
@@ -791,7 +762,7 @@ func getAccountByEth(cmd *cobra.Command, args []string) {
 func getAccountByChain33Cmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "accountC",
-		Short: "get zkspot account by chain33Addr",
+		Short: "get zksync account by chain33Addr",
 		Run:   getAccountByChain33,
 	}
 	getAccountByChain33Flag(cmd)
@@ -799,7 +770,7 @@ func getAccountByChain33Cmd() *cobra.Command {
 }
 
 func getAccountByChain33Flag(cmd *cobra.Command) {
-	cmd.Flags().StringP("chain33Addr", "c", "", "zkspot account chain33Addr")
+	cmd.Flags().StringP("chain33Addr", "c", "", "zksync account chain33Addr")
 	cmd.MarkFlagRequired("chain33Addr")
 }
 
@@ -809,7 +780,7 @@ func getAccountByChain33(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = ExecName
+	params.Execer = zt.Zksync
 	req := &zt.ZkQueryReq{
 		Chain33Addr: chain33Addr,
 	}
@@ -825,7 +796,7 @@ func getAccountByChain33(cmd *cobra.Command, args []string) {
 func getContractAccountCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "contractAccount",
-		Short: "get zkspot contractAccount by chain33WalletAddr and token symbol",
+		Short: "get zksync contractAccount by chain33WalletAddr and token symbol",
 		Run:   getContractAccount,
 	}
 	getContractAccountFlag(cmd)
@@ -846,7 +817,7 @@ func getContractAccount(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = ExecName
+	params.Execer = zt.Zksync
 	req := &zt.ZkQueryReq{
 		TokenSymbol:       token,
 		Chain33WalletAddr: chain33Addr,
@@ -863,7 +834,7 @@ func getContractAccount(cmd *cobra.Command, args []string) {
 func getTokenBalanceCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "token",
-		Short: "get zkspot tokenBalance by accountId and tokenId",
+		Short: "get zksync tokenBalance by accountId and tokenId",
 		Run:   getTokenBalance,
 	}
 	getTokenBalanceFlag(cmd)
@@ -871,9 +842,9 @@ func getTokenBalanceCmd() *cobra.Command {
 }
 
 func getTokenBalanceFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("accountId", "a", 0, "zkspot account id")
+	cmd.Flags().Uint64P("accountId", "a", 0, "zksync account id")
 	cmd.MarkFlagRequired("accountId")
-	cmd.Flags().Uint64P("token", "t", 1, "zkspot token id")
+	cmd.Flags().Uint64P("token", "t", 1, "zksync token id")
 	cmd.MarkFlagRequired("token")
 }
 
@@ -884,7 +855,7 @@ func getTokenBalance(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = ExecName
+	params.Execer = zt.Zksync
 	req := &zt.ZkQueryReq{
 		TokenId:   token,
 		AccountId: accountId,
@@ -898,9 +869,178 @@ func getTokenBalance(cmd *cobra.Command, args []string) {
 	ctx.Run()
 }
 
+func queryProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "proof",
+		Short: "query proof related cmd",
+	}
+	cmd.AddCommand(getTxProofCmd())
+	cmd.AddCommand(getTxProofByHeightCmd())
+	cmd.AddCommand(getProofByHeightsCmd())
+	cmd.AddCommand(getLastCommitProofCmd())
+	cmd.AddCommand(getZkCommitProofCmd())
+	cmd.AddCommand(getFirstRootHashCmd())
+	cmd.AddCommand(getZkCommitProofListCmd())
+
+	//cmd.AddCommand(commitProofCmd())
+
+	return cmd
+}
+
+func getTxProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "tx",
+		Short: "get tx proof",
+		Run:   getTxProof,
+	}
+	getTxProofFlag(cmd)
+	return cmd
+}
+
+func getTxProofFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("height", "g", 0, "zksync proof height")
+	cmd.MarkFlagRequired("height")
+	cmd.Flags().Uint32P("index", "i", 0, "tx index")
+	cmd.MarkFlagRequired("index")
+}
+
+func getTxProof(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	height, _ := cmd.Flags().GetUint64("height")
+	index, _ := cmd.Flags().GetUint32("index")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq{
+		BlockHeight: height,
+		TxIndex:     index,
+	}
+
+	params.FuncName = "GetTxProof"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.OperationInfo
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getTxProofByHeightCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "block",
+		Short: "get block proofs by height",
+		Run:   getTxProofByHeight,
+	}
+	getTxProofByHeightFlag(cmd)
+	return cmd
+}
+
+func getTxProofByHeightFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("height", "g", 0, "zksync proof height")
+	cmd.MarkFlagRequired("height")
+}
+
+func getTxProofByHeight(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	height, _ := cmd.Flags().GetUint64("height")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq{
+		BlockHeight: height,
+	}
+
+	params.FuncName = "GetTxProofByHeight"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkQueryResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getProofByHeightsCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "blocks",
+		Short: "get proofs by height range",
+		Run:   getProofByHeights,
+	}
+	getProofByHeightsFlag(cmd)
+	return cmd
+}
+
+func getProofByHeightsFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("start", "s", 0, "start height")
+	cmd.MarkFlagRequired("start")
+
+	cmd.Flags().Uint64P("end", "e", 0, "end height")
+	cmd.MarkFlagRequired("end")
+
+	cmd.Flags().Uint64P("index", "i", 0, "start index of block")
+	cmd.MarkFlagRequired("start")
+
+	cmd.Flags().Uint32P("op", "o", 0, "op index of block")
+	cmd.MarkFlagRequired("op")
+
+	cmd.Flags().BoolP("detail", "d", false, "if need detail")
+	cmd.MarkFlagRequired("detail")
+}
+
+func getProofByHeights(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	start, _ := cmd.Flags().GetUint64("start")
+	end, _ := cmd.Flags().GetUint64("end")
+	index, _ := cmd.Flags().GetUint64("index")
+	op, _ := cmd.Flags().GetUint32("op")
+	detail, _ := cmd.Flags().GetBool("detail")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryProofReq{
+		StartBlockHeight: start,
+		EndBlockHeight:   end,
+		StartIndex:       index,
+		OpIndex:          op,
+		NeedDetail:       detail,
+	}
+
+	params.FuncName = "GetTxProofByHeights"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkQueryProofResp
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getLastCommitProofCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "last",
+		Short: "get last committed proof",
+		Run:   getLastCommitProof,
+	}
+
+	return cmd
+}
+
+func getLastCommitProof(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+
+	params.FuncName = "GetLastCommitProof"
+	params.Payload = types.MustPBToJSON(&types.ReqNil{})
+
+	var resp zt.CommitProofState
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
 func getZkCommitProofCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "zkCommit",
+		Use:   "id",
 		Short: "get zkcommit proof by proofId",
 		Run:   getZkCommitProof,
 	}
@@ -909,7 +1049,7 @@ func getZkCommitProofCmd() *cobra.Command {
 }
 
 func getZkCommitProofFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("proofId", "p", 0, "commit proof id")
+	cmd.Flags().Uint64P("proofId", "i", 0, "commit proof id")
 	cmd.MarkFlagRequired("proofId")
 }
 
@@ -919,7 +1059,7 @@ func getZkCommitProof(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = ExecName
+	params.Execer = zt.Zksync
 	req := &zt.ZkQueryReq{
 		ProofId: proofId,
 	}
@@ -931,6 +1071,355 @@ func getZkCommitProof(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
 }
+
+func setTokenFeeCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "fee",
+		Short: "set zkoption fee",
+		Run:   setTokenFee,
+	}
+	setTokenFeeFlag(cmd)
+	return cmd
+}
+
+func setTokenFeeFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("tokenId", "t", 0, "token id")
+	cmd.MarkFlagRequired("tokenId")
+	cmd.Flags().StringP("fee", "f", "10000", "fee")
+	cmd.MarkFlagRequired("fee")
+	cmd.Flags().Int32P("action", "a", 0, "action ty")
+	cmd.MarkFlagRequired("action")
+}
+
+func setTokenFee(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	fee, _ := cmd.Flags().GetString("fee")
+	action, _ := cmd.Flags().GetInt32("action")
+
+	payload := &zt.ZkSetFee{
+		TokenId:  tokenId,
+		Amount:   fee,
+		ActionTy: action,
+	}
+
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "SetFee",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func getFirstRootHashCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "initroot",
+		Short: "get merkel tree init root, default from cfg fee",
+		Run:   getFirstRootHash,
+	}
+	getFirstRootHashFlag(cmd)
+	return cmd
+}
+
+func getFirstRootHashFlag(cmd *cobra.Command) {
+	cmd.Flags().StringP("ethAddr", "e", "", "optional eth fee addr, hex format default from config")
+	cmd.Flags().StringP("chain33Addr", "c", "", "optional chain33 fee addr, hex format,default from config")
+}
+
+func getFirstRootHash(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	eth, _ := cmd.Flags().GetString("ethAddr")
+	chain33, _ := cmd.Flags().GetString("chain33Addr")
+
+	var params rpctypes.Query4Jrpc
+	params.Execer = zt.Zksync
+	req := &types.ReqAddrs{Addrs: []string{eth, chain33}}
+
+	params.FuncName = "GetTreeInitRoot"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp types.ReplyString
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getZkCommitProofListCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "plist",
+		Short: "get committed proof list",
+		Run:   getZkCommitProofList,
+	}
+	getZkCommitProofListFlag(cmd)
+	return cmd
+}
+
+func getZkCommitProofListFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("proofId", "i", 0, "commit proof id")
+	cmd.MarkFlagRequired("proofId")
+	cmd.Flags().Uint64P("onChainProofId", "s", 0, "commit on chain proof id")
+
+	cmd.Flags().BoolP("onChain", "o", true, "if req onChain proof by sub id")
+	cmd.Flags().BoolP("latestProof", "l", false, "if req latest proof")
+	cmd.Flags().Uint64P("endHeight", "e", 0, "latest proof pre endHeight")
+
+}
+
+func getZkCommitProofList(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	proofId, _ := cmd.Flags().GetUint64("proofId")
+	onChainProofId, _ := cmd.Flags().GetUint64("onChainProofId")
+	onChain, _ := cmd.Flags().GetBool("onChain")
+	latestProof, _ := cmd.Flags().GetBool("latestProof")
+	end, _ := cmd.Flags().GetUint64("endHeight")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkFetchProofList{
+		ProofId:         proofId,
+		OnChainProofId:  onChainProofId,
+		ReqOnChainProof: onChain,
+		ReqLatestProof:  latestProof,
+		EndHeight:       end,
+	}
+
+	params.FuncName = "GetProofList"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkCommitProof
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func nftCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "nft",
+		Short: "nft related cmd",
+	}
+	cmd.AddCommand(mintNFTCmd())
+	cmd.AddCommand(transferNFTCmd())
+	cmd.AddCommand(withdrawNFTCmd())
+	cmd.AddCommand(getNftByIdCmd())
+	cmd.AddCommand(getNftByHashCmd())
+
+	return cmd
+}
+
+func mintNFTCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "mint",
+		Short: "mint nft command",
+		Run:   setMintNFT,
+	}
+	mintNFTFlag(cmd)
+	return cmd
+}
+
+func mintNFTFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("creatorId", "f", 0, "NFT creator id")
+	cmd.MarkFlagRequired("creatorId")
+
+	cmd.Flags().Uint64P("recipientId", "t", 0, "NFT recipient id")
+	cmd.MarkFlagRequired("recipientId")
+
+	cmd.Flags().StringP("contentHash", "e", "", "NFT content hash,must 64 hex char")
+	cmd.MarkFlagRequired("contentHash")
+
+	cmd.Flags().Uint64P("protocol", "p", 1, "NFT protocol, 1:ERC1155, 2: ERC721")
+	cmd.MarkFlagRequired("protocol")
+
+	cmd.Flags().Uint64P("amount", "n", 1, "mint amount, only for ERC1155 case")
+
+}
+
+func setMintNFT(cmd *cobra.Command, args []string) {
+	accountId, _ := cmd.Flags().GetUint64("creatorId")
+	toId, _ := cmd.Flags().GetUint64("recipientId")
+	contentHash, _ := cmd.Flags().GetString("contentHash")
+	protocol, _ := cmd.Flags().GetUint64("protocol")
+	amount, _ := cmd.Flags().GetUint64("amount")
+
+	if protocol == zt.ZKERC721 && amount > 1 {
+		fmt.Fprintln(os.Stderr, errors.Wrapf(types.ErrInvalidParam, "NFT erc721 only allow 1 amount"))
+	}
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	nft := &zt.ZkMintNFT{
+		FromAccountId: accountId,
+		RecipientId:   toId,
+		ContentHash:   contentHash,
+		ErcProtocol:   protocol,
+		Amount:        amount,
+	}
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "MintNFT",
+		Payload:    types.MustPBToJSON(nft),
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func transferNFTCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer",
+		Short: "transfer nft command",
+		Run:   transferNFT,
+	}
+	transferNFTFlag(cmd)
+	return cmd
+}
+
+func transferNFTFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("fromId", "a", 0, "NFT from id")
+	cmd.MarkFlagRequired("fromId")
+
+	cmd.Flags().Uint64P("toId", "t", 0, "NFT to id")
+	cmd.MarkFlagRequired("toId")
+
+	cmd.Flags().Uint64P("tokenId", "i", 0, "NFT token id")
+	cmd.MarkFlagRequired("tokenId")
+
+	cmd.Flags().Uint64P("amount", "n", 1, "NFT token id")
+	cmd.MarkFlagRequired("amount")
+}
+
+func transferNFT(cmd *cobra.Command, args []string) {
+	accountId, _ := cmd.Flags().GetUint64("fromId")
+	toId, _ := cmd.Flags().GetUint64("toId")
+	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	amount, _ := cmd.Flags().GetUint64("amount")
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	nft := &zt.ZkTransferNFT{
+		FromAccountId: accountId,
+		RecipientId:   toId,
+		NFTTokenId:    tokenId,
+		Amount:        amount,
+	}
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "TransferNFT",
+		Payload:    types.MustPBToJSON(nft),
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func withdrawNFTCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "withdraw",
+		Short: "withdraw to L1",
+		Run:   withdrawNFT,
+	}
+	withdrawNFTFlag(cmd)
+	return cmd
+}
+
+func withdrawNFTFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("fromId", "a", 0, "NFT from id")
+	cmd.MarkFlagRequired("fromId")
+
+	cmd.Flags().Uint64P("tokenId", "i", 0, "NFT token id")
+	cmd.MarkFlagRequired("tokenId")
+
+	cmd.Flags().Uint64P("amount", "n", 0, "amount")
+	cmd.MarkFlagRequired("amount")
+}
+
+func withdrawNFT(cmd *cobra.Command, args []string) {
+	accountId, _ := cmd.Flags().GetUint64("fromId")
+	tokenId, _ := cmd.Flags().GetUint64("tokenId")
+	amount, _ := cmd.Flags().GetUint64("amount")
+
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+
+	nft := &zt.ZkWithdrawNFT{
+		FromAccountId: accountId,
+		NFTTokenId:    tokenId,
+		Amount:        amount,
+	}
+	params := &rpctypes.CreateTxIn{
+		Execer:     zt.Zksync,
+		ActionName: "WithdrawNFT",
+		Payload:    types.MustPBToJSON(nft),
+	}
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func getNftByIdCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "id",
+		Short: "get nft by id",
+		Run:   getNftId,
+	}
+	getNftByIdFlag(cmd)
+	return cmd
+}
+
+func getNftByIdFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("id", "i", 0, "nft token Id")
+	cmd.MarkFlagRequired("id")
+}
+
+func getNftId(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	id, _ := cmd.Flags().GetUint64("id")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &zt.ZkQueryReq{
+		TokenId: id,
+	}
+
+	params.FuncName = "GetNFTStatus"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp zt.ZkNFTTokenStatus
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getNftByHashCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "hash",
+		Short: "get nft by hash",
+		Run:   getNftHash,
+	}
+	getNftByHashFlag(cmd)
+	return cmd
+}
+
+func getNftByHashFlag(cmd *cobra.Command) {
+	cmd.Flags().StringP("hash", "s", "", "nft content hash")
+	cmd.MarkFlagRequired("hash")
+}
+
+func getNftHash(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	hash, _ := cmd.Flags().GetString("hash")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = zt.Zksync
+	req := &types.ReqString{
+		Data: hash,
+	}
+
+	params.FuncName = "GetNFTId"
+	params.Payload = types.MustPBToJSON(req)
+
+	var id types.Int64
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &id)
+	ctx.Run()
+}
+
 
 func limitOrderCmd() *cobra.Command {
 	cmd := &cobra.Command{
