@@ -1490,7 +1490,7 @@ func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, payload1 *et.Spot
 		return nil, errors.Wrapf(err, "calProof")
 	}
 
-	after := getBranchByReceipt1(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, payload.GetAmountOut(), payload.FromAccountId, payload.TokenId)
+	after := getBranchByReceipt1(receipt, operationInfo, fromLeaf.EthAddress, fromLeaf.Chain33Addr, fromLeaf.PubKey, receipt.Token.Balance, payload.FromAccountId, payload.TokenId)
 
 	branch := &zt.OperationPairBranch{
 		Before: before,
@@ -1531,7 +1531,7 @@ func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, payload1 *et.Spot
 	if err != nil {
 		return nil, errors.Wrapf(err, "calProof")
 	}
-	after2 := getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, payload.GetAmountIn(), payload.ToAccountId, payload.TokenId)
+	after2 := getBranchByReceipt1(receipt, operationInfo, toLeaf.EthAddress, toLeaf.Chain33Addr, toLeaf.PubKey, receipt.Token.Balance, payload.ToAccountId, payload.TokenId)
 	rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
 	kv := &types.KeyValue{
 		Key:   getHeightKey(a.height),
