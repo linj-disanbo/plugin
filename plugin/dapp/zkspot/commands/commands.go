@@ -111,7 +111,7 @@ func deposit(cmd *cobra.Command, args []string) {
 		EthPriorityQueueId: int64(queueId),
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     zt.Zksync,
+		Execer:     ExecName,
 		ActionName: "Deposit",
 		Payload:    types.MustPBToJSON(deposit),
 	}
@@ -407,7 +407,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	}
 	payload := types.MustPBToJSON(pubkey)
 	params := &rpctypes.CreateTxIn{
-		Execer:     zt.Zksync,
+		Execer:     ExecName,
 		ActionName: "SetPubKey",
 		Payload:    payload,
 	}
@@ -447,7 +447,7 @@ func fullExit(cmd *cobra.Command, args []string) {
 		EthPriorityQueueId: int64(queueId),
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     zt.Zksync,
+		Execer:     ExecName,
 		ActionName: "FullExit",
 		Payload:    types.MustPBToJSON(fullExit),
 	}
@@ -491,7 +491,6 @@ func verifyKey(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
 }
-
 
 func setOperatorCmd() *cobra.Command {
 	cmd := &cobra.Command{
@@ -1104,7 +1103,7 @@ func setTokenFee(cmd *cobra.Command, args []string) {
 	}
 
 	params := &rpctypes.CreateTxIn{
-		Execer:     zt.Zksync,
+		Execer:     ExecName,
 		ActionName: "SetFee",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -1255,7 +1254,7 @@ func setMintNFT(cmd *cobra.Command, args []string) {
 		Amount:        amount,
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     zt.Zksync,
+		Execer:     ExecName,
 		ActionName: "MintNFT",
 		Payload:    types.MustPBToJSON(nft),
 	}
@@ -1302,7 +1301,7 @@ func transferNFT(cmd *cobra.Command, args []string) {
 		Amount:        amount,
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     zt.Zksync,
+		Execer:     ExecName,
 		ActionName: "TransferNFT",
 		Payload:    types.MustPBToJSON(nft),
 	}
@@ -1344,7 +1343,7 @@ func withdrawNFT(cmd *cobra.Command, args []string) {
 		Amount:        amount,
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     zt.Zksync,
+		Execer:     ExecName,
 		ActionName: "WithdrawNFT",
 		Payload:    types.MustPBToJSON(nft),
 	}
@@ -1419,7 +1418,6 @@ func getNftHash(cmd *cobra.Command, args []string) {
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &id)
 	ctx.Run()
 }
-
 
 func limitOrderCmd() *cobra.Command {
 	cmd := &cobra.Command{
