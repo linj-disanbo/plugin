@@ -61,7 +61,7 @@ function zkspot_init() {
 function zkspot_deposit() {
   echo "=========== # zkspot deposit test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 deposit amount 1000000000000
-    chain33Addr=$(${CLI} zkspot getChain33Addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    chain33Addr=$(${CLI} zkspot l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
     rawData=$(${CLI} zkspot deposit -t 1 -a 1000000000000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
     echo "${rawData}"
 
@@ -76,7 +76,7 @@ function zkspot_deposit() {
 function zkspot_setPubKey() {
     echo "=========== # zkspot setPubKey test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 setPubKey
-    rawData=$(${CLI} zkspot setPubKey -a 1)
+    rawData=$(${CLI} zkspot pubKey -a 1)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -105,7 +105,7 @@ function zkspot_withdraw() {
 function zkspot_treeToContract() {
     echo "=========== # zkspot treeToContract test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 treeToContract amount 1000000000
-    rawData=$(${CLI} zkspot treeToContract -t 1 -a 10000000000000000000 --accountId 1)
+    rawData=$(${CLI} zkspot tree2contract -t 1 -a 10000000000000000000 --accountId 1)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -119,8 +119,8 @@ function zkspot_treeToContract() {
 function zkspot_contractToTree() {
     echo "=========== # zkspot contractToTree test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 contractToTree to self amount 100000000
-    chain33Addr=$(${CLI} zkspot getChain33Addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
-    rawData=$(${CLI} zkspot contractToTree -t 1 -a 1000000000000000000 --accountId 1)
+    chain33Addr=$(${CLI} zkspot l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
+    rawData=$(${CLI} zkspot contract2tree -t 1 -a 1000000000000000000 --accountId 1)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -131,7 +131,7 @@ function zkspot_contractToTree() {
     query_account "${CLI}" 1
 
     #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR deposit amount 1000000000
-    chain33Addr=$(${CLI} zkspot getChain33Addr -k 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
+    chain33Addr=$(${CLI} zkspot l2addr -k 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
     rawData=$(${CLI} zkspot deposit -t 1 -a 1000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
     echo "${rawData}"
 
@@ -161,8 +161,8 @@ function zkspot_transfer() {
 function zkspot_transferToNew() {
     echo "=========== # zkspot transferToNew test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 transferToNew to 1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k amount 100000000
-    chain33Addr=$(${CLI} zkspot getChain33Addr -k 7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
-    rawData=$(${CLI} zkspot transferToNew -t 1 -a 100000000 --accountId 1 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr")
+    chain33Addr=$(${CLI} zkspot l2addr -k 7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
+    rawData=$(${CLI} zkspot transfer2new -t 1 -a 100000000 --accountId 1 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr")
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -176,7 +176,7 @@ function zkspot_transferToNew() {
 function zkspot_forceExit() {
     echo "=========== # zkspot forceExit test ============="
     #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR setPubKey
-    rawData=$(${CLI} zkspot setPubKey -a 2)
+    rawData=$(${CLI} zkspot pubKey -a 2)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
@@ -187,7 +187,7 @@ function zkspot_forceExit() {
     query_account "${CLI}" 2
 
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 help 1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR forceExit
-    rawData=$(${CLI} zkspot forceExit -t 1 --accountId 2)
+    rawData=$(${CLI} zkspot forceexit -t 1 --accountId 2)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -201,7 +201,7 @@ function zkspot_forceExit() {
 function zkspot_fullExit() {
     echo "=========== # zkspot fullExit test ============="
     #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k setPubKey
-    rawData=$(${CLI} zkspot setPubKey -a 3)
+    rawData=$(${CLI} zkspot pubKey -a 3)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
@@ -212,7 +212,8 @@ function zkspot_fullExit() {
     query_account "${CLI}" 3
 
     #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k fullExit
-    rawData=$(${CLI} zkspot fullExit -t 1 --accountId 3)
+    # ?
+    rawData=$(${CLI} zkspot fullexit -t 1 -a 3 --accountId 4)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -240,7 +241,7 @@ function query_account() {
     block_wait "${1}" 1
 
     local times=200
-    ret=$(${1} zkspot account -a "${2}")
+    ret=$(${1} zkspot query account id -a "${2}")
     echo "query account accountId=${2}, return ${ret} "
 
 }
@@ -275,7 +276,7 @@ function create_tx() {
          echo "=========== # zkspot setVerifyKey test ============="
          privateKey=$(${CLI} account rand -l 1 | jq -r ".privateKey")
          echo "${privateKey}"
-         chain33Addr=$(${CLI} zkspot getChain33Addr -k "$privateKey")
+         chain33Addr=$(${CLI} zkspot l2addr -k "$privateKey")
 
          rawData=$(${CLI} zkspot deposit -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
          echo "${rawData}"
