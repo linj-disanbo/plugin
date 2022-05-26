@@ -579,7 +579,7 @@ func commitProof(cmd *cobra.Command, args []string) {
 		PubDatas:    strings.Split(pubdata, "-"),
 	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     getExecname(paraname),
+		Execer:     getExecname(paraName),
 		ActionName: "CommitProof",
 		Payload:    types.MustPBToJSON(payload),
 	}
