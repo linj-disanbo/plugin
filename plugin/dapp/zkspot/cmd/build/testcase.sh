@@ -62,7 +62,7 @@ function zkspot_deposit() {
   echo "=========== # zkspot deposit test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 deposit amount 1000000000000
     chain33Addr=$(${CLI} zkspot l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
-    rawData=$(${CLI} zkspot deposit -t 1 -a 1000000000000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
+    rawData=$(${CLI} zkspot deposit -t 1 -a 1000000000000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr" -i 0)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -132,7 +132,7 @@ function zkspot_contractToTree() {
 
     #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR deposit amount 1000000000
     chain33Addr=$(${CLI} zkspot l2addr -k 19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
-    rawData=$(${CLI} zkspot deposit -t 1 -a 1000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
+    rawData=$(${CLI} zkspot deposit -t 1 -a 1000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr" -i 1)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -271,6 +271,7 @@ function create_tx() {
     block_wait "${CLI}" 10
 
     local accountId=4
+    local queryid=2
     while true; do
          #loop deposit amount 1000000000000
          echo "=========== # zkspot setVerifyKey test ============="
@@ -278,7 +279,7 @@ function create_tx() {
          echo "${privateKey}"
          chain33Addr=$(${CLI} zkspot l2addr -k "$privateKey")
 
-         rawData=$(${CLI} zkspot deposit -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr")
+         rawData=$(${CLI} zkspot deposit -t 1 -a 1000000000000 -e abcd68033A72978C1084E2d44D1Fa06DdC4A2d57 -c "$chain33Addr" -i ${queryid})
          echo "${rawData}"
 
          signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
@@ -288,6 +289,7 @@ function create_tx() {
          query_tx "${CLI}" "${hash}"
          query_account "${CLI}" $accountId
          accountId=$((accountId + 1))
+         queryid=$((queryid + 1))
     done
 }
 
