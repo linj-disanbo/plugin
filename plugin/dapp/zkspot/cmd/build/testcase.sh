@@ -176,7 +176,7 @@ function zkspot_transferToNew() {
 function zkspot_forceExit() {
     echo "=========== # zkspot forceExit test ============="
     #1JRNjdEqp4LJ5fqycUBm9ayCKSeeskgMKR setPubKey
-    rawData=$(${CLI} zkspot pubKey -a 2)
+    rawData=$(${CLI} zkspot pubkey -a 2)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x19c069234f9d3e61135fefbeb7791b149cdf6af536f26bebb310d4cd22c3fee4)
