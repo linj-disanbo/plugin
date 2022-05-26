@@ -76,7 +76,7 @@ function zkspot_deposit() {
 function zkspot_setPubKey() {
     echo "=========== # zkspot setPubKey test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 setPubKey
-    rawData=$(${CLI} zkspot pubKey -a 1)
+    rawData=$(${CLI} zkspot pubkey -a 1)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
@@ -201,7 +201,7 @@ function zkspot_forceExit() {
 function zkspot_fullExit() {
     echo "=========== # zkspot fullExit test ============="
     #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k setPubKey
-    rawData=$(${CLI} zkspot pubKey -a 3)
+    rawData=$(${CLI} zkspot pubkey -a 3)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 0x7a80a1f75d7360c6123c32a78ecf978c1ac55636f87892df38d8b85a9aeff115)
