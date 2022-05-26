@@ -478,12 +478,8 @@ func verifyKey(cmd *cobra.Command, args []string) {
 	payload := &zt.ZkVerifyKey{
 		Key: vkey,
 	}
-	exec := zt.Zksync
-	if strings.HasPrefix(paraName, pt.ParaPrefix) {
-		exec = paraName + zt.Zksync
-	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     exec,
+		Execer:     getExecname(paraName),
 		ActionName: "SetVerifyKey",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -508,6 +504,14 @@ func addOperatorCmdFlags(cmd *cobra.Command) {
 
 }
 
+func getExecname(paraName string) string {
+	exec := ExecName
+	if strings.HasPrefix(paraName, pt.ParaPrefix) {
+		exec = paraName + ExecName
+	}
+	retrun exec
+}
+
 func setOperator(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	operator, _ := cmd.Flags().GetString("operator")
@@ -515,12 +519,8 @@ func setOperator(cmd *cobra.Command, args []string) {
 	payload := &zt.ZkVerifier{
 		Verifiers: strings.Split(operator, "-"),
 	}
-	exec := zt.Zksync
-	if strings.HasPrefix(paraName, pt.ParaPrefix) {
-		exec = paraName + zt.Zksync
-	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     exec,
+		Execer:     getExecname(paraName),
 		ActionName: "SetVerifier",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -578,12 +578,8 @@ func commitProof(cmd *cobra.Command, args []string) {
 		Proof:       proof,
 		PubDatas:    strings.Split(pubdata, "-"),
 	}
-	exec := zt.Zksync
-	if strings.HasPrefix(paraName, pt.ParaPrefix) {
-		exec = paraName + zt.Zksync
-	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     exec,
+		Execer:     getExecname(paraname),
 		ActionName: "CommitProof",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -679,7 +675,7 @@ func getAccountTree(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := new(types.ReqNil)
 
 	params.FuncName = "GetAccountTree"
@@ -711,7 +707,7 @@ func getAccountById(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkQueryReq{
 		AccountId: accountId,
 	}
@@ -745,7 +741,7 @@ func getAccountByEth(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkQueryReq{
 		EthAddress: ethAddress,
 	}
@@ -779,7 +775,7 @@ func getAccountByChain33(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkQueryReq{
 		Chain33Addr: chain33Addr,
 	}
@@ -816,7 +812,7 @@ func getContractAccount(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkQueryReq{
 		TokenSymbol:       token,
 		Chain33WalletAddr: chain33Addr,
@@ -854,7 +850,7 @@ func getTokenBalance(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkQueryReq{
 		TokenId:   token,
 		AccountId: accountId,
@@ -910,7 +906,7 @@ func getTxProof(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkQueryReq{
 		BlockHeight: height,
 		TxIndex:     index,
@@ -945,7 +941,7 @@ func getTxProofByHeight(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkQueryReq{
 		BlockHeight: height,
 	}
@@ -995,7 +991,7 @@ func getProofByHeights(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkQueryProofReq{
 		StartBlockHeight: start,
 		EndBlockHeight:   end,
@@ -1027,7 +1023,7 @@ func getLastCommitProof(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 
 	params.FuncName = "GetLastCommitProof"
 	params.Payload = types.MustPBToJSON(&types.ReqNil{})
@@ -1058,7 +1054,7 @@ func getZkCommitProof(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkQueryReq{
 		ProofId: proofId,
 	}
@@ -1133,7 +1129,7 @@ func getFirstRootHash(cmd *cobra.Command, args []string) {
 	chain33, _ := cmd.Flags().GetString("chain33Addr")
 
 	var params rpctypes.Query4Jrpc
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &types.ReqAddrs{Addrs: []string{eth, chain33}}
 
 	params.FuncName = "GetTreeInitRoot"
@@ -1175,7 +1171,7 @@ func getZkCommitProofList(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkFetchProofList{
 		ProofId:         proofId,
 		OnChainProofId:  onChainProofId,
@@ -1372,7 +1368,7 @@ func getNftId(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &zt.ZkQueryReq{
 		TokenId: id,
 	}
@@ -1406,7 +1402,7 @@ func getNftHash(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = zt.Zksync
+	params.Execer = getExecname("")
 	req := &types.ReqString{
 		Data: hash,
 	}
@@ -1491,13 +1487,9 @@ func limitOrder(cmd *cobra.Command, args []string) {
 		Op:         int32(opInt),
 		Order:      &zkorder,
 	}
-	exec := ExecName
 	paraName, _ := cmd.Flags().GetString("paraName")
-	if strings.HasPrefix(paraName, pt.ParaPrefix) {
-		exec = paraName + ExecName
-	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     exec,
+		Execer:     getExecname(paraName),
 		ActionName: "LimitOrder",
 		Payload:    types.MustPBToJSON(payload),
 	}
@@ -1523,17 +1515,13 @@ func revokeOrderFlag(cmd *cobra.Command) {
 
 func revokeOrder(cmd *cobra.Command, args []string) {
 	orderid, _ := cmd.Flags().GetUint64("orderid")
+	paraName, _ := cmd.Flags().GetString("paraName")
 
 	payload := &et.SpotRevokeOrder{
 		OrderID: int64(orderid),
 	}
-	exec := ExecName
-	paraName, _ := cmd.Flags().GetString("paraName")
-	if strings.HasPrefix(paraName, pt.ParaPrefix) {
-		exec = paraName + ExecName
-	}
 	params := &rpctypes.CreateTxIn{
-		Execer:     exec,
+		Execer:     getExecname(paraName),
 		ActionName: "RevokeOrder",
 		Payload:    types.MustPBToJSON(payload),
 	}
