@@ -67,7 +67,8 @@ function zkspot_deposit() {
   echo "=========== # zkspot deposit test ============="
     #1KSBd17H7ZK8iT37aJztFB22XGwsPTdwE4 deposit amount 1000000000000
     chain33Addr=$(${CLI} zkspot l2addr -k 6da92a632ab7deb67d38c0f6560bcfed28167998f6496db64c258d5e8393a81b)
-    hash=$(${CLI} send zkspot deposit -t "${TOKENID_0}" -a 1000000000000000000000 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr" -i 0 -k 
+    hash=$(${CLI} send zkspot deposit -t "${TOKENID_0}" -a 1000000000000000000000 -e 12a0E25E62C1dBD32E505446062B26AECB65F028 -c "$chain33Addr" -i 0 -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
+    echo "${hash}"
     query_tx "${CLI}" "${hash}"
     query_account "${CLI}" "${ZKSYNC_ACCOUNT_3}"
 }
