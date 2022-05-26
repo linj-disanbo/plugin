@@ -509,7 +509,7 @@ func getExecname(paraName string) string {
 	if strings.HasPrefix(paraName, pt.ParaPrefix) {
 		exec = paraName + ExecName
 	}
-	retrun exec
+	return exec
 }
 
 func setOperator(cmd *cobra.Command, args []string) {
