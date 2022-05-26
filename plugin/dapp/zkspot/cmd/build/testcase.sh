@@ -212,8 +212,7 @@ function zkspot_fullExit() {
     query_account "${CLI}" 3
 
     #1NLHPEcbTWWxxU3dGUZBhayjrCHD3psX7k fullExit
-    # ?
-    rawData=$(${CLI} zkspot fullexit -t 1 -a 3 --accountId 4)
+    rawData=$(${CLI} zkspot fullexit -t 1 -a 3 --accountId 4 -i 2)
     echo "${rawData}"
 
     signData=$(${CLI} wallet sign -d "$rawData" -k 4257D8692EF7FE13C68B65D6A52F03933DB2FA5CE8FAF210B5B8B80C721CED01)
