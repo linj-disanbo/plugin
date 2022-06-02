@@ -918,3 +918,15 @@ func (a *SpotAction) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*ty
 
 	return acc.Burn(uint32(payload.TokenId), amountWithFee)
 }
+
+//
+func (a *SpotAction) ExchangeBind(payload *et.SpotExchangeBind) (*types.Receipt, error) {
+	return nil, nil
+}
+func (a *SpotAction) EntrustOrder(payload *et.SpotEntrustOrder) (*types.Receipt, error) {
+	return nil, nil
+}
+
+func (a *SpotAction) EntrustRevokeOrder(payload *et.SpotEntrustRevokeOrder) (*types.Receipt, error) {
+	return nil, nil
+}
