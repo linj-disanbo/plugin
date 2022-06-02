@@ -2,19 +2,13 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
-)
-
-const (
-	//KeyPrefixStateDB state db key必须前缀
-	KeyPrefixStateDB = "mavl-zkspot-"
-	//KeyPrefixLocalDB local db的key必须前缀
-	KeyPrefixLocalDB = "LODB-zkspot"
 )
 
 var opt_account_tree = &table.Option{
