@@ -29,18 +29,22 @@ message ZkOrder {
   ZkSignature signature = 20;
 }
 
+message RawLimitOrder {
+    //交易对
+    uint32 leftAsset = 1;
+    //交易对
+    uint32 rightAsset = 2;
+    //价格
+    int64 price = 3;
+    //总量
+    int64 amount = 4;
+    //操作， 1为买，2为卖
+    int32 op = 5;
+}
+
 //限价订单
 message SpotLimitOrder {
-  //交易对
-  uint32 leftAsset = 1;
-  //交易对
-  uint32 rightAsset = 2;
-  //价格
-  int64 price = 3;
-  //总量
-  int64 amount = 4;
-  //操作， 1为买，2为卖
-  int32 op = 5;
+  RawLimitOrder raw = 1;
   ZkOrder order = 6;
 }
 
@@ -65,16 +69,7 @@ message SpotExchangeBind {
 
 //委托限价订单
 message SpotEntrustOrder {
-  //交易对
-  uint32 leftAsset = 1;
-  //交易对
-  uint32 rightAsset = 2;
-  //价格
-  int64 price = 3;
-  //总量
-  int64 amount = 4;
-  //操作， 1为买，2为卖
-  int32 op = 5;
+  RawLimitOrder raw = 1;
   //交易地址
   string addr = 6;
   ZkOrder order = 7;
