@@ -2,11 +2,12 @@ package types
 
 import (
 	"encoding/hex"
-	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"math/big"
 	"strings"
+
+	"github.com/33cn/chain33/types"
+	"github.com/consensys/gnark-crypto/ecc/bn254/fr"
 	"github.com/pkg/errors"
-	"github.com/33cn/chain33/types"	
 )
 
 func Str2Byte(v string) []byte {
@@ -38,24 +39,27 @@ func DecimalAddr2Hex(addr string) string {
 	return hex.EncodeToString(addrInt.Bytes())
 }
 
-
 func SplitNFTContent(contentHash string) (*big.Int, *big.Int, string, error) {
-       hexContent := strings.ToLower(contentHash)
-       if hexContent[0:2] == "0x" || hexContent[0:2] == "0X" {
-               hexContent = hexContent[2:]
-       }
+	hexContent := strings.ToLower(contentHash)
+	if hexContent[0:2] == "0x" || hexContent[0:2] == "0X" {
+		hexContent = hexContent[2:]
+	}
 
-       if len(hexContent) != 64 {
-               return nil, nil, "", errors.Wrapf(types.ErrInvalidParam, "contentHash not 64 len, %s", hexContent)
-       }
-       part1, ok := big.NewInt(0).SetString(hexContent[:32], 16)
-       if !ok {
-               return nil, nil, "", errors.Wrapf(types.ErrInvalidParam, "contentHash.preHalf hex err, %s", hexContent[:32])
-       }
-       part2, ok := big.NewInt(0).SetString(hexContent[32:], 16)
-       if !ok {
-               return nil, nil, "", errors.Wrapf(types.ErrInvalidParam, "contentHash.postHalf hex err, %s", hexContent[32:])
-       }
-       return part1, part2, hexContent, nil
+	if len(hexContent) != 64 {
+		return nil, nil, "", errors.Wrapf(types.ErrInvalidParam, "contentHash not 64 len, %s", hexContent)
+	}
+	part1, ok := big.NewInt(0).SetString(hexContent[:32], 16)
+	if !ok {
+		return nil, nil, "", errors.Wrapf(types.ErrInvalidParam, "contentHash.preHalf hex err, %s", hexContent[:32])
+	}
+	part2, ok := big.NewInt(0).SetString(hexContent[32:], 16)
+	if !ok {
+		return nil, nil, "", errors.Wrapf(types.ErrInvalidParam, "contentHash.postHalf hex err, %s", hexContent[32:])
+	}
+	return part1, part2, hexContent, nil
 }
 
+type DBprefix interface {
+	GetLocaldbPrefix() string
+	GetStatedbPrefix() string
+}
