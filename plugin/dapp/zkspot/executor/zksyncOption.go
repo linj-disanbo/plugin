@@ -1574,9 +1574,18 @@ func toString(i int64) string {
 func genSwapSpecialData(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) *zt.OperationSpecialData {
 	left, right := payload1.LeftAsset, payload1.RightAsset
 
+	sellRightFee, buyRightFee := trade.Match.FeeMaker, trade.Match.FeeTaker
+	if payload1.Op == et.OpBuy {
+		sellRightFee, buyRightFee = trade.Match.FeeTaker, trade.Match.FeeMaker
+	}
 	specialData := &zt.OperationSpecialData{
 		TokenID: []uint64{uint64(left), uint64(right)},
-		Amount:  []string{toString(trade.Match.LeftBalance), toString(trade.Match.RightBalance)},
+		Amount: []string{
+			toString(trade.Match.LeftBalance),
+			toString(trade.Match.RightBalance),
+			toString(sellRightFee),
+			toString(buyRightFee),
+		},
 	}
 
 	return specialData
