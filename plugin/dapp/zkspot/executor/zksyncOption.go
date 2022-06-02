@@ -1759,8 +1759,14 @@ func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptS
 		AmountIn:      new(big.Int).SetInt64(fee).String(),
 	}
 
-	transfers = append(transfers, taker1)
-	transfers = append(transfers, maker1)
+	// 对先后顺序有要求: 先处理LeftAsset, 在处理RightAsset
+	if payload1.Op == et.OpSell {
+		transfers = append(transfers, taker1)
+		transfers = append(transfers, maker1)
+	} else {
+		transfers = append(transfers, maker1)
+		transfers = append(transfers, taker1)
+	}
 	transfers = append(transfers, fee1)
 	elog.Error("swapGenTransfer", "takerPay", takerPay, "takerRcv", takerRcv,
 		"makerPay", makerPay, "makerRcv", makerRcv)
