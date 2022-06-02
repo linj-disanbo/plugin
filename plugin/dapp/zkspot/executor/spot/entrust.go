@@ -1,4 +1,4 @@
-package executor
+package spot
 
 import (
 	"github.com/33cn/chain33/common/address"
@@ -8,10 +8,43 @@ import (
 )
 
 var (
-	exchangeBindKeyPrefix = []byte("mavl-exchange-ebind-")
+	exchangeBindKeyPrefix = []byte("ebind-")
 )
 
-func (a *SpotAction) ExchangeBind(payload *et.SpotExchangeBind) (*types.Receipt, error) {
+func getBindKeyPrefix() []byte {
+	return exchangeBindKeyPrefix
+}
+
+type Entrust struct {
+	fromaddr string
+	height   int64
+	statedb  dbm.KV
+	prefix   et.DBprefix
+}
+
+func NewEntrust(s string, h int64, d dbm.KV) *Entrust {
+	return &Entrust{
+		fromaddr: s,
+		height:   h,
+		statedb:  d,
+	}
+}
+
+func (a *Entrust) SetDB(d dbm.KV, prefix et.DBprefix) {
+	a.statedb = d
+	a.prefix = prefix
+}
+
+// dummy
+func (a *Entrust) LimitOrder(payload *et.SpotLimitOrder, s string) (*types.Receipt, error) {
+	return nil, nil
+}
+
+func (a *Entrust) RevokeOrder(payload *et.SpotRevokeOrder) (*types.Receipt, error) {
+	return nil, nil
+}
+
+func (a *Entrust) Bind(payload *et.SpotExchangeBind) (*types.Receipt, error) {
 	if a.fromaddr != payload.GetExchangeAddress() {
 		return nil, types.ErrFromAddr
 	}
@@ -38,42 +71,21 @@ func (a *SpotAction) ExchangeBind(payload *et.SpotExchangeBind) (*types.Receipt,
 	return receipt, nil
 }
 
-func (a *SpotAction) EntrustOrder(payload *et.SpotEntrustOrder) (*types.Receipt, error) {
-	entrustAddr, addr := a.fromaddr, payload.Addr
+func (a *Entrust) CheckBind(addr string) error {
+	entrustAddr, addr := a.fromaddr, addr
 
 	if !a.checkBind(entrustAddr, addr) {
-		return nil, et.ErrBindAddr
+		return et.ErrBindAddr
 	}
 
-	a.fromaddr = addr
-	limitOrder := &et.SpotLimitOrder{
-		LeftAsset:  payload.LeftAsset,
-		RightAsset: payload.RightAsset,
-		Price:      payload.Price,
-		Amount:     payload.Amount,
-		Op:         payload.Op,
-		Order:      payload.Order,
-	}
-	return a.LimitOrder(limitOrder, entrustAddr)
+	return nil
 }
 
-func (a *SpotAction) EntrustRevokeOrder(payload *et.SpotEntrustRevokeOrder) (*types.Receipt, error) {
-	entrustAddr, addr := a.fromaddr, payload.Addr
-
-	if !a.checkBind(entrustAddr, addr) {
-		return nil, et.ErrBindAddr
-	}
-
-	a.fromaddr = payload.Addr
-	revokeOrder := &et.SpotRevokeOrder{OrderID: payload.OrderID}
-	return a.RevokeOrder(revokeOrder)
-}
-
-func (a *SpotAction) checkBind(entrustAddr, addr string) bool {
+func (a *Entrust) checkBind(entrustAddr, addr string) bool {
 	return a.getBind(addr) == entrustAddr
 }
 
-func (a *SpotAction) getBind(addr string) string {
+func (a *Entrust) getBind(addr string) string {
 	value, err := a.statedb.Get(bindKey(addr))
 	if err != nil || value == nil {
 		return ""
@@ -87,7 +99,7 @@ func (a *SpotAction) getBind(addr string) string {
 }
 
 func bindKey(id string) (key []byte) {
-	key = append(key, exchangeBindKeyPrefix...)
+	key = append(key, getBindKeyPrefix()...)
 	key = append(key, []byte(id)...)
 	return key
 }

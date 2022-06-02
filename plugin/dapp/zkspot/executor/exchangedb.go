@@ -11,6 +11,7 @@ import (
 	tab "github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/executor/spot"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 	"github.com/pkg/errors"
@@ -920,13 +921,44 @@ func (a *SpotAction) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*ty
 }
 
 //
-func (a *SpotAction) ExchangeBind(payload *et.SpotExchangeBind) (*types.Receipt, error) {
-	return nil, nil
+
+func (a SpotAction) newEntrust() *spot.Entrust {
+	e := spot.NewEntrust(a.fromaddr, a.height, a.statedb)
+	e.SetDB(a.statedb, &dbprefix{})
+	return e
 }
+
+func (a *SpotAction) ExchangeBind(payload *et.SpotExchangeBind) (*types.Receipt, error) {
+	e := a.newEntrust()
+	return e.Bind(payload)
+}
+
 func (a *SpotAction) EntrustOrder(payload *et.SpotEntrustOrder) (*types.Receipt, error) {
-	return nil, nil
+	e := a.newEntrust()
+	err := e.CheckBind(payload.Addr)
+	if err != nil {
+		return nil, err
+	}
+	limitOrder := &et.SpotLimitOrder{
+		LeftAsset:  payload.LeftAsset,
+		RightAsset: payload.RightAsset,
+		Price:      payload.Price,
+		Amount:     payload.Amount,
+		Op:         payload.Op,
+		Order:      payload.Order,
+	}
+
+	return a.LimitOrder(limitOrder, payload.Addr)
 }
 
 func (a *SpotAction) EntrustRevokeOrder(payload *et.SpotEntrustRevokeOrder) (*types.Receipt, error) {
-	return nil, nil
+	e := a.newEntrust()
+	err := e.CheckBind(payload.Addr)
+	if err != nil {
+		return nil, err
+	}
+	p := et.SpotRevokeOrder{
+		OrderID: payload.OrderID,
+	}
+	return a.RevokeOrder(&p)
 }
