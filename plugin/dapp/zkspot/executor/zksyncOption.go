@@ -1529,8 +1529,11 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 		FeeAmount:   "0",
 		SigData:     payload1.GetOrder().Signature,
 		AccountID:   payload1.Order.AccountID,
+		SpecialInfo: new(zt.OperationSpecialInfo),
 	}
 
+	swapSpecialData := genSwapSpecialData(payload1, trade)
+	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, swapSpecialData)
 	// A 和 B 交易, 构造4个transfer, 使用transfer 实现
 	// A 和 A 交易, 构造4个transfer, 0 swap *2  收取手续费*2
 	zklog.Debug("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
@@ -1563,6 +1566,20 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	receipts = mergeReceipt(receipts, feelog1)
 	return receipts, nil
+}
+
+func toString(i int64) string {
+	return new(big.Int).SetInt64(i).String()
+}
+func genSwapSpecialData(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) *zt.OperationSpecialData {
+	left, right := payload1.LeftAsset, payload1.RightAsset
+
+	specialData := &zt.OperationSpecialData{
+		TokenID: []uint64{uint64(left), uint64(right)},
+		Amount:  []string{toString(trade.Match.LeftBalance), toString(trade.Match.RightBalance)},
+	}
+
+	return specialData
 }
 
 // 将参加放到 ZkTransfer, 可以方便的修改 Transfer的实现
