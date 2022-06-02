@@ -1578,6 +1578,20 @@ func genSwapSpecialData(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade)
 	if payload1.Op == et.OpBuy {
 		sellRightFee, buyRightFee = trade.Match.FeeTaker, trade.Match.FeeMaker
 	}
+
+	sellLeft := &zt.OrderPricePair{
+		Sell: toString(int64(payload1.Order.Ratio1)),
+		Buy:  toString(int64(payload1.Order.Ratio2)),
+	}
+	buyLeft := &zt.OrderPricePair{
+		Sell: toString(int64(trade.MakerOrder.Ratio1)),
+		Buy:  toString(int64(trade.MakerOrder.Ratio2)),
+	}
+
+	if payload1.Op == et.OpBuy {
+		sellLeft, buyLeft = buyLeft, sellLeft
+	}
+
 	specialData := &zt.OperationSpecialData{
 		TokenID: []uint64{uint64(left), uint64(right)},
 		Amount: []string{
@@ -1585,7 +1599,13 @@ func genSwapSpecialData(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade)
 			toString(trade.Match.RightBalance),
 			toString(sellRightFee),
 			toString(buyRightFee),
+			toString(payload1.Amount),
+			toString(int64(trade.MakerOrder.Amount)),
 		},
+		AccountID:   trade.GetCurrent().Taker.Id,
+		RecipientID: trade.GetCurrent().Maker.Id,
+		PricePair:   []*zt.OrderPricePair{sellLeft, buyLeft},
+		SigData:     trade.MakerOrder.Signature,
 	}
 
 	return specialData
