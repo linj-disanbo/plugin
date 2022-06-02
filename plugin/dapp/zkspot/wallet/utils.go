@@ -80,7 +80,7 @@ func CreateRawTx(actionTy int32, tokenId uint64, amount string, ethAddress strin
 		}
 		payload = types.MustPBToJSON(fullExit)
 	case zst.TySetVerifierAction:
-	 	verifier := &zt.ZkVerifier{
+		verifier := &zt.ZkVerifier{
 			Verifiers: strings.Split(chain33Addr, ","),
 		}
 		payload = types.MustPBToJSON(verifier)
@@ -176,7 +176,7 @@ func GetDepositMsg(payload *zt.ZkDeposit) *zt.ZkMsg {
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
 	chain33Address, _ := new(big.Int).SetString(payload.Chain33Addr, 16)
-	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address,  zt.HashBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.HashBitWidth)...)
 
 	copy(binaryData, pubData)
 
@@ -291,7 +291,7 @@ func GetTransferToNewMsg(payload *zt.ZkTransferToNew) *zt.ZkMsg {
 	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
 
 	chain33Address, _ := new(big.Int).SetString(payload.ToChain33Address, 16)
-	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address,  zt.HashBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(chain33Address, zt.HashBitWidth)...)
 
 	copy(binaryData, pubData)
 
@@ -371,17 +371,16 @@ func GetLimitOrderMsg(payload *zst.SpotLimitOrder) *zt.ZkMsg {
 
 	binaryData := make([]uint, zt.MsgWidth)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TyLimitOrderAction), zt.TxTypeBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.AccountID), zt.TokenBitWidth)...)
-	ethAddress, _ := new(big.Int).SetString(strings.ToLower(payload.Order.EthAddress), 16)
-	pubData = append(pubData, getBigEndBitsWithFixLen(ethAddress, zt.AddrBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.TokenSell)), zt.AccountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.TokenBuy)), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zst.TySwapAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.AccountID), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.TokenSell)), zt.TokenBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.TokenBuy)), zt.TokenBitWidth)...)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.Amount), zt.AccountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio1)), zt.AccountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio2)), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio1)), zt.AmountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio2)), zt.AmountBitWidth)...)
 
+	//merkel tree 上的精度都是1e18 和eth保持一致， 这里的amount是1e8精度
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).Mul(big.NewInt(0).SetUint64(payload.Order.Amount), big.NewInt(1e10)), zt.AmountBitWidth)...)
 	copy(binaryData, pubData)
 
 	return &zt.ZkMsg{
@@ -392,76 +391,73 @@ func GetLimitOrderMsg(payload *zst.SpotLimitOrder) *zt.ZkMsg {
 
 }
 
-
 func GetMintNFTMsg(payload *zt.ZkMintNFT) *zt.ZkMsg {
-       var pubData []uint
+	var pubData []uint
 
-       binaryData := make([]uint, zt.MsgWidth)
+	binaryData := make([]uint, zt.MsgWidth)
 
-       part1, part2, _, err := zt.SplitNFTContent(payload.ContentHash)
-       if err != nil {
-               fmt.Println(fmt.Sprintf("split content hash=%s wrong", payload.ContentHash))
-               panic(err)
-       }
+	part1, part2, _, err := zt.SplitNFTContent(payload.ContentHash)
+	if err != nil {
+		fmt.Println(fmt.Sprintf("split content hash=%s wrong", payload.ContentHash))
+		panic(err)
+	}
 
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyMintNFTAction), zt.TxTypeBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.RecipientId), zt.AccountBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.ErcProtocol), zt.TxTypeBitWidth)...)
-       //nft amount 需要和其他token amount 宽度一致
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Amount), zt.NFTAmountBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(part1, zt.HashBitWidth/2)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(part2, zt.HashBitWidth/2)...)
-       copy(binaryData, pubData)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyMintNFTAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.RecipientId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.ErcProtocol), zt.TxTypeBitWidth)...)
+	//nft amount 需要和其他token amount 宽度一致
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Amount), zt.NFTAmountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(part1, zt.HashBitWidth/2)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(part2, zt.HashBitWidth/2)...)
+	copy(binaryData, pubData)
 
-       return &zt.ZkMsg{
-               First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
-               Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-               Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
-       }
+	return &zt.ZkMsg{
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	}
 
 }
 
 func GetTransferNFTMsg(payload *zt.ZkTransferNFT) *zt.ZkMsg {
-       var pubData []uint
+	var pubData []uint
 
-       binaryData := make([]uint, zt.MsgWidth)
+	binaryData := make([]uint, zt.MsgWidth)
 
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTransferNFTAction), zt.TxTypeBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.RecipientId), zt.AccountBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.NFTTokenId), zt.TokenBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Amount), zt.NFTAmountBitWidth)...)
-       copy(binaryData, pubData)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyTransferNFTAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.RecipientId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.NFTTokenId), zt.TokenBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Amount), zt.NFTAmountBitWidth)...)
+	copy(binaryData, pubData)
 
-       return &zt.ZkMsg{
-               First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
-               Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-               Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
-       }
+	return &zt.ZkMsg{
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	}
 
 }
-
 
 func GetWithdrawNFTMsg(payload *zt.ZkWithdrawNFT) *zt.ZkMsg {
-       var pubData []uint
+	var pubData []uint
 
-       binaryData := make([]uint, zt.MsgWidth)
+	binaryData := make([]uint, zt.MsgWidth)
 
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyWithdrawNFTAction), zt.TxTypeBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.NFTTokenId), zt.TokenBitWidth)...)
-       pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Amount), zt.NFTAmountBitWidth)...)
-       copy(binaryData, pubData)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TyWithdrawNFTAction), zt.TxTypeBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.FromAccountId), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.NFTTokenId), zt.TokenBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Amount), zt.NFTAmountBitWidth)...)
+	copy(binaryData, pubData)
 
-       return &zt.ZkMsg{
-               First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
-               Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
-               Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
-       }
+	return &zt.ZkMsg{
+		First:  setBeBitsToVal(binaryData[:zt.MsgFirstWidth]),
+		Second: setBeBitsToVal(binaryData[zt.MsgFirstWidth : zt.MsgFirstWidth+zt.MsgSecondWidth]),
+		Third:  setBeBitsToVal(binaryData[zt.MsgFirstWidth+zt.MsgSecondWidth:]),
+	}
 
 }
-
 
 func GetMsgHash(msg *zt.ZkMsg) []byte {
 	hash := mimc.NewMiMC(zt.ZkMimcHashSeed)
