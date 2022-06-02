@@ -1,10 +1,5 @@
 package executor
 
-type DBprefix interface {
-	GetLocaldbPrefix() string
-	GetStatedbPrefix() string
-}
-
 const (
 	//KeyPrefixStateDB state db key必须前缀
 	KeyPrefixStateDB = "mavl-zkspot-"
