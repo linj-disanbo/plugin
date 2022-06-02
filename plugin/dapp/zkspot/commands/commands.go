@@ -1454,7 +1454,8 @@ func limitOrder(cmd *cobra.Command, args []string) {
 	amount, _ := cmd.Flags().GetUint64("amount")
 	op, _ := cmd.Flags().GetString("op")
 	opInt := 1
-	// buy: L:R = price/1 = R1:R2
+	// 业务 buy = buy-Left, sell-Right
+	// ratio参数 要求 sell的比较在前   R1:R2 = R:L = price : 1
 	buy := lt
 	sell := rt
 	ratio1 := int64(price)
