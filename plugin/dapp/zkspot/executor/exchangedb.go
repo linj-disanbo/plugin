@@ -190,27 +190,56 @@ func (a *SpotAction) getFees(fromaddr string, left, right uint32) (*feeDetail, e
 	}, nil
 }
 
-//LimitOrder ...
-func (a *SpotAction) LimitOrder(payload *et.SpotLimitOrder, entrustAddr string) (*types.Receipt, error) {
-	cfg := a.api.GetConfig()
-	err := checkLimitOrder(cfg, payload)
+func (a *SpotAction) getFeeRate(fromaddr string, left, right uint32) (int32, int32, error) {
+	tCfg, err := ParseConfig(a.api.GetConfig(), a.height)
 	if err != nil {
-		return nil, err
+		elog.Error("executor/exchangedb ParseConfig", "err", err)
+		return 0, 0, err
 	}
+	trade := tCfg.GetTrade(left, right)
 
-	info, err := getTreeUpdateInfo(a.statedb)
+	// Taker/Maker fee may relate to user (fromaddr) level in dex
+	return trade.Taker, trade.Maker, nil
+}
+
+type zktree struct {
+}
+
+func (z *zktree) getAccount(statedb dbm.KV, acccountID uint64) (*zt.Leaf, error) {
+	info, err := getTreeUpdateInfo(statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
-	leaf, err := GetLeafByAccountId(a.statedb, payload.Order.AccountID, info)
+	leaf, err := GetLeafByAccountId(statedb, acccountID, info)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.GetLeafByAccountId")
 	}
-	err = authVerification(payload.Order.Signature.PubKey, leaf.GetPubKey())
+
+	return leaf, nil
+}
+
+func (z *zktree) checkAuth(acc *zt.Leaf, pub *zt.ZkPubKey) error {
+	err := authVerification(pub, acc.GetPubKey())
 	if err != nil {
-		return nil, errors.Wrapf(err, "authVerification")
+		return errors.Wrapf(err, "authVerification")
+	}
+	return nil
+}
+
+func (a *SpotAction) loadUser(accountID uint64) (*spotTrader, error) {
+	acc, err := LoadSpotAccount(a.fromaddr, accountID, a.statedb)
+	if err != nil {
+		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
+		return nil, err
 	}
 
+	return &spotTrader{
+		acc: acc,
+		cfg: a.api.GetConfig(),
+	}, nil
+}
+
+func (a *SpotAction) createLimitOrder(acc *spotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
 	fees, err := a.getFees(a.fromaddr, payload.LeftAsset, payload.RightAsset)
 	if err != nil {
 		elog.Error("executor/exchangedb getFees", "err", err)
@@ -220,9 +249,54 @@ func (a *SpotAction) LimitOrder(payload *et.SpotLimitOrder, entrustAddr string) 
 	order := createLimitOrder(payload, entrustAddr,
 		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
 
-	acc, err := LoadSpotAccount(a.fromaddr, payload.Order.AccountID, a.statedb)
+	err = acc.CheckTokenAmountForLimitOrder(order)
 	if err != nil {
-		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
+		return nil, err
+	}
+
+	// TODO
+	t, m, err := a.getFeeRate(a.fromaddr, payload.LeftAsset, payload.RightAsset)
+	if err != nil {
+		return nil, err
+	}
+	acc.makerFee = m
+	acc.takerFee = t
+	acc.order = order
+
+	return order, nil
+}
+
+//LimitOrder ...
+func (a *SpotAction) LimitOrder(payload *et.SpotLimitOrder, entrustAddr string) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	err := checkLimitOrder(cfg, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	var zktree1 zktree
+	zkAcc, err := zktree1.getAccount(a.statedb, payload.Order.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	err = zktree1.checkAuth(zkAcc, payload.Order.Signature.PubKey)
+	if err != nil {
+		return nil, errors.Wrapf(err, "authVerification")
+	}
+
+	acc, err := a.loadUser(payload.Order.AccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	order, err := a.createLimitOrder(acc, payload, entrustAddr)
+	if err != nil {
+		return nil, err
+	}
+
+	fees, err := a.getFees(a.fromaddr, payload.LeftAsset, payload.RightAsset)
+	if err != nil {
+		elog.Error("executor/exchangedb getFees", "err", err)
 		return nil, err
 	}
 
@@ -233,16 +307,11 @@ func (a *SpotAction) LimitOrder(payload *et.SpotLimitOrder, entrustAddr string) 
 	}
 	taker := spotTaker{
 		spotTrader: spotTrader{
-			acc:   acc,
+			acc:   acc.acc,
 			order: order,
 			cfg:   a.api.GetConfig(),
 		},
 		accFee: accFee,
-	}
-
-	err = taker.CheckTokenAmountForLimitOrder(order)
-	if err != nil {
-		return nil, err
 	}
 
 	receipt1, err := a.matchLimitOrder(payload, entrustAddr, &taker)

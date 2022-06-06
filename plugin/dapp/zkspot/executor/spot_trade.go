@@ -15,9 +15,11 @@ type spotTaker struct {
 }
 
 type spotTrader struct {
-	acc   *dexAccount
-	order *et.SpotOrder
-	cfg   *types.Chain33Config
+	acc      *dexAccount
+	order    *et.SpotOrder
+	cfg      *types.Chain33Config
+	takerFee int32
+	makerFee int32
 }
 
 type spotMaker struct {
@@ -27,9 +29,9 @@ type spotMaker struct {
 // buy 按最大量判断余额是否够
 // 因为在吃单时, 价格是变动的, 所以实际锁定的量是会浮动的
 // 实现上, 按最大量判断余额是否够, 在成交时, 按实际需要量扣除. 最后变成挂单时, 进行锁定
-func (s *spotTaker) CheckTokenAmountForLimitOrder(order *et.SpotOrder) error {
+func (s *spotTrader) CheckTokenAmountForLimitOrder(order *et.SpotOrder) error {
 	precision := s.cfg.GetCoinPrecision()
-	or := s.order.GetLimitOrder()
+	or := order.GetLimitOrder()
 	if or.GetOp() == et.OpBuy {
 		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
 		fee := calcMtfFee(amount, int32(order.TakerRate))
