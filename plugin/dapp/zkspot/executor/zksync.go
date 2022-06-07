@@ -71,42 +71,42 @@ func (z *zkspot) CheckTx(tx *types.Transaction, index int) error {
 	var msg *zt.ZkMsg
 	zlog.Info("CheckTx", "action.Ty", action.GetTy())
 	switch action.GetTy() {
-	case et.TyDepositAction:
+	case zt.TyDepositAction:
 		signature = action.GetDeposit().GetSignature()
 		msg = wallet.GetDepositMsg(action.GetDeposit())
-	case et.TyWithdrawAction:
+	case zt.TyWithdrawAction:
 		signature = action.GetWithdraw().GetSignature()
 		msg = wallet.GetWithdrawMsg(action.GetWithdraw())
-	case et.TyContractToTreeAction:
+	case zt.TyContractToTreeAction:
 		signature = action.GetContractToTree().GetSignature()
 		msg = wallet.GetContractToTreeMsg(action.GetContractToTree())
-	case et.TyTreeToContractAction:
+	case zt.TyTreeToContractAction:
 		signature = action.GetTreeToContract().GetSignature()
 		msg = wallet.GetTreeToContractMsg(action.GetTreeToContract())
-	case et.TyTransferAction:
+	case zt.TyTransferAction:
 		signature = action.GetTransfer().GetSignature()
 		msg = wallet.GetTransferMsg(action.GetTransfer())
-	case et.TyTransferToNewAction:
+	case zt.TyTransferToNewAction:
 		signature = action.GetTransferToNew().GetSignature()
 		msg = wallet.GetTransferToNewMsg(action.GetTransferToNew())
-	case et.TyForceExitAction:
+	case zt.TyForceExitAction:
 		signature = action.GetForceExit().GetSignature()
 		msg = wallet.GetForceExitMsg(action.GetForceExit())
-	case et.TySetPubKeyAction:
+	case zt.TySetPubKeyAction:
 		signature = action.GetSetPubKey().GetSignature()
 		msg = wallet.GetSetPubKeyMsg(action.GetSetPubKey())
-	case et.TyFullExitAction:
+	case zt.TyFullExitAction:
 		signature = action.GetFullExit().GetSignature()
 		msg = wallet.GetFullExitMsg(action.GetFullExit())
-       case zt.TyMintNFTAction:
-                signature = action.GetMintNFT().GetSignature()
-                msg = wallet.GetMintNFTMsg(action.GetMintNFT())
-        case zt.TyWithdrawNFTAction:
-                signature = action.GetWithdrawNFT().GetSignature()
-                msg = wallet.GetWithdrawNFTMsg(action.GetWithdrawNFT())
-        case zt.TyTransferNFTAction:
-                signature = action.GetTransferNFT().GetSignature()
-                msg = wallet.GetTransferNFTMsg(action.GetTransferNFT())
+	case zt.TyMintNFTAction:
+		signature = action.GetMintNFT().GetSignature()
+		msg = wallet.GetMintNFTMsg(action.GetMintNFT())
+	case zt.TyWithdrawNFTAction:
+		signature = action.GetWithdrawNFT().GetSignature()
+		msg = wallet.GetWithdrawNFTMsg(action.GetWithdrawNFT())
+	case zt.TyTransferNFTAction:
+		signature = action.GetTransferNFT().GetSignature()
+		msg = wallet.GetTransferNFTMsg(action.GetTransferNFT())
 	case et.TyLimitOrderAction:
 		cfg := z.GetAPI().GetConfig()
 		err := SpotCheckTx(cfg, tx, index)
