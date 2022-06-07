@@ -15,74 +15,9 @@ import (
 
 // action类型id和name，这些常量可以自定义修改
 const (
-	TyNoopAction           = 0
-	TyDepositAction        = 199 //eth存款
-	TyWithdrawAction       = 2  //eth取款
-	TyTransferAction       = 5  //转账
-	TyTransferToNewAction  = 6  //向新地址转账
-	TyForceExitAction      = 7  //强制退出
-	TySetPubKeyAction      = 8  //设置公钥
-	TyFullExitAction       = 9  //从L1完全退出
-	TySwapAction           = 10 //交换
-	TyContractToTreeAction = 3  //合约账户转入叶子
-	TyTreeToContractAction = 4  //叶子账户转入合约
-	TyFeeAction            = 11 //手续费
-        TyMintNFTAction        = 12
-        TyWithdrawNFTAction    = 13
-        TyTransferNFTAction    = 14
-
-
-	//非电路action
-	TySetVerifyKeyAction = 102 //设置电路验证key
-	TyCommitProofAction  = 103 //提交zk proof
-	TySetVerifierAction  = 104 //设置验证者
-	TySetFeeAction       = 105 //设置手续费
-
-	NameNoopAction           = "Noop"
-	NameDepositAction        = "Deposit"
-	NameWithdrawAction       = "Withdraw"
-	NameContractToTreeAction = "ContractToTree"
-	NameTreeToContractAction = "TreeToContract"
-	NameTransferAction       = "Transfer"
-	NameTransferToNewAction  = "TransferToNew"
-	NameForceExitAction      = "ForceExit"
-	NameSetPubKeyAction      = "SetPubKey"
-	NameFullExitAction       = "FullExit"
-	NameSwapAction           = "Swap"
-	NameFeeAction            = "Fee"
-        NameMintNFTAction        = "MintNFT"
-        NameWithdrawNFTACTION    = "WithdrawNFT"
-        NameTransferNFTAction    = "TransferNFT"
-
-	NameSetVerifyKeyAction = "SetVerifyKey"
-	NameCommitProofAction  = "CommitProof"
-	NameSetVerifierAction  = "SetVerifier"
-	NameSetFeeAction       = "SetFee"
-)
-
-// log类型id值
-const (
-	TyNoopLog           = 100
-	TyDepositLog        = 101 //存款
-	TyWithdrawLog       = 102 //取款
-	TyTransferLog       = 103 //转账
-	TyTransferToNewLog  = 104 //向新地址转账
-	TyForceExitLog      = 105 //强制退出
-	TySetPubKeyLog      = 106 //设置公钥
-	TyFullExitLog       = 107 //从L1完全退出
-	TySwapLog           = 108 //交换
-	TyContractToTreeLog = 109 //合约账户转入叶子
-	TyTreeToContractLog = 110 //叶子账户转入合约
-	TyFeeLog            = 111 //手续费
-        TyMintNFTLog        = 112 //铸造NFT
-        TyWithdrawNFTLog    = 113 //L2提款NFT到L1
-        TyTransferNFTLog    = 114 //L2提款NFT到L1
-
-	TySetVerifyKeyLog       = 202 //设置电路验证key
-	TyCommitProofLog        = 203 //提交zk proof
-	TySetVerifierLog        = 204 //设置验证者
-	TySetEthPriorityQueueId = 205 //设置 eth上 priority queue id;
-	TySetFeeLog             = 206
+// zk action type  0 - 1000
+// zk log id 0 - 1000
+// github.com/33cn/plugin/plugin/dapp/zksync/types/zksync.go
 )
 
 const (
@@ -98,9 +33,9 @@ const ZkVerifierKey = "verifier"
 
 //msg宽度
 const (
-	TxTypeBitWidth      = 8   //1byte
-	AccountBitWidth     = 32  //4byte
-	TokenBitWidth       = 32  //2byte
+	TxTypeBitWidth      = 8  //1byte
+	AccountBitWidth     = 32 //4byte
+	TokenBitWidth       = 32 //2byte
 	NFTAmountBitWidth   = 16
 	AmountBitWidth      = 128 //16byte
 	AddrBitWidth        = 160 //20byte
@@ -141,33 +76,32 @@ const (
 	NoopChunks          = 1
 	SetPubKeyChunks     = 5
 	FeeChunks           = 1
-        SetProxyAddrChunks  = 5
-        MintNFTChunks       = 5
-        WithdrawNFTChunks   = 6
-        TransferNFTChunks   = 3
-
+	SetProxyAddrChunks  = 5
+	MintNFTChunks       = 5
+	WithdrawNFTChunks   = 6
+	TransferNFTChunks   = 3
 )
 
 const (
-       //SystemFeeAccountId 此账户作为缺省收费账户
-       SystemFeeAccountId = 1
-       //SystemNFTAccountId 此特殊账户没有私钥，只记录并产生NFT token资产，不会有小于NFTTokenId的FT token记录
-       SystemNFTAccountId = 2
-       //SystemNFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
-       SystemNFTTokenId = 256 //2^8,
+	//SystemFeeAccountId 此账户作为缺省收费账户
+	SystemFeeAccountId = 1
+	//SystemNFTAccountId 此特殊账户没有私钥，只记录并产生NFT token资产，不会有小于NFTTokenId的FT token记录
+	SystemNFTAccountId = 2
+	//SystemNFTTokenId 作为一个NFT token标记 低于NFTTokenId 为FT token id, 高于NFTTokenId为 NFT token id，即从NFTTokenId+1开始作为NFT资产
+	SystemNFTTokenId = 256 //2^8,
 
 )
 
 //ERC protocol
 const (
-       ZKERC1155 = 1
-       ZKERC721  = 2
+	ZKERC1155 = 1
+	ZKERC721  = 2
 )
 
 const (
-       NormalProxyPubKey = 1
-       SystemProxyPubKey = 2
-       SuperProxyPubKey  = 3
+	NormalProxyPubKey = 1
+	SystemProxyPubKey = 2
+	SuperProxyPubKey  = 3
 )
 
 var (
@@ -176,23 +110,23 @@ var (
 	actionMap = map[string]int32{
 		// zk
 		//NameNoopAction:           TyNoopAction,
-		NameDepositAction:        TyDepositAction,
-		NameWithdrawAction:       TyWithdrawAction,
-		NameContractToTreeAction: TyContractToTreeAction,
-		NameTreeToContractAction: TyTreeToContractAction,
-		NameTransferAction:       TyTransferAction,
-		NameTransferToNewAction:  TyTransferToNewAction,
-		NameForceExitAction:      TyForceExitAction,
-		NameSetPubKeyAction:      TySetPubKeyAction,
-		NameFullExitAction:       TyFullExitAction,
-		NameSwapAction:           TySwapAction,
-		NameSetVerifyKeyAction:   TySetVerifyKeyAction,
-		NameCommitProofAction:    TyCommitProofAction,
-		NameSetVerifierAction:    TySetVerifierAction,
-                NameSetFeeAction:         TySetFeeAction,
-                NameMintNFTAction:        TyMintNFTAction,
-                NameWithdrawNFTACTION:    TyWithdrawNFTAction,
-                NameTransferNFTAction:    TyTransferNFTAction,
+		zt.NameDepositAction:        zt.TyDepositAction,
+		zt.NameWithdrawAction:       zt.TyWithdrawAction,
+		zt.NameContractToTreeAction: zt.TyContractToTreeAction,
+		zt.NameTreeToContractAction: zt.TyTreeToContractAction,
+		zt.NameTransferAction:       zt.TyTransferAction,
+		zt.NameTransferToNewAction:  zt.TyTransferToNewAction,
+		zt.NameForceExitAction:      zt.TyForceExitAction,
+		zt.NameSetPubKeyAction:      zt.TySetPubKeyAction,
+		zt.NameFullExitAction:       zt.TyFullExitAction,
+		zt.NameSwapAction:           zt.TySwapAction,
+		zt.NameSetVerifyKeyAction:   zt.TySetVerifyKeyAction,
+		zt.NameCommitProofAction:    zt.TyCommitProofAction,
+		zt.NameSetVerifierAction:    zt.TySetVerifierAction,
+		zt.NameSetFeeAction:         zt.TySetFeeAction,
+		zt.NameMintNFTAction:        zt.TyMintNFTAction,
+		zt.NameWithdrawNFTACTION:    zt.TyWithdrawNFTAction,
+		zt.NameTransferNFTAction:    zt.TyTransferNFTAction,
 		// spot
 		NameLimitOrderAction:         TyLimitOrderAction,
 		NameMarketOrderAction:        TyMarketOrderAction,
@@ -205,26 +139,26 @@ var (
 	logMap = map[int64]*types.LogInfo{
 		// zk
 		//TyNoopLog:           {Ty: reflect.TypeOf(ZkReceiptLeaf{}), Name: "TyNoopLog"},
-		TyDepositLog:            {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyDepositLog"},
-		TyWithdrawLog:           {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyWithdrawLog"},
-		TyContractToTreeLog:     {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyContractToTreeLog"},
-		TyTreeToContractLog:     {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTreeToContractLog"},
-		TyTransferLog:           {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTransferLog"},
-		TyTransferToNewLog:      {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTransferToNewLog"},
-		TyForceExitLog:          {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyForceExitLog"},
-		TySetPubKeyLog:          {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TySetPubKeyLog"},
-		TyFullExitLog:           {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyFullExitLog"},
-		TySwapLog:               {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TySwapLog"},
-		TyFeeLog:                {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyFeeLog"},
-                TyMintNFTLog:            {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyMintNFTLog"},
-                TyWithdrawNFTLog:        {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
-                TyTransferNFTLog:        {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTransferNFTLog"},
+		zt.TyDepositLog:        {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyDepositLog"},
+		zt.TyWithdrawLog:       {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyWithdrawLog"},
+		zt.TyContractToTreeLog: {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyContractToTreeLog"},
+		zt.TyTreeToContractLog: {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTreeToContractLog"},
+		zt.TyTransferLog:       {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTransferLog"},
+		zt.TyTransferToNewLog:  {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTransferToNewLog"},
+		zt.TyForceExitLog:      {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyForceExitLog"},
+		zt.TySetPubKeyLog:      {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TySetPubKeyLog"},
+		zt.TyFullExitLog:       {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyFullExitLog"},
+		zt.TySwapLog:           {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TySwapLog"},
+		zt.TyFeeLog:            {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyFeeLog"},
+		zt.TyMintNFTLog:        {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyMintNFTLog"},
+		zt.TyWithdrawNFTLog:    {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyWithdrawNFTLog"},
+		zt.TyTransferNFTLog:    {Ty: reflect.TypeOf(zt.ZkReceiptLog{}), Name: "TyTransferNFTLog"},
 
-		TySetVerifyKeyLog:       {Ty: reflect.TypeOf(zt.ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
-		TyCommitProofLog:        {Ty: reflect.TypeOf(zt.ReceiptCommitProof{}), Name: "TyCommitProof"},
-		TySetVerifierLog:        {Ty: reflect.TypeOf(zt.ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
-		TySetEthPriorityQueueId: {Ty: reflect.TypeOf(zt.ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
-		TySetFeeLog:             {Ty: reflect.TypeOf(zt.ReceiptSetFee{}), Name: "TySetFeeLog"},
+		zt.TySetVerifyKeyLog:       {Ty: reflect.TypeOf(zt.ReceiptSetVerifyKey{}), Name: "TySetVerifyKey"},
+		zt.TyCommitProofLog:        {Ty: reflect.TypeOf(zt.ReceiptCommitProof{}), Name: "TyCommitProof"},
+		zt.TySetVerifierLog:        {Ty: reflect.TypeOf(zt.ReceiptSetVerifier{}), Name: "TySetVerifierLog"},
+		zt.TySetEthPriorityQueueId: {Ty: reflect.TypeOf(zt.ReceiptEthPriorityQueueID{}), Name: "TySetEthPriorityQueueID"},
+		zt.TySetFeeLog:             {Ty: reflect.TypeOf(zt.ReceiptSetFee{}), Name: "TySetFeeLog"},
 
 		// spot
 		TyLimitOrderLog:   {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyLimitOrderLog"},
@@ -240,16 +174,15 @@ var (
 	}
 
 	FeeMap = map[int64]string{
-		TyWithdrawAction:      "1000000",
-		TyTransferAction:      "100000",
-		TyTransferToNewAction: "100000",
-		TyForceExitAction:     "1000000",
-		TyFullExitAction:      "1000000",
-		TySwapAction:          "100000",
-                TyMintNFTAction:       "100",
-                TyWithdrawNFTAction:   "100",
-                TyTransferNFTAction:   "100",
-
+		zt.TyWithdrawAction:      "1000000",
+		zt.TyTransferAction:      "100000",
+		zt.TyTransferToNewAction: "100000",
+		zt.TyForceExitAction:     "1000000",
+		zt.TyFullExitAction:      "1000000",
+		zt.TySwapAction:          "100000",
+		zt.TyMintNFTAction:       "100",
+		zt.TyWithdrawNFTAction:   "100",
+		zt.TyTransferNFTAction:   "100",
 	}
 )
 

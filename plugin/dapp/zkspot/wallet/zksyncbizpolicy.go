@@ -129,7 +129,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 	var msg *zt.ZkMsg
 	var signInfo *zt.ZkSignature
 	switch action.GetTy() {
-	case et.TyDepositAction:
+	case zt.TyDepositAction:
 		deposit := action.GetDeposit()
 		msg = GetDepositMsg(deposit)
 		signInfo, err = SignTx(msg, privateKey)
@@ -138,7 +138,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		deposit.Signature = signInfo
-	case et.TyWithdrawAction:
+	case zt.TyWithdrawAction:
 		withDraw := action.GetWithdraw()
 		msg = GetWithdrawMsg(withDraw)
 		signInfo, err = SignTx(msg, privateKey)
@@ -147,7 +147,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		withDraw.Signature = signInfo
-	case et.TyContractToTreeAction:
+	case zt.TyContractToTreeAction:
 		contractToLeaf := action.GetContractToTree()
 		msg = GetContractToTreeMsg(contractToLeaf)
 		signInfo, err = SignTx(msg, privateKey)
@@ -156,7 +156,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		contractToLeaf.Signature = signInfo
-	case et.TyTreeToContractAction:
+	case zt.TyTreeToContractAction:
 		leafToContract := action.GetTreeToContract()
 		msg = GetTreeToContractMsg(leafToContract)
 		signInfo, err = SignTx(msg, privateKey)
@@ -165,7 +165,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		leafToContract.Signature = signInfo
-	case et.TyTransferAction:
+	case zt.TyTransferAction:
 		transfer := action.GetTransfer()
 		msg = GetTransferMsg(transfer)
 		signInfo, err = SignTx(msg, privateKey)
@@ -174,7 +174,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		transfer.Signature = signInfo
-	case et.TyTransferToNewAction:
+	case zt.TyTransferToNewAction:
 		transferToNew := action.GetTransferToNew()
 		msg = GetTransferToNewMsg(transferToNew)
 		signInfo, err = SignTx(msg, privateKey)
@@ -183,7 +183,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		transferToNew.Signature = signInfo
-	case et.TyForceExitAction:
+	case zt.TyForceExitAction:
 		forceQuit := action.GetForceExit()
 		msg = GetForceExitMsg(forceQuit)
 		signInfo, err = SignTx(msg, privateKey)
@@ -192,7 +192,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		forceQuit.Signature = signInfo
-	case et.TySetPubKeyAction:
+	case zt.TySetPubKeyAction:
 		setPubKey := action.GetSetPubKey()
 		//如果是添加公钥的操作，则默认设置这里生成的公钥 todo:要是未来修改可以自定义公钥，这里需要删除
 		//如果是添加公钥的操作，则默认设置这里生成的公钥
@@ -211,7 +211,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		setPubKey.Signature = signInfo
-	case et.TyFullExitAction:
+	case zt.TyFullExitAction:
 		forceQuit := action.GetFullExit()
 		msg = GetFullExitMsg(forceQuit)
 		signInfo, err = SignTx(msg, privateKey)
@@ -229,7 +229,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		limitOrder.Order.Signature = signInfo
-	case et.TyMintNFTAction:
+	case zt.TyMintNFTAction:
 		nft := action.GetMintNFT()
 		msg := GetMintNFTMsg(nft)
 		signInfo, err = SignTx(msg, privateKey)
@@ -238,7 +238,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		nft.Signature = signInfo
-	case et.TyTransferNFTAction:
+	case zt.TyTransferNFTAction:
 		nft := action.GetTransferNFT()
 		msg := GetTransferNFTMsg(nft)
 		signInfo, err = SignTx(msg, privateKey)
@@ -247,7 +247,7 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		nft.Signature = signInfo
-	case et.TyWithdrawNFTAction:
+	case zt.TyWithdrawNFTAction:
 		nft := action.GetWithdrawNFT()
 		msg := GetWithdrawNFTMsg(nft)
 		signInfo, err = SignTx(msg, privateKey)

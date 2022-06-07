@@ -36,6 +36,8 @@ const (
 	TySetVerifierAction  = 104 //设置验证者
 	TySetFeeAction       = 105 //设置手续费
 
+	MaxTyAction = 1000
+
 	NameNoopAction           = "Noop"
 	NameDepositAction        = "Deposit"
 	NameWithdrawAction       = "Withdraw"
@@ -81,6 +83,8 @@ const (
 	TySetVerifierLog        = 204 //设置验证者
 	TySetEthPriorityQueueId = 205 //设置 eth上 priority queue id;
 	TySetFeeLog             = 206
+
+	MaxTyLog = 1000
 )
 
 const (

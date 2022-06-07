@@ -68,3 +68,25 @@ type TxInfo struct {
 	Index int32
 	Hash  string
 }
+
+// eth precision : 1e18, chain33 precision : 1e8
+const (
+	precisionDiff = 1e10
+)
+
+func AmountFromZksync(s string) (uint64, error) {
+	zkAmount, ok := new(big.Int).SetString(s, 10)
+	if !ok {
+		return 0, ErrAssetAmount
+	}
+	chain33Amount := new(big.Int).Div(zkAmount, big.NewInt(precisionDiff))
+	if !chain33Amount.IsUint64() {
+		return 0, ErrAssetAmount
+	}
+	return chain33Amount.Uint64(), nil
+}
+
+func AmountToZksync(a uint64) string {
+	amount := new(big.Int).Mul(new(big.Int).SetUint64(a), big.NewInt(precisionDiff))
+	return amount.String()
+}

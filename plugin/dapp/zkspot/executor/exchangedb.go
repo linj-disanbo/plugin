@@ -658,7 +658,10 @@ func formatInterface(data interface{}) int64 {
 func (a *SpotAction) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Receipt, error) {
 
 	chain33Addr := payload.GetChain33Addr()
-	amount := payload.GetAmount()
+	amount, err := et.AmountFromZksync(payload.GetAmount())
+	if err != nil {
+		return nil, err
+	}
 
 	// TODO tid 哪里定义, 里面不需要知道tid 是什么, 在合约里 id1 换 id2
 
@@ -666,12 +669,8 @@ func (a *SpotAction) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Re
 	if err != nil {
 		return nil, err
 	}
-	amount2, ok := big.NewInt(0).SetString(amount, 10)
-	if !ok {
-		return nil, et.ErrAssetBalance
-	}
 
-	return acc.Mint(uint32(payload.TokenId), amount2.Uint64())
+	return acc.Mint(uint32(payload.TokenId), amount)
 }
 
 func (a *SpotAction) LoadDexAccount(chain33addr string, accountID uint64) (*dexAccount, error) {
