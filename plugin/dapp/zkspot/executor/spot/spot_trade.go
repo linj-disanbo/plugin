@@ -397,34 +397,15 @@ func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) 
 	}, nil
 }
 
-func (a *Spot) GetFees(fromaddr string, left, right uint32) (*feeDetail, error) {
-	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
+func (a *Spot) LoadFee(trader *SpotTrader, left, right uint32) error {
+	t, m, err := a.getFeeRate(trader.acc.acc.Addr, left, right)
 	if err != nil {
-		elog.Error("executor/exchangedb ParseConfig", "err", err)
-		return nil, err
+		return err
 	}
-	trade := tCfg.GetTrade(left, right)
 
-	// Taker/Maker fee may relate to user (fromaddr) level in dex
-
-	return &feeDetail{
-		addr:  tCfg.GetFeeAddr(),
-		id:    tCfg.GetFeeAddrID(),
-		taker: trade.Taker,
-		maker: trade.Maker,
-	}, nil
-}
-
-func (a *Spot) getFeeRate(fromaddr string, left, right uint32) (int32, int32, error) {
-	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
-	if err != nil {
-		elog.Error("executor/exchangedb ParseConfig", "err", err)
-		return 0, 0, err
-	}
-	trade := tCfg.GetTrade(left, right)
-
-	// Taker/Maker fee may relate to user (fromaddr) level in dex
-	return trade.Taker, trade.Maker, nil
+	trader.takerFee = t
+	trader.makerFee = m
+	return nil
 }
 
 func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
@@ -441,17 +422,29 @@ func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.Sp
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO
-	t, m, err := a.getFeeRate(fromaddr, payload.LeftAsset, payload.RightAsset)
-	if err != nil {
-		return nil, err
-	}
-	acc.makerFee = m
-	acc.takerFee = t
 	acc.order = order
 
 	return order, nil
+}
+
+func (a *Spot) GetFees(fromaddr string, left, right uint32) (*feeDetail, error) {
+	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
+
+	if err != nil {
+		elog.Error("executor/exchangedb ParseConfig", "err", err)
+		return nil, err
+
+	}
+	trade := tCfg.GetTrade(left, right)
+
+	// Taker/Maker fee may relate to user (fromaddr) level in dex
+
+	return &feeDetail{
+		addr:  tCfg.GetFeeAddr(),
+		id:    tCfg.GetFeeAddrID(),
+		taker: trade.Taker,
+		maker: trade.Maker,
+	}, nil
 }
 
 //GetIndex get index

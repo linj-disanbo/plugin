@@ -14,16 +14,18 @@ var (
 )
 
 type Spot struct {
-	// block info
-	env *drivers.DriverBase
-	tx  *et.TxInfo
+	env    *drivers.DriverBase
+	tx     *et.TxInfo
+	feeAcc *SpotTrader
 }
 
-func NewSpot(e *drivers.DriverBase, tx *et.TxInfo) *Spot {
-	return &Spot{
+func NewSpot(e *drivers.DriverBase, tx *et.TxInfo) (*Spot, error) {
+	spot := &Spot{
 		env: e,
 		tx:  tx,
 	}
+	err := spot.GetFeeAcc()
+	return spot, err
 }
 
 func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types.Receipt, error) {
@@ -89,4 +91,34 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 	logs = append(logs, receiptlog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
+}
+
+// fee
+func (a *Spot) GetFeeAcc() error {
+	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
+	if err != nil {
+		elog.Error("executor/spot ParseConfig", "err", err)
+		return err
+	}
+	// Taker/Maker fee may relate to user (fromaddr) level in dex
+
+	feeAcc, err := a.LoadUser(tCfg.GetFeeAddr(), tCfg.GetFeeAddrID())
+	if err != nil {
+		elog.Error("executor/spot LoadUser", "err", err)
+		return err
+	}
+	a.feeAcc = feeAcc
+	return nil
+}
+
+func (a *Spot) getFeeRate(fromaddr string, left, right uint32) (int32, int32, error) {
+	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
+	if err != nil {
+		elog.Error("executor/exchangedb ParseConfig", "err", err)
+		return 0, 0, err
+	}
+	trade := tCfg.GetTrade(left, right)
+
+	// Taker/Maker fee may relate to user (fromaddr) level in dex
+	return trade.Taker, trade.Maker, nil
 }

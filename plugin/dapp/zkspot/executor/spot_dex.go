@@ -11,8 +11,8 @@ import (
 	"github.com/pkg/errors"
 )
 
-// Action action struct
-type SpotAction struct {
+// SpotDex SpotDex struct
+type SpotDex struct {
 	statedb   dbm.KV
 	blocktime int64
 	height    int64
@@ -34,8 +34,8 @@ func NewTxInfo(tx *types.Transaction, index int) *et.TxInfo {
 }
 
 //NewAction ...
-func NewSpotDex(e *zkspot, tx *types.Transaction, index int) *SpotAction {
-	return &SpotAction{
+func NewSpotDex(e *zkspot, tx *types.Transaction, index int) *SpotDex {
+	return &SpotDex{
 		txinfo:    NewTxInfo(tx, index),
 		statedb:   e.GetStateDB(),
 		blocktime: e.GetBlockTime(),
@@ -46,7 +46,7 @@ func NewSpotDex(e *zkspot, tx *types.Transaction, index int) *SpotAction {
 }
 
 //GetIndex get index
-func (a *SpotAction) GetIndex() int64 {
+func (a *SpotDex) GetIndex() int64 {
 	// Add four zeros to match multiple MatchOrder indexes
 	return (a.height*types.MaxTxsPerBlock + int64(a.txinfo.Index)) * 1e4
 }
@@ -76,7 +76,7 @@ func (z *zktree) checkAuth(acc *zt.Leaf, pub *zt.ZkPubKey) error {
 }
 
 //LimitOrder ...
-func (a *SpotAction) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder, entrustAddr string) (*types.Receipt, error) {
+func (a *SpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder, entrustAddr string) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	err := et.CheckLimitOrder(cfg, payload)
 	if err != nil {
@@ -93,32 +93,24 @@ func (a *SpotAction) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrde
 		return nil, errors.Wrapf(err, "authVerification")
 	}
 
-	spot1 := spot.NewSpot(base, &et.TxInfo{})
-	acc, err := spot1.LoadUser(a.txinfo.From, payload.Order.AccountID)
+	spot1, err := spot.NewSpot(base, &et.TxInfo{})
+	if err != nil {
+		return nil, err
+	}
+	taker, err := spot1.LoadUser(a.txinfo.From, payload.Order.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	err = spot1.LoadFee(taker, payload.LeftAsset, payload.RightAsset)
 	if err != nil {
 		return nil, err
 	}
 
-	order, err := spot1.CreateLimitOrder(a.txinfo.From, acc, payload, entrustAddr)
+	order, err := spot1.CreateLimitOrder(a.txinfo.From, taker, payload, entrustAddr)
 	if err != nil {
 		return nil, err
 	}
 	_ = order // set to order trader
-
-	fees, err := spot1.GetFees(a.txinfo.From, payload.LeftAsset, payload.RightAsset)
-	if err != nil {
-		elog.Error("executor/exchangedb getFees", "err", err)
-		return nil, err
-	}
-	_ = fees
-
-	accFee, err := spot.LoadSpotAccount("fees.addr", 1 /*fees.id,*/, a.statedb)
-	if err != nil {
-		elog.Error("executor/exchangedb LoadSpotAccount load fee account", "err", err)
-		return nil, err
-	}
-	_ = accFee
-	taker := acc
 
 	receipt1, err := spot1.MatchLimitOrder(payload, entrustAddr, taker)
 	if err != nil {
@@ -150,8 +142,7 @@ func (a *SpotAction) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrde
 // dex1 -> accountid -> tokenids 是一个对象
 //  理论上, 对象越小越快, 但交易涉及两个资产. 如果一个资产是一个对象的. 要处理两个对象.
 //  先实现再说
-func (a *SpotAction) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Receipt, error) {
-
+func (a *SpotDex) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Receipt, error) {
 	chain33Addr := payload.GetChain33Addr()
 	amount, err := et.AmountFromZksync(payload.GetAmount())
 	if err != nil {
@@ -168,7 +159,7 @@ func (a *SpotAction) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Re
 	return acc.Mint(uint32(payload.TokenId), amount)
 }
 
-func (a *SpotAction) CalcMaxActive(accountID uint64, token uint32, amount string) (uint64, error) {
+func (a *SpotDex) CalcMaxActive(accountID uint64, token uint32, amount string) (uint64, error) {
 	acc, err := spot.LoadSpotAccount(a.txinfo.From, accountID, a.statedb)
 	if err != nil {
 		return 0, err
@@ -176,7 +167,7 @@ func (a *SpotAction) CalcMaxActive(accountID uint64, token uint32, amount string
 	return acc.GetBalance(token), nil
 }
 
-func (a *SpotAction) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*types.Receipt, error) {
+func (a *SpotDex) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*types.Receipt, error) {
 	// TODO amountWithFee to chain33amount
 	chain33Addr := a.txinfo.From
 	/*
@@ -199,18 +190,18 @@ func (a *SpotAction) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*ty
 
 //
 
-func (a SpotAction) newEntrust() *spot.Entrust {
+func (a *SpotDex) newEntrust() *spot.Entrust {
 	e := spot.NewEntrust(a.txinfo.From, a.height, a.statedb)
 	e.SetDB(a.statedb, &dbprefix{})
 	return e
 }
 
-func (a *SpotAction) ExchangeBind(payload *et.SpotExchangeBind) (*types.Receipt, error) {
+func (a *SpotDex) ExchangeBind(payload *et.SpotExchangeBind) (*types.Receipt, error) {
 	e := a.newEntrust()
 	return e.Bind(payload)
 }
 
-func (a *SpotAction) EntrustOrder(d *dapp.DriverBase, payload *et.SpotEntrustOrder) (*types.Receipt, error) {
+func (a *SpotDex) EntrustOrder(d *dapp.DriverBase, payload *et.SpotEntrustOrder) (*types.Receipt, error) {
 	e := a.newEntrust()
 	err := e.CheckBind(payload.Addr)
 	if err != nil {
