@@ -1508,9 +1508,8 @@ func (a *Action) SpotMatch(payload *et.SpotLimitOrder, list *types.Receipt) (*ty
 	return receipt, nil
 }
 
-// A 和 B 交换 = transfer(A,B) + transfer(B,A) + transfer(A,fee) + transfer(B,fee)
-// A 和 A 交换 = transfer(A,A) 0 + transfer(A,A) 0 + transfer(A,fee) + transfer(B,fee)
-// fee 先不处理, 因为交易本身就收了手续费
+// A 和 B 交换 = transfer(A,B) + transfer(B,A) + swapfee()
+// A 和 A 交换 = transfer(A,A) 0 + transfer(A,A) 0 + swapfee()
 func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -1534,8 +1533,7 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 
 	swapSpecialData := genSwapSpecialData(payload1, trade)
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, swapSpecialData)
-	// A 和 B 交易, 构造4个transfer, 使用transfer 实现
-	// A 和 A 交易, 构造4个transfer, 0 swap *2  收取手续费*2
+
 	zklog.Debug("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
 	transfers := a.swapGenTransfer(payload1, trade)
 	zklog.Debug("swapGenTransfer", "tokenid0", transfers[0].TokenId, "tokenid1", transfers[1].TokenId)
