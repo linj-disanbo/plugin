@@ -1508,9 +1508,8 @@ func (a *Action) SpotMatch(payload *et.SpotLimitOrder, list *types.Receipt) (*ty
 	return receipt, nil
 }
 
-// A 和 B 交换 = transfer(A,B) + transfer(B,A) + transfer(A,fee) + transfer(B,fee)
-// A 和 A 交换 = transfer(A,A) 0 + transfer(A,A) 0 + transfer(A,fee) + transfer(B,fee)
-// fee 先不处理, 因为交易本身就收了手续费
+// A 和 B 交换 = transfer(A,B) + transfer(B,A) + swapfee()
+// A 和 A 交换 = transfer(A,A) 0 + transfer(A,A) 0 + swapfee()
 func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -1534,8 +1533,7 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 
 	swapSpecialData := genSwapSpecialData(payload1, trade)
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, swapSpecialData)
-	// A 和 B 交易, 构造4个transfer, 使用transfer 实现
-	// A 和 A 交易, 构造4个transfer, 0 swap *2  收取手续费*2
+
 	zklog.Debug("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
 	transfers := a.swapGenTransfer(payload1, trade)
 	zklog.Debug("swapGenTransfer", "tokenid0", transfers[0].TokenId, "tokenid1", transfers[1].TokenId)
@@ -1599,8 +1597,8 @@ func genSwapSpecialData(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade)
 			toString(trade.Match.RightBalance),
 			toString(sellRightFee),
 			toString(buyRightFee),
-			toString(payload1.Amount),
-			toString(int64(trade.MakerOrder.Amount)),
+			payload1.Order.Amount,
+			trade.MakerOrder.Amount,
 		},
 		AccountID:   trade.GetCurrent().Taker.Id,
 		RecipientID: trade.GetCurrent().Maker.Id,
@@ -1765,27 +1763,27 @@ func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptS
 
 	taker1 := &et.ZkTransferWithFee{
 		TokenId:       uint64(takerTokenID),
-		AmountOut:     new(big.Int).SetInt64(takerPay).String(),
+		AmountOut:     et.AmountToZksync(uint64(takerPay)),
 		FromAccountId: payload1.Order.AccountID,
 		ToAccountId:   trade.Current.Maker.Id,
 		Signature:     payload1.Order.Signature,
-		AmountIn:      new(big.Int).SetInt64(makerRcv).String(),
+		AmountIn:      et.AmountToZksync(uint64(makerRcv)),
 	}
 	maker1 := &et.ZkTransferWithFee{
 		TokenId:       uint64(makerTokenID),
-		AmountOut:     new(big.Int).SetInt64(makerPay).String(),
+		AmountOut:     et.AmountToZksync(uint64(makerPay)),
 		FromAccountId: trade.Current.Maker.Id,
 		ToAccountId:   payload1.Order.AccountID,
 		Signature:     trade.MakerOrder.Signature,
-		AmountIn:      new(big.Int).SetInt64(takerRcv).String(),
+		AmountIn:      et.AmountToZksync(uint64(takerRcv)),
 	}
 	fee1 := &et.ZkTransferWithFee{
 		TokenId:       uint64(payload1.RightAsset),
-		AmountOut:     new(big.Int).SetInt64(0).String(),
+		AmountOut:     et.AmountToZksync(0),
 		FromAccountId: payload1.Order.AccountID,
 		ToAccountId:   trade.Current.Fee.Id,
 		Signature:     payload1.Order.Signature,
-		AmountIn:      new(big.Int).SetInt64(fee).String(),
+		AmountIn:      et.AmountToZksync(uint64(fee)),
 	}
 
 	// 对先后顺序有要求: 先处理LeftAsset, 在处理RightAsset
@@ -1811,27 +1809,27 @@ func (a *Action) selfSwapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.Rece
 
 	left := &et.ZkTransferWithFee{
 		TokenId:       uint64(payload1.LeftAsset),
-		AmountOut:     new(big.Int).SetInt64(leftPay).String(),
+		AmountOut:     et.AmountToZksync(uint64(leftPay)),
 		FromAccountId: payload1.Order.AccountID,
 		ToAccountId:   trade.Current.Maker.Id,
 		Signature:     payload1.Order.Signature,
-		AmountIn:      new(big.Int).SetInt64(leftPay).String(),
+		AmountIn:      et.AmountToZksync(uint64(leftPay)),
 	}
 	right := &et.ZkTransferWithFee{
 		TokenId:       uint64(payload1.RightAsset),
-		AmountOut:     new(big.Int).SetInt64(rightPay).String(),
+		AmountOut:     et.AmountToZksync(uint64(rightPay)),
 		FromAccountId: trade.Current.Maker.Id,
 		ToAccountId:   payload1.Order.AccountID,
 		Signature:     trade.MakerOrder.Signature,
-		AmountIn:      new(big.Int).SetInt64(0).String(),
+		AmountIn:      et.AmountToZksync(uint64(0)),
 	}
 	fee := &et.ZkTransferWithFee{
 		TokenId:       uint64(payload1.RightAsset),
-		AmountOut:     new(big.Int).SetInt64(0).String(),
+		AmountOut:     et.AmountToZksync(uint64(0)),
 		FromAccountId: payload1.Order.AccountID,
 		ToAccountId:   trade.Current.Fee.Id,
 		Signature:     payload1.Order.Signature,
-		AmountIn:      new(big.Int).SetInt64(rightPay).String(),
+		AmountIn:      et.AmountToZksync(uint64(rightPay)),
 	}
 
 	transfers = append(transfers, left)
