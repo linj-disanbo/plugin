@@ -21,7 +21,7 @@ import (
 
 var (
 	//日志
-	zlog = log.New("module", "zkspot.executor")
+	elog = log.New("module", et.ExecName+".executor")
 )
 
 var driverName = et.ExecName
@@ -64,12 +64,12 @@ func (z *zkspot) GetDriverName() string {
 func (z *zkspot) CheckTx(tx *types.Transaction, index int) error {
 	action := new(et.ZksyncAction1)
 	if err := types.Decode(tx.Payload, action); err != nil {
-		zlog.Error("CheckTx", "decode", err)
+		elog.Error("CheckTx", "decode", err)
 		return err
 	}
 	var signature *zt.ZkSignature
 	var msg *zt.ZkMsg
-	zlog.Info("CheckTx", "action.Ty", action.GetTy())
+	elog.Info("CheckTx", "action.Ty", action.GetTy())
 	switch action.GetTy() {
 	case zt.TyDepositAction:
 		signature = action.GetDeposit().GetSignature()
@@ -125,16 +125,16 @@ func (z *zkspot) CheckTx(tx *types.Transaction, index int) error {
 	pubKey.A.Y.SetString(signature.PubKey.Y)
 	signInfo, err := common.FromHex(signature.GetSignInfo())
 	if err != nil {
-		zlog.Error("CheckTx", "signInfo", err)
+		elog.Error("CheckTx", "signInfo", err)
 		return err
 	}
 	success, err := pubKey.Verify(signInfo, wallet.GetMsgHash(msg), mimc.NewMiMC(zt.ZkMimcHashSeed))
 	if err != nil {
-		zlog.Error("CheckTx", "Verify", err)
+		elog.Error("CheckTx", "Verify", err)
 		return err
 	}
 	if !success {
-		zlog.Error("CheckTx", "Verify", "failed")
+		elog.Error("CheckTx", "Verify", "failed")
 		return errors.New("verify sign failed")
 	}
 	return nil
