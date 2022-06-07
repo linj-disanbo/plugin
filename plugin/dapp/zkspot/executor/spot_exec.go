@@ -4,6 +4,8 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/executor/spot"
+	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	exchangetypes "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
@@ -49,8 +51,13 @@ func (e *zkspot) Exec_MarketOrder(payload *exchangetypes.SpotMarketOrder, tx *ty
 
 // 撤单
 func (e *zkspot) Exec_RevokeOrder(payload *exchangetypes.SpotRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	txinfo := et.TxInfo{
+		Hash:  string(tx.Hash()),
+		Index: index,
+	}
+	spot := spot.NewSpot(&e.DriverBase, &txinfo)
 	action := NewSpotDex(e, tx, index)
-	return action.RevokeOrder(payload)
+	return spot.RevokeOrder(action.fromaddr, payload)
 }
 
 // 绑定委托交易地址

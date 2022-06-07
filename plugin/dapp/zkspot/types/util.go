@@ -65,7 +65,7 @@ type DBprefix interface {
 }
 
 type TxInfo struct {
-	Index int32
+	Index int
 	Hash  string
 }
 

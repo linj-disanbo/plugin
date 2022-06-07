@@ -3,7 +3,6 @@ package executor
 import (
 	"encoding/hex"
 	"fmt"
-	"math/big"
 	"reflect"
 
 	"github.com/33cn/chain33/client"
@@ -14,7 +13,6 @@ import (
 	"github.com/33cn/plugin/plugin/dapp/zkspot/executor/spot"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
-	"github.com/holiman/uint256"
 	"github.com/pkg/errors"
 )
 
@@ -85,10 +83,6 @@ func GetOrderKvSet(order *et.SpotOrder) (kvset []*types.KeyValue) {
 	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(order.OrderID), Value: types.Encode(order)})
 	return kvset
 }
-
-
-
-
 
 //CheckPrice price  1<=price<=1e16
 func CheckPrice(price int64) bool {
@@ -317,13 +311,6 @@ func (a *SpotAction) LimitOrder(payload *et.SpotLimitOrder, entrustAddr string) 
 	}
 	return receipt1, nil
 }
-
-//RevokeOrder ...
-func (a *SpotAction) RevokeOrder(payload *et.SpotRevokeOrder) (*types.Receipt, error) {
-	return a.RevokeOrder1(payload)
-}
-
-a.statedb, a.localDB a.fromaddr a.api.GetConfig() a.blocktime 
 
 // set the transaction logic method
 // rules:
