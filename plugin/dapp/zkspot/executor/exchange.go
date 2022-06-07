@@ -14,7 +14,7 @@ import (
 
 var (
 	//日志
-	elog = log.New("module", "exchange.executor")
+	elog = log.New("module", et.ExecName+".executor")
 )
 
 // CheckTx 实现自定义检验交易接口，供框架调用
@@ -24,31 +24,10 @@ func SpotCheckTx(cfg *types.Chain33Config, tx *types.Transaction, index int) err
 	types.Decode(tx.GetPayload(), &exchange)
 	if exchange.Ty == exchangetypes.TyLimitOrderAction {
 		limitOrder := exchange.GetLimitOrder()
-		return checkLimitOrder(cfg, limitOrder)
+		return et.CheckLimitOrder(cfg, limitOrder)
 	}
 	if exchange.Ty == exchangetypes.TyMarketOrderAction {
 		return types.ErrActionNotSupport
-	}
-	return nil
-}
-
-func checkLimitOrder(cfg *types.Chain33Config, limitOrder *et.SpotLimitOrder) error {
-	left := limitOrder.GetLeftAsset()
-	right := limitOrder.GetRightAsset()
-	price := limitOrder.GetPrice()
-	amount := limitOrder.GetAmount()
-	op := limitOrder.GetOp()
-	if !CheckExchangeAsset(cfg.GetCoinExec(), left, right) {
-		return exchangetypes.ErrAsset
-	}
-	if !CheckPrice(price) {
-		return exchangetypes.ErrAssetPrice
-	}
-	if !CheckAmount(amount, cfg.GetCoinPrecision()) {
-		return exchangetypes.ErrAssetAmount
-	}
-	if !CheckOp(op) {
-		return exchangetypes.ErrAssetOp
 	}
 	return nil
 }

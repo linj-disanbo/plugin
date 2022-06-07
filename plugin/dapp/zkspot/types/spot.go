@@ -75,6 +75,9 @@ const (
 	Count = int32(10)
 	//MaxMatchCount 系统最大撮合深度
 	MaxMatchCount = 100
+
+	QeuryCountLmit = 20
+	PriceLimit     = 1e16
 )
 
 var (
@@ -109,3 +112,77 @@ func SpotInitFork(cfg *types.Chain33Config) {
 
 // config part
 var MverPrefix = "mver.exec.sub." + ExecName // [mver.exec.sub.zkspot]
+
+//CheckPrice price  1<=price<=1e16
+func CheckPrice(price int64) bool {
+	if price > int64(PriceLimit) || price < 1 {
+		return false
+	}
+	return true
+}
+
+//CheckOp ...
+func CheckOp(op int32) bool {
+	if op == OpBuy || op == OpSell {
+		return true
+	}
+	return false
+}
+
+//CheckCount ...
+func CheckCount(count int32) bool {
+	return count <= QeuryCountLmit && count >= 0
+}
+
+//CheckAmount 最小交易 1coin
+func CheckAmount(amount, coinPrecision int64) bool {
+	if amount < 1 || amount >= types.MaxCoin*coinPrecision {
+		return false
+	}
+	return true
+}
+
+//CheckDirection ...
+func CheckDirection(direction int32) bool {
+	if direction == ListASC || direction == ListDESC {
+		return true
+	}
+	return false
+}
+
+//CheckStatus ...
+func CheckStatus(status int32) bool {
+	if status == Ordered || status == Completed || status == Revoked {
+		return true
+	}
+	return false
+}
+
+//CheckExchangeAsset
+func CheckExchangeAsset(coinExec string, left, right uint32) bool {
+	if left == right {
+		return false
+	}
+	return true
+}
+
+func CheckLimitOrder(cfg *types.Chain33Config, limitOrder *SpotLimitOrder) error {
+	left := limitOrder.GetLeftAsset()
+	right := limitOrder.GetRightAsset()
+	price := limitOrder.GetPrice()
+	amount := limitOrder.GetAmount()
+	op := limitOrder.GetOp()
+	if !CheckExchangeAsset(cfg.GetCoinExec(), left, right) {
+		return ErrAsset
+	}
+	if !CheckPrice(price) {
+		return ErrAssetPrice
+	}
+	if !CheckAmount(amount, cfg.GetCoinPrecision()) {
+		return ErrAssetAmount
+	}
+	if !CheckOp(op) {
+		return ErrAssetOp
+	}
+	return nil
+}

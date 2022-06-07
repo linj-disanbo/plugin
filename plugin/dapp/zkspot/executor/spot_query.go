@@ -8,14 +8,14 @@ import (
 
 //查询市场深度
 func (e *zkspot) Query_QueryMarketDepth(in *et.SpotQueryMarketDepth) (types.Message, error) {
-	if !CheckCount(in.Count) {
+	if !et.CheckCount(in.Count) {
 		return nil, et.ErrCount
 	}
-	if !CheckExchangeAsset(e.GetAPI().GetConfig().GetCoinExec(), in.LeftAsset, in.RightAsset) {
+	if !et.CheckExchangeAsset(e.GetAPI().GetConfig().GetCoinExec(), in.LeftAsset, in.RightAsset) {
 		return nil, et.ErrAsset
 	}
 
-	if !CheckOp(in.Op) {
+	if !et.CheckOp(in.Op) {
 		return nil, et.ErrAssetOp
 	}
 	return spot.QueryMarketDepth(e.GetLocalDB(), in.LeftAsset, in.RightAsset, in.Op, in.PrimaryKey, in.Count)
@@ -23,14 +23,14 @@ func (e *zkspot) Query_QueryMarketDepth(in *et.SpotQueryMarketDepth) (types.Mess
 
 //查询已经完成得订单
 func (e *zkspot) Query_QueryHistoryOrderList(in *et.SpotQueryHistoryOrderList) (types.Message, error) {
-	if !CheckExchangeAsset(e.GetAPI().GetConfig().GetCoinExec(), in.LeftAsset, in.RightAsset) {
+	if !et.CheckExchangeAsset(e.GetAPI().GetConfig().GetCoinExec(), in.LeftAsset, in.RightAsset) {
 		return nil, et.ErrAsset
 	}
-	if !CheckCount(in.Count) {
+	if !et.CheckCount(in.Count) {
 		return nil, et.ErrCount
 	}
 
-	if !CheckDirection(in.Direction) {
+	if !et.CheckDirection(in.Direction) {
 		return nil, et.ErrDirection
 	}
 	return spot.QueryHistoryOrderList(e.GetLocalDB(), in.LeftAsset, in.RightAsset, in.PrimaryKey, in.Count, in.Direction)
@@ -46,14 +46,14 @@ func (e *zkspot) Query_QueryOrder(in *et.SpotQueryOrder) (types.Message, error) 
 
 //根据订单状态，查询订单信息（这里面包含所有交易对）
 func (e *zkspot) Query_QueryOrderList(in *et.SpotQueryOrderList) (types.Message, error) {
-	if !CheckStatus(in.Status) {
+	if !et.CheckStatus(in.Status) {
 		return nil, et.ErrStatus
 	}
-	if !CheckCount(in.Count) {
+	if !et.CheckCount(in.Count) {
 		return nil, et.ErrCount
 	}
 
-	if !CheckDirection(in.Direction) {
+	if !et.CheckDirection(in.Direction) {
 		return nil, et.ErrDirection
 	}
 

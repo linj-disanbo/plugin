@@ -62,59 +62,6 @@ func (a *SpotAction) GetIndex() int64 {
 	return (a.height*types.MaxTxsPerBlock + int64(a.index)) * 1e4
 }
 
-//CheckPrice price  1<=price<=1e16
-func CheckPrice(price int64) bool {
-	if price > 1e16 || price < 1 {
-		return false
-	}
-	return true
-}
-
-//CheckOp ...
-func CheckOp(op int32) bool {
-	if op == et.OpBuy || op == et.OpSell {
-		return true
-	}
-	return false
-}
-
-//CheckCount ...
-func CheckCount(count int32) bool {
-	return count <= 20 && count >= 0
-}
-
-//CheckAmount 最小交易 1coin
-func CheckAmount(amount, coinPrecision int64) bool {
-	if amount < 1 || amount >= types.MaxCoin*coinPrecision {
-		return false
-	}
-	return true
-}
-
-//CheckDirection ...
-func CheckDirection(direction int32) bool {
-	if direction == et.ListASC || direction == et.ListDESC {
-		return true
-	}
-	return false
-}
-
-//CheckStatus ...
-func CheckStatus(status int32) bool {
-	if status == et.Ordered || status == et.Completed || status == et.Revoked {
-		return true
-	}
-	return false
-}
-
-//CheckExchangeAsset
-func CheckExchangeAsset(coinExec string, left, right uint32) bool {
-	if left == right {
-		return false
-	}
-	return true
-}
-
 type zktree struct {
 }
 
@@ -142,7 +89,7 @@ func (z *zktree) checkAuth(acc *zt.Leaf, pub *zt.ZkPubKey) error {
 //LimitOrder ...
 func (a *SpotAction) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder, entrustAddr string) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	err := checkLimitOrder(cfg, payload)
+	err := et.CheckLimitOrder(cfg, payload)
 	if err != nil {
 		return nil, err
 	}
