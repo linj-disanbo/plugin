@@ -2,7 +2,6 @@ package executor
 
 import (
 	log "github.com/33cn/chain33/common/log/log15"
-	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	exchangetypes "github.com/33cn/plugin/plugin/dapp/zkspot/types"
@@ -17,10 +16,6 @@ var (
 	//日志
 	elog = log.New("module", "exchange.executor")
 )
-
-type exchange struct {
-	drivers.DriverBase
-}
 
 // CheckTx 实现自定义检验交易接口，供框架调用
 func SpotCheckTx(cfg *types.Chain33Config, tx *types.Transaction, index int) error {

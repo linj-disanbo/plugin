@@ -51,11 +51,8 @@ func (e *zkspot) Exec_MarketOrder(payload *exchangetypes.SpotMarketOrder, tx *ty
 
 // 撤单
 func (e *zkspot) Exec_RevokeOrder(payload *exchangetypes.SpotRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	txinfo := et.TxInfo{
-		Hash:  string(tx.Hash()),
-		Index: index,
-	}
-	spot := spot.NewSpot(&e.DriverBase, &txinfo)
+	txinfo := NewTxInfo(tx, index)
+	spot := spot.NewSpot(&e.DriverBase, txinfo)
 	action := NewSpotDex(e, tx, index)
 	return spot.RevokeOrder(action.fromaddr, payload)
 }
@@ -84,11 +81,8 @@ func (e *zkspot) Exec_EntrustRevokeOrder(payload *exchangetypes.SpotEntrustRevok
 		OrderID: payload.OrderID,
 	}
 
-	txinfo := et.TxInfo{
-		Hash:  string(tx.Hash()),
-		Index: index,
-	}
-	spot := spot.NewSpot(&e.DriverBase, &txinfo)
+	txinfo := NewTxInfo(tx, index)
+	spot := spot.NewSpot(&e.DriverBase, txinfo)
 	action := NewSpotDex(e, tx, index)
 	return spot.RevokeOrder(action.fromaddr, &p)
 }

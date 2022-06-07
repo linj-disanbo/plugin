@@ -25,22 +25,15 @@ type SpotAction struct {
 	api       client.QueueProtocolAPI
 }
 
-//NewAction ...
-func NewSpotAction(e *exchange, tx *types.Transaction, index int) *SpotAction {
-	hash := tx.Hash()
-	fromaddr := tx.From()
-	toaddr := tx.GetTo()
-	return &SpotAction{
-		statedb:   e.GetStateDB(),
-		txhash:    hash,
-		fromaddr:  fromaddr,
-		toaddr:    toaddr,
-		blocktime: e.GetBlockTime(),
-		height:    e.GetHeight(),
-		execaddr:  dapp.ExecAddress(string(tx.Execer)),
-		localDB:   e.GetLocalDB(),
-		index:     index,
-		api:       e.GetAPI(),
+//NewTxInfo ...
+func NewTxInfo(tx *types.Transaction, index int) *et.TxInfo {
+	return &et.TxInfo{
+		Hash:     tx.Hash(),
+		From:     tx.From(),
+		To:       tx.GetTo(),
+		ExecAddr: dapp.ExecAddress(string(tx.Execer)),
+		Index:    index,
+		Tx:       tx,
 	}
 }
 

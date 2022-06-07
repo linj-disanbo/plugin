@@ -65,8 +65,12 @@ type DBprefix interface {
 }
 
 type TxInfo struct {
-	Index int
-	Hash  string
+	Index    int
+	Hash     []byte
+	From     string
+	To       string
+	ExecAddr string
+	Tx       *types.Transaction
 }
 
 // eth precision : 1e18, chain33 precision : 1e8
