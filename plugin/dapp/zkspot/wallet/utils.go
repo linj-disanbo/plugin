@@ -380,7 +380,8 @@ func GetLimitOrderMsg(payload *zst.SpotLimitOrder) *zt.ZkMsg {
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio2)), zt.AmountBitWidth)...)
 
 	//merkel tree 上的精度都是1e18 和eth保持一致， 这里的amount是1e8精度
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).Mul(big.NewInt(0).SetUint64(payload.Order.Amount), big.NewInt(1e10)), zt.AmountBitWidth)...)
+	amount, _ := big.NewInt(0).SetString(payload.Order.Amount, 10)
+	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
 	copy(binaryData, pubData)
 
 	return &zt.ZkMsg{
