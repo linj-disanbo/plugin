@@ -1524,7 +1524,7 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 		TxIndex:     uint32(a.index),
 		TxType:      zt.TySwapAction,
 		TokenID:     uint64(payload1.LeftAsset),
-		Amount:      new(big.Int).SetInt64(payload1.Amount).String(),
+		Amount:      et.AmountToZksync(uint64(payload1.Amount)),
 		FeeAmount:   "0",
 		SigData:     payload1.GetOrder().Signature,
 		AccountID:   payload1.Order.AccountID,
@@ -1593,10 +1593,10 @@ func genSwapSpecialData(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade)
 	specialData := &zt.OperationSpecialData{
 		TokenID: []uint64{uint64(left), uint64(right)},
 		Amount: []string{
-			toString(trade.Match.LeftBalance),
-			toString(trade.Match.RightBalance),
-			toString(sellRightFee),
-			toString(buyRightFee),
+			et.AmountToZksync(uint64(trade.Match.LeftBalance)),
+			et.AmountToZksync(uint64(trade.Match.RightBalance)),
+			et.AmountToZksync(uint64(sellRightFee)),
+			et.AmountToZksync(uint64(buyRightFee)),
 			payload1.Order.Amount,
 			trade.MakerOrder.Amount,
 		},
