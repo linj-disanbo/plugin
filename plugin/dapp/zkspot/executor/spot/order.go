@@ -15,6 +15,10 @@ func calcOrderKey(orderID int64) []byte {
 	return []byte("TODO")
 }
 
+func FindOrderByOrderID1(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.SpotOrder, error) {
+	return findOrderByOrderID(statedb, localdb, orderID)
+}
+
 func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.SpotOrder, error) {
 	data, err := statedb.Get(calcOrderKey(orderID))
 	if err != nil {

@@ -100,6 +100,9 @@ func (acc *dexAccount) newToken(tid uint32, amount uint64) int {
 	})
 	return len(acc.acc.Balance) - 1
 }
+func (acc *dexAccount) GetBalance(tid uint32) uint64 {
+	return acc.getBalance(tid)
+}
 
 func (acc *dexAccount) getBalance(tid uint32) uint64 {
 	idx := acc.findTokenIndex(tid)

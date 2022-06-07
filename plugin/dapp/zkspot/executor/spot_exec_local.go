@@ -5,6 +5,7 @@ import (
 
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
+	"github.com/33cn/plugin/plugin/dapp/zkspot/executor/spot"
 	ety "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
@@ -162,7 +163,7 @@ func (e *zkspot) updateOrder(marketTable, orderTable, historyTable *table.Table,
 	switch order.Status {
 	case ety.Ordered:
 		var markDepth ety.SpotMarketDepth
-		depth, err := queryMarketDepth(marketTable, left, right, op, price)
+		depth, err := spot.QueryMarketDepth1(marketTable, left, right, op, price)
 		if err == types.ErrNotFound {
 			markDepth.Price = price
 			markDepth.LeftAsset = left
@@ -192,7 +193,7 @@ func (e *zkspot) updateOrder(marketTable, orderTable, historyTable *table.Table,
 		}
 	case ety.Revoked:
 		var marketDepth ety.SpotMarketDepth
-		depth, err := queryMarketDepth(marketTable, left, right, op, price)
+		depth, err := spot.QueryMarketDepth1(marketTable, left, right, op, price)
 		if err == nil {
 			marketDepth.Price = price
 			marketDepth.LeftAsset = left
@@ -271,7 +272,7 @@ func (e *zkspot) updateMatchOrders(marketTable, orderTable, historyTable *table.
 
 		for pr, executed := range cache {
 			var matchDepth ety.SpotMarketDepth
-			depth, err := queryMarketDepth(marketTable, left, right, OpSwap(op), pr)
+			depth, err := spot.QueryMarketDepth1(marketTable, left, right, OpSwap(op), pr)
 			if err != nil {
 				continue
 			} else {

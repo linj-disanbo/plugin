@@ -1,6 +1,8 @@
 package spot
 
 import (
+	"reflect"
+
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
@@ -9,27 +11,32 @@ import (
 // RightToken: buyer -> seller
 // RightToken: buyer, seller -> fee-bank
 type spotTaker struct {
-	spotTrader
-	matches *et.ReceiptSpotMatch
-	accFee  *dexAccount
+	SpotTrader
 }
 
-type spotTrader struct {
+type SpotTrader struct {
 	acc      *dexAccount
 	order    *et.SpotOrder
 	cfg      *types.Chain33Config
 	takerFee int32
 	makerFee int32
+	//
+	matches *et.ReceiptSpotMatch
+	accFee  *dexAccount
+}
+
+func (s *SpotTrader) GetOrder() *et.SpotOrder {
+	return s.order
 }
 
 type spotMaker struct {
-	spotTrader
+	SpotTrader
 }
 
 // buy 按最大量判断余额是否够
 // 因为在吃单时, 价格是变动的, 所以实际锁定的量是会浮动的
 // 实现上, 按最大量判断余额是否够, 在成交时, 按实际需要量扣除. 最后变成挂单时, 进行锁定
-func (s *spotTrader) CheckTokenAmountForLimitOrder(order *et.SpotOrder) error {
+func (s *SpotTrader) CheckTokenAmountForLimitOrder(order *et.SpotOrder) error {
 	precision := s.cfg.GetCoinPrecision()
 	or := order.GetLimitOrder()
 	if or.GetOp() == et.OpBuy {
@@ -54,7 +61,7 @@ func (s *spotTrader) CheckTokenAmountForLimitOrder(order *et.SpotOrder) error {
 	return nil
 }
 
-func (s *spotTaker) FrozenForLimitOrder() (*types.Receipt, error) {
+func (s *SpotTrader) FrozenForLimitOrder() (*types.Receipt, error) {
 	or := s.order.GetLimitOrder()
 	if or.GetOp() == et.OpSell {
 		receipt, err := s.acc.Frozen(or.LeftAsset, uint64(s.order.Balance))
@@ -78,7 +85,7 @@ func (s *spotTaker) FrozenForLimitOrder() (*types.Receipt, error) {
 	return receipt, nil
 }
 
-func (s *spotTaker) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (s *SpotTrader) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	balance := s.calcTradeBalance(maker.order)
 	matchDetail := s.calcTradeInfo(maker, balance)
 
@@ -108,14 +115,14 @@ func (s *spotTaker) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyVa
 	return receipt, kvs, nil
 }
 
-func (s *spotTaker) calcTradeBalance(order *et.SpotOrder) int64 {
+func (s *SpotTrader) calcTradeBalance(order *et.SpotOrder) int64 {
 	if order.GetBalance() >= s.order.GetBalance() {
 		return s.order.GetBalance()
 	}
 	return order.GetBalance()
 }
 
-func (s *spotTaker) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo {
+func (s *SpotTrader) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo {
 	var info et.MatchInfo
 	info.Matched = balance
 	info.LeftBalance = balance
@@ -129,7 +136,7 @@ func (s *spotTaker) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo 
 // LeftToken: seller -> buyer
 // RightToken: buyer -> seller
 // RightToken: buyer, seller -> fee-bank
-func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (s *SpotTrader) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	if s.acc.acc.Addr == maker.acc.acc.Addr {
 		return s.selfSettlement(maker, tradeBalance)
 	}
@@ -214,7 +221,7 @@ func (s *spotTaker) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]
 }
 
 // taker/maker the same user
-func (s *spotTaker) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (s *SpotTrader) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	copyAcc := dupAccount(s.acc.acc)
 	copyFeeAcc := dupAccount(s.accFee.acc)
 
@@ -264,7 +271,7 @@ func (s *spotTaker) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo)
 	return []*types.ReceiptLog{&log1}, kvs1, nil
 }
 
-func (s *spotTaker) orderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (s *SpotTrader) orderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
@@ -313,7 +320,7 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOr
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *spotTaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *SpotTrader) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -326,7 +333,7 @@ func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *spotTaker) ([]*typ
 		return nil, nil, err
 	}
 	maker := spotMaker{
-		spotTrader: spotTrader{
+		SpotTrader: SpotTrader{
 			acc:   accMatch,
 			order: matchorder,
 			cfg:   m.api.GetConfig(),
@@ -375,4 +382,215 @@ func (f *feeDetail) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
 func GetOrderKvSet(order *et.SpotOrder) (kvset []*types.KeyValue) {
 	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(order.OrderID), Value: types.Encode(order)})
 	return kvset
+}
+
+func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) {
+	acc, err := LoadSpotAccount(fromaddr, accountID, a.env.GetStateDB())
+	if err != nil {
+		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
+		return nil, err
+	}
+
+	return &SpotTrader{
+		acc: acc,
+		cfg: a.env.GetAPI().GetConfig(),
+	}, nil
+}
+
+func (a *Spot) GetFees(fromaddr string, left, right uint32) (*feeDetail, error) {
+	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
+	if err != nil {
+		elog.Error("executor/exchangedb ParseConfig", "err", err)
+		return nil, err
+	}
+	trade := tCfg.GetTrade(left, right)
+
+	// Taker/Maker fee may relate to user (fromaddr) level in dex
+
+	return &feeDetail{
+		addr:  tCfg.GetFeeAddr(),
+		id:    tCfg.GetFeeAddrID(),
+		taker: trade.Taker,
+		maker: trade.Maker,
+	}, nil
+}
+
+func (a *Spot) getFeeRate(fromaddr string, left, right uint32) (int32, int32, error) {
+	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
+	if err != nil {
+		elog.Error("executor/exchangedb ParseConfig", "err", err)
+		return 0, 0, err
+	}
+	trade := tCfg.GetTrade(left, right)
+
+	// Taker/Maker fee may relate to user (fromaddr) level in dex
+	return trade.Taker, trade.Maker, nil
+}
+
+func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
+	fees, err := a.GetFees(fromaddr, payload.LeftAsset, payload.RightAsset)
+	if err != nil {
+		elog.Error("executor/exchangedb getFees", "err", err)
+		return nil, err
+	}
+
+	order := createLimitOrder(payload, entrustAddr,
+		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
+
+	err = acc.CheckTokenAmountForLimitOrder(order)
+	if err != nil {
+		return nil, err
+	}
+
+	// TODO
+	t, m, err := a.getFeeRate(fromaddr, payload.LeftAsset, payload.RightAsset)
+	if err != nil {
+		return nil, err
+	}
+	acc.makerFee = m
+	acc.takerFee = t
+	acc.order = order
+
+	return order, nil
+}
+
+//GetIndex get index
+func (a *Spot) GetIndex() int64 {
+	// Add four zeros to match multiple MatchOrder indexes
+	return (a.env.GetHeight()*types.MaxTxsPerBlock + int64(a.tx.Index)) * 1e4
+}
+
+func (a *Spot) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
+	return func(order *et.SpotOrder) *et.SpotOrder {
+		order.OrderID = a.GetIndex()
+		order.Index = a.GetIndex()
+		order.CreateTime = a.env.GetBlockTime()
+		order.UpdateTime = a.env.GetBlockTime()
+		order.Hash = "hex.EncodeToString(a.tx.Hash) TODO"
+		order.Addr = "a.fromaddr TODO"
+		return order
+	}
+}
+
+// config
+
+func ParseConfig(cfg *types.Chain33Config, height int64) (*et.Econfig, error) {
+	banks, err := ParseStrings(cfg, "banks", height)
+	if err != nil || len(banks) == 0 {
+		return nil, err
+	}
+	coins, err := ParseCoins(cfg, "coins", height)
+	if err != nil {
+		return nil, err
+	}
+	exchanges, err := ParseSymbols(cfg, "exchanges", height)
+	if err != nil {
+		return nil, err
+	}
+	return &et.Econfig{
+		Banks:     banks,
+		Coins:     coins,
+		Exchanges: exchanges,
+	}, nil
+}
+
+func ParseStrings(cfg *types.Chain33Config, tradeKey string, height int64) (ret []string, err error) {
+	val, err := cfg.MG(et.MverPrefix+"."+tradeKey, height)
+	if err != nil {
+		return nil, err
+	}
+
+	datas, ok := val.([]interface{})
+	if !ok {
+		elog.Error("invalid val", "val", val, "key", tradeKey)
+		return nil, et.ErrCfgFmt
+	}
+
+	for _, v := range datas {
+		one, ok := v.(string)
+		if !ok {
+			elog.Error("invalid one", "one", one, "key", tradeKey)
+			return nil, et.ErrCfgFmt
+		}
+		ret = append(ret, one)
+	}
+	return
+}
+
+func ParseCoins(cfg *types.Chain33Config, tradeKey string, height int64) (coins []et.CoinCfg, err error) {
+	coins = make([]et.CoinCfg, 0)
+
+	val, err := cfg.MG(et.MverPrefix+"."+tradeKey, height)
+	if err != nil {
+		return nil, err
+	}
+
+	datas, ok := val.([]interface{})
+	if !ok {
+		elog.Error("invalid coins", "val", val, "type", reflect.TypeOf(val))
+		return nil, et.ErrCfgFmt
+	}
+
+	for _, e := range datas {
+		v, ok := e.(map[string]interface{})
+		if !ok {
+			elog.Error("invalid coins one", "one", v, "key", tradeKey)
+			return nil, et.ErrCfgFmt
+		}
+
+		coin := et.CoinCfg{
+			Coin:   v["coin"].(string),
+			Execer: v["execer"].(string),
+			Name:   v["name"].(string),
+		}
+		coins = append(coins, coin)
+	}
+	return
+}
+
+func ParseSymbols(cfg *types.Chain33Config, tradeKey string, height int64) (symbols map[string]*et.Trade, err error) {
+	symbols = make(map[string]*et.Trade)
+
+	val, err := cfg.MG(et.MverPrefix+"."+tradeKey, height)
+	if err != nil {
+		return nil, err
+	}
+
+	datas, ok := val.([]interface{})
+	if !ok {
+		elog.Error("invalid Symbols", "val", val, "type", reflect.TypeOf(val))
+		return nil, et.ErrCfgFmt
+	}
+
+	for _, e := range datas {
+		v, ok := e.(map[string]interface{})
+		if !ok {
+			elog.Error("invalid Symbols one", "one", v, "key", tradeKey)
+			return nil, et.ErrCfgFmt
+		}
+
+		symbol := v["symbol"].(string)
+		symbols[symbol] = &et.Trade{
+			Symbol:       symbol,
+			PriceDigits:  int32(formatInterface(v["priceDigits"])),
+			AmountDigits: int32(formatInterface(v["amountDigits"])),
+			Taker:        int32(formatInterface(v["taker"])),
+			Maker:        int32(formatInterface(v["maker"])),
+			MinFee:       formatInterface(v["minFee"]),
+		}
+	}
+	return
+}
+
+func formatInterface(data interface{}) int64 {
+	switch data.(type) {
+	case int64:
+		return data.(int64)
+	case int32:
+		return int64(data.(int32))
+	case int:
+		return int64(data.(int))
+	default:
+		return 0
+	}
 }

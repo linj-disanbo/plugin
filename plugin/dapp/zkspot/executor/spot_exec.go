@@ -23,7 +23,7 @@ func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.SpotLimitOrder, tx *type
 	// checkTx will check payload and zk Signature
 	start := time.Now()
 	action := NewSpotDex(e, tx, index)
-	r, err := action.LimitOrder(payload, "")
+	r, err := action.LimitOrder(&e.DriverBase, payload, "")
 	if err != nil {
 		return r, err
 	}
@@ -69,11 +69,26 @@ func (e *zkspot) Exec_ExchangeBind(payload *exchangetypes.SpotExchangeBind, tx *
 // 委托交易
 func (e *zkspot) Exec_EntrustOrder(payload *exchangetypes.SpotEntrustOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewSpotDex(e, tx, index)
-	return action.EntrustOrder(payload)
+	return action.EntrustOrder(&e.DriverBase, payload)
 }
 
 // 委托撤单
 func (e *zkspot) Exec_EntrustRevokeOrder(payload *exchangetypes.SpotEntrustRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	a := NewSpotDex(e, tx, index)
+	ee := a.newEntrust()
+	err := ee.CheckBind(payload.Addr)
+	if err != nil {
+		return nil, err
+	}
+	p := et.SpotRevokeOrder{
+		OrderID: payload.OrderID,
+	}
+
+	txinfo := et.TxInfo{
+		Hash:  string(tx.Hash()),
+		Index: index,
+	}
+	spot := spot.NewSpot(&e.DriverBase, &txinfo)
 	action := NewSpotDex(e, tx, index)
-	return action.EntrustRevokeOrder(payload)
+	return spot.RevokeOrder(action.fromaddr, &p)
 }
