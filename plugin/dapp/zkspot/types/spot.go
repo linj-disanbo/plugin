@@ -96,15 +96,15 @@ var (
 // SpotInitFork defines register fork
 func SpotInitFork(cfg *types.Chain33Config) {
 	//cfg.RegisterDappFork(ExchangeX, ForkFix1, 0)
-	cfg.RegisterDappFork(Zksync, ForkParamV1, 0)
-	cfg.RegisterDappFork(Zksync, ForkParamV2, 0)
-	cfg.RegisterDappFork(Zksync, ForkParamV3, 0)
-	cfg.RegisterDappFork(Zksync, ForkParamV4, 0)
-	cfg.RegisterDappFork(Zksync, ForkParamV5, 0)
-	cfg.RegisterDappFork(Zksync, ForkParamV6, 0)
-	cfg.RegisterDappFork(Zksync, ForkParamV7, 0)
-	cfg.RegisterDappFork(Zksync, ForkParamV8, 0)
-	cfg.RegisterDappFork(Zksync, ForkParamV9, 0)
+	cfg.RegisterDappFork(ExecName, ForkParamV1, 0)
+	cfg.RegisterDappFork(ExecName, ForkParamV2, 0)
+	cfg.RegisterDappFork(ExecName, ForkParamV3, 0)
+	cfg.RegisterDappFork(ExecName, ForkParamV4, 0)
+	cfg.RegisterDappFork(ExecName, ForkParamV5, 0)
+	cfg.RegisterDappFork(ExecName, ForkParamV6, 0)
+	cfg.RegisterDappFork(ExecName, ForkParamV7, 0)
+	cfg.RegisterDappFork(ExecName, ForkParamV8, 0)
+	cfg.RegisterDappFork(ExecName, ForkParamV9, 0)
 }
 
 // config part

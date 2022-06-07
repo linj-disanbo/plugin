@@ -27,7 +27,7 @@ var (
 )
 
 func init() {
-	wcom.RegisterPolicy(et.Zksync, New())
+	wcom.RegisterPolicy(et.ExecName, New())
 }
 
 // New 创建一盒钱包业务策略

@@ -20,8 +20,7 @@ const (
 // github.com/33cn/plugin/plugin/dapp/zksync/types/zksync.go
 )
 
-//Zksync 执行器名称定义
-const Zksync = "zkspot"
+//ExecName 执行器名称定义
 const ExecName = "zkspot"
 
 var (
@@ -108,21 +107,21 @@ var (
 
 // init defines a register function
 func init() {
-	types.AllowUserExec = append(types.AllowUserExec, []byte(Zksync))
+	types.AllowUserExec = append(types.AllowUserExec, []byte(ExecName))
 	//注册合约启用高度
-	types.RegFork(Zksync, InitFork)
-	types.RegExec(Zksync, InitExecutor)
+	types.RegFork(ExecName, InitFork)
+	types.RegExec(ExecName, InitExecutor)
 }
 
 // InitFork defines register fork
 func InitFork(cfg *types.Chain33Config) {
 	SpotInitFork(cfg)
-	cfg.RegisterDappFork(Zksync, "Enable", 0)
+	cfg.RegisterDappFork(ExecName, "Enable", 0)
 }
 
 // InitExecutor defines register executor
 func InitExecutor(cfg *types.Chain33Config) {
-	types.RegistorExecutor(Zksync, NewType(cfg))
+	types.RegistorExecutor(ExecName, NewType(cfg))
 }
 
 //ZksyncType ...

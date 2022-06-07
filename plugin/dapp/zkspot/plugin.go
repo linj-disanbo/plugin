@@ -10,7 +10,7 @@ import (
 
 func init() {
 	pluginmgr.Register(&pluginmgr.PluginBase{
-		Name:     types.Zksync,
+		Name:     types.ExecName,
 		ExecName: executor.GetName(),
 		Exec:     executor.Init,
 		Cmd:      commands.ZksyncCmd,

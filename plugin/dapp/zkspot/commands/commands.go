@@ -27,7 +27,7 @@ import (
  * 实现合约对应客户端
  */
 
-const ExecName = et.Zksync
+const ExecName = et.ExecName
 
 // ZksyncCmd zkspot client command
 func ZksyncCmd() *cobra.Command {
