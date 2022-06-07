@@ -1,13 +1,23 @@
-package executor
+package spot
 
 import (
 	"fmt"
 
 	"github.com/33cn/chain33/common/db"
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
+	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	ety "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
+
+type spot struct {
+	fromaddr string
+	height   int64
+	statedb  dbm.KV
+	localdb  dbm.KV
+	prefix   et.DBprefix
+}
 
 /*
  * 用户合约存取kv数据时，key值前缀需要满足一定规范
@@ -16,37 +26,43 @@ import (
  */
 
 //状态数据库中存储具体挂单信息
-func calcOrderKey(orderID int64) []byte {
-	key := fmt.Sprintf("%s"+"orderID:%022d", KeyPrefixStateDB, orderID)
+func (s *spot) calcOrderKey(orderID int64) []byte {
+	key := fmt.Sprintf("%s"+"orderID:%022d", s.prefix.GetStatedbPrefix(), orderID)
 	return []byte(key)
 }
 
-var opt_exchange_depth = &table.Option{
-	Prefix:  KeyPrefixLocalDB,
-	Name:    "depth",
-	Primary: "price",
-	Index:   nil,
+func (s *spot) getDepthOpt() *table.Option {
+	return &table.Option{
+		Prefix:  s.prefix.GetLocaldbPrefix(),
+		Name:    "depth",
+		Primary: "price",
+		Index:   nil,
+	}
 }
 
-//重新设计表，list查询全部在订单信息localdb查询中
-var opt_exchange_order = &table.Option{
-	Prefix:  KeyPrefixLocalDB,
-	Name:    "order",
-	Primary: "orderID",
-	Index:   []string{"market_order", "addr_status"},
+func (s *spot) getOrderOpt() *table.Option {
+	return &table.Option{
+		Prefix:  s.prefix.GetLocaldbPrefix(),
+		Name:    "order",
+		Primary: "orderID",
+		Index:   []string{"market_order", "addr_status"},
+	}
 }
 
-var opt_exchange_history = &table.Option{
-	Prefix:  KeyPrefixLocalDB,
-	Name:    "history",
-	Primary: "index",
-	Index:   []string{"name", "addr_status"},
+func (s *spot) getHistoryOpt() *table.Option {
+	return &table.Option{
+		Prefix:  s.prefix.GetLocaldbPrefix(),
+		Name:    "history",
+		Primary: "index",
+		Index:   []string{"name", "addr_status"},
+	}
 }
 
 //NewMarketDepthTable 新建表
-func NewMarketDepthTable(kvdb db.KV) *table.Table {
+func NewMarketDepthTable(kvdb db.KV, p et.DBprefix) *table.Table {
+	s := spot{prefix: p}
 	rowmeta := NewMarketDepthRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_depth)
+	table, err := table.NewTable(rowmeta, kvdb, s.getDepthOpt())
 	if err != nil {
 		panic(err)
 	}
@@ -54,9 +70,10 @@ func NewMarketDepthTable(kvdb db.KV) *table.Table {
 }
 
 //NewMarketOrderTable ...
-func NewMarketOrderTable(kvdb db.KV) *table.Table {
+func NewMarketOrderTable(kvdb db.KV, p et.DBprefix) *table.Table {
+	s := spot{prefix: p}
 	rowmeta := NewOrderRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_order)
+	table, err := table.NewTable(rowmeta, kvdb, s.getOrderOpt())
 	if err != nil {
 		panic(err)
 	}
@@ -64,9 +81,10 @@ func NewMarketOrderTable(kvdb db.KV) *table.Table {
 }
 
 //NewHistoryOrderTable ...
-func NewHistoryOrderTable(kvdb db.KV) *table.Table {
+func NewHistoryOrderTable(kvdb db.KV, p et.DBprefix) *table.Table {
+	s := spot{prefix: p}
 	rowmeta := NewHistoryOrderRow()
-	table, err := table.NewTable(rowmeta, kvdb, opt_exchange_history)
+	table, err := table.NewTable(rowmeta, kvdb, s.getHistoryOpt())
 	if err != nil {
 		panic(err)
 	}

@@ -1,4 +1,4 @@
-package executor
+package spot
 
 import (
 	"fmt"

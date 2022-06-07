@@ -63,3 +63,8 @@ type DBprefix interface {
 	GetLocaldbPrefix() string
 	GetStatedbPrefix() string
 }
+
+type TxInfo struct {
+	Index int32
+	Hash  string
+}

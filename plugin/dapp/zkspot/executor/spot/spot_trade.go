@@ -1,4 +1,4 @@
-package executor
+package spot
 
 import (
 	"github.com/33cn/chain33/types"
@@ -370,4 +370,9 @@ func (f *feeDetail) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
 		order.TakerRate = f.taker
 		return order
 	}
+}
+
+func GetOrderKvSet(order *et.SpotOrder) (kvset []*types.KeyValue) {
+	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(order.OrderID), Value: types.Encode(order)})
+	return kvset
 }

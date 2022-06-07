@@ -54,9 +54,9 @@ func (e *zkspot) ExecLocal_EntrustRevokeOrder(payload *ety.SpotMarketOrder, tx *
 
 func (e *zkspot) interExecLocal2(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
-	historyTable := NewHistoryOrderTable(e.GetLocalDB())
-	marketTable := NewMarketDepthTable(e.GetLocalDB())
-	orderTable := NewMarketOrderTable(e.GetLocalDB())
+	historyTable := spot.NewHistoryOrderTable(e.GetLocalDB(), &dbprefix{})
+	marketTable := spot.NewMarketDepthTable(e.GetLocalDB(), &dbprefix{})
+	orderTable := spot.NewMarketOrderTable(e.GetLocalDB(), &dbprefix{})
 	if receiptData.Ty == types.ExecOk {
 		for _, log := range receiptData.Logs {
 			switch log.Ty {
