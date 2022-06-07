@@ -14,15 +14,11 @@ import (
 // Action action struct
 type SpotAction struct {
 	statedb   dbm.KV
-	txhash    []byte
-	fromaddr  string
-	toaddr    string
 	blocktime int64
 	height    int64
-	execaddr  string
 	localDB   dbm.KVDB
-	index     int
 	api       client.QueueProtocolAPI
+	txinfo    *et.TxInfo
 }
 
 //NewTxInfo ...
@@ -39,19 +35,12 @@ func NewTxInfo(tx *types.Transaction, index int) *et.TxInfo {
 
 //NewAction ...
 func NewSpotDex(e *zkspot, tx *types.Transaction, index int) *SpotAction {
-	hash := tx.Hash()
-	fromaddr := tx.From()
-	toaddr := tx.GetTo()
 	return &SpotAction{
+		txinfo:    NewTxInfo(tx, index),
 		statedb:   e.GetStateDB(),
-		txhash:    hash,
-		fromaddr:  fromaddr,
-		toaddr:    toaddr,
 		blocktime: e.GetBlockTime(),
 		height:    e.GetHeight(),
-		execaddr:  dapp.ExecAddress(string(tx.Execer)),
 		localDB:   e.GetLocalDB(),
-		index:     index,
 		api:       e.GetAPI(),
 	}
 }
@@ -59,7 +48,7 @@ func NewSpotDex(e *zkspot, tx *types.Transaction, index int) *SpotAction {
 //GetIndex get index
 func (a *SpotAction) GetIndex() int64 {
 	// Add four zeros to match multiple MatchOrder indexes
-	return (a.height*types.MaxTxsPerBlock + int64(a.index)) * 1e4
+	return (a.height*types.MaxTxsPerBlock + int64(a.txinfo.Index)) * 1e4
 }
 
 type zktree struct {
@@ -105,18 +94,18 @@ func (a *SpotAction) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrde
 	}
 
 	spot1 := spot.NewSpot(base, &et.TxInfo{})
-	acc, err := spot1.LoadUser(a.fromaddr, payload.Order.AccountID)
+	acc, err := spot1.LoadUser(a.txinfo.From, payload.Order.AccountID)
 	if err != nil {
 		return nil, err
 	}
 
-	order, err := spot1.CreateLimitOrder(a.fromaddr, acc, payload, entrustAddr)
+	order, err := spot1.CreateLimitOrder(a.txinfo.From, acc, payload, entrustAddr)
 	if err != nil {
 		return nil, err
 	}
 	_ = order // set to order trader
 
-	fees, err := spot1.GetFees(a.fromaddr, payload.LeftAsset, payload.RightAsset)
+	fees, err := spot1.GetFees(a.txinfo.From, payload.LeftAsset, payload.RightAsset)
 	if err != nil {
 		elog.Error("executor/exchangedb getFees", "err", err)
 		return nil, err
@@ -148,9 +137,6 @@ func (a *SpotAction) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrde
 
 //QueryMarketDepth 这里primaryKey当作主键索引来用，
 //The first query does not need to fill in the value, pay according to the price from high to low, selling orders according to the price from low to high query
-func QueryMarketDepth(localdb dbm.KV, left, right uint32, op int32, primaryKey string, count int32) (*et.SpotMarketDepthList, error) {
-	return spot.QueryMarketDepth(localdb, left, right, op, primaryKey, count)
-}
 
 // 使用 chain33 地址为key
 // 同样提供: account 基本和 token 级别的信息
@@ -183,7 +169,7 @@ func (a *SpotAction) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Re
 }
 
 func (a *SpotAction) CalcMaxActive(accountID uint64, token uint32, amount string) (uint64, error) {
-	acc, err := spot.LoadSpotAccount(a.fromaddr, accountID, a.statedb)
+	acc, err := spot.LoadSpotAccount(a.txinfo.From, accountID, a.statedb)
 	if err != nil {
 		return 0, err
 	}
@@ -192,7 +178,7 @@ func (a *SpotAction) CalcMaxActive(accountID uint64, token uint32, amount string
 
 func (a *SpotAction) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*types.Receipt, error) {
 	// TODO amountWithFee to chain33amount
-	chain33Addr := a.fromaddr
+	chain33Addr := a.txinfo.From
 	/*
 		amount := payload.GetAmount()
 		amount2, ok := big.NewInt(0).SetString(amount, 10)
@@ -214,7 +200,7 @@ func (a *SpotAction) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*ty
 //
 
 func (a SpotAction) newEntrust() *spot.Entrust {
-	e := spot.NewEntrust(a.fromaddr, a.height, a.statedb)
+	e := spot.NewEntrust(a.txinfo.From, a.height, a.statedb)
 	e.SetDB(a.statedb, &dbprefix{})
 	return e
 }

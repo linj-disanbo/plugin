@@ -14,10 +14,6 @@ import (
  * 关键数据上链（statedb）并生成交易回执（log）
  */
 
-func checkZkSignature() error {
-	return types.ErrAccountNotExist
-}
-
 // 限价交易
 func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.SpotLimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	// checkTx will check payload and zk Signature
@@ -54,7 +50,7 @@ func (e *zkspot) Exec_RevokeOrder(payload *exchangetypes.SpotRevokeOrder, tx *ty
 	txinfo := NewTxInfo(tx, index)
 	spot := spot.NewSpot(&e.DriverBase, txinfo)
 	action := NewSpotDex(e, tx, index)
-	return spot.RevokeOrder(action.fromaddr, payload)
+	return spot.RevokeOrder(action.txinfo.From, payload)
 }
 
 // 绑定委托交易地址
@@ -84,5 +80,5 @@ func (e *zkspot) Exec_EntrustRevokeOrder(payload *exchangetypes.SpotEntrustRevok
 	txinfo := NewTxInfo(tx, index)
 	spot := spot.NewSpot(&e.DriverBase, txinfo)
 	action := NewSpotDex(e, tx, index)
-	return spot.RevokeOrder(action.fromaddr, &p)
+	return spot.RevokeOrder(action.txinfo.From, &p)
 }
