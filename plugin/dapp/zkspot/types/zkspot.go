@@ -22,6 +22,7 @@ const (
 
 //Zksync 执行器名称定义
 const Zksync = "zkspot"
+const ExecName = "zkspot"
 
 var (
 
