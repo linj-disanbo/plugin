@@ -30,13 +30,22 @@ func (z *zkspot) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, in
 	if err != nil {
 		return nil, err
 	}
-	amount2, ok := big.NewInt(0).SetString(payload.Amount, 10)
-	feeInt, _ := new(big.Int).SetString(zt.FeeMap[zt.TyWithdrawAction], 10)
-	totalAmount := new(big.Int).Add(amount2, feeInt)
+	zkMaxActive := et.AmountToZksync(maxActive)
+	hasAmount, ok := big.NewInt(0).SetString(zkMaxActive, 10)
 	if !ok {
 		return nil, et.ErrAssetBalance
 	}
-	if totalAmount.Uint64() > maxActive {
+
+	amount2, ok := big.NewInt(0).SetString(payload.Amount, 10)
+	if !ok {
+		return nil, et.ErrAssetBalance
+	}
+	feeInt, ok := new(big.Int).SetString(zt.FeeMap[zt.TyWithdrawAction], 10)
+	if !ok {
+		return nil, et.ErrAssetBalance
+	}
+	totalAmount := new(big.Int).Add(amount2, feeInt)
+	if hasAmount.Cmp(totalAmount) < 0 {
 		return nil, et.ErrDexNotEnough
 	}
 
