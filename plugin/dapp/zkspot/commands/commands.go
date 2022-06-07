@@ -1474,7 +1474,7 @@ func limitOrder(cmd *cobra.Command, args []string) {
 		EthAddress: ethAddress,
 		TokenSell:  sell,
 		TokenBuy:   buy,
-		Amount:     amount,
+		Amount:     et.AmountToZksync(amount),
 		Ratio1:     uint32(ratio1),
 		Ratio2:     uint32(ratio2),
 	}
