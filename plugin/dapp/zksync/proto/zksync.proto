@@ -45,12 +45,14 @@ message AccountTree {
 
 message Leaf {
   uint64 accountId = 1; //accountId其实就是叶子的totalIndex
-  string ethAddress = 2; //账户对应的以太坊地址
+  string ethAddress = 2; //账户对应的以太坊地址, L1Addr
   ZkPubKey pubKey = 3; //eddsa公钥，用于验证身份
   string l2Addr = 4; //chain33 l2地址
   string tokenHash = 5; //叶子下token的hash
   repeated uint64 tokenIds = 6; //叶子下拥有的tokenId
   AccountProxyPubKeys proxyPubKeys = 7; //eddsa代理公钥，用于验证代理者的身份
+  string chainAddr = 8; // tx 签名的地址
+  string proxyChainAddr = 9; // 和proxyPubKeys 对应的链上tx签名的地址
 }
 
 message HistoryLeaf {
