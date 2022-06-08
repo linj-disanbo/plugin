@@ -37,17 +37,17 @@ func getCfgFeeAddr(cfg *types.Chain33Config) (string, string) {
 func getInitAccountLeaf(ethFeeAddr, chain33FeeAddr string) []*zt.Leaf {
 	//default system FeeAccount
 	feeAccount := &zt.Leaf{
-		EthAddress:  ethFeeAddr,
-		AccountId:   zt.SystemFeeAccountId,
-		Chain33Addr: chain33FeeAddr,
-		TokenHash:   "0",
+		EthAddress: ethFeeAddr,
+		AccountId:  zt.SystemFeeAccountId,
+		L2Addr:     chain33FeeAddr,
+		TokenHash:  "0",
 	}
 	//default NFT system account
 	NFTAccount := &zt.Leaf{
-		EthAddress:  "0",
-		AccountId:   zt.SystemNFTAccountId,
-		Chain33Addr: "0",
-		TokenHash:   "0",
+		EthAddress: "0",
+		AccountId:  zt.SystemNFTAccountId,
+		L2Addr:     "0",
+		TokenHash:  "0",
 	}
 	return []*zt.Leaf{feeAccount, NFTAccount}
 }
@@ -97,7 +97,7 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 	kvs = append(kvs, kv)
 
 	kv = &types.KeyValue{
-		Key:   GetChain33EthPrimaryKey(leafFeeAccount.Chain33Addr, leafFeeAccount.EthAddress),
+		Key:   GetChain33EthPrimaryKey(leafFeeAccount.L2Addr, leafFeeAccount.EthAddress),
 		Value: types.Encode(leafFeeAccount),
 	}
 	kvs = append(kvs, kv)
@@ -111,7 +111,7 @@ func NewAccountTree(localDb dbm.KVDB, ethFeeAddr, chain33FeeAddr string) ([]*typ
 	kvs = append(kvs, kv)
 
 	kv = &types.KeyValue{
-		Key:   GetChain33EthPrimaryKey(leafNFTAccount.Chain33Addr, leafNFTAccount.EthAddress),
+		Key:   GetChain33EthPrimaryKey(leafNFTAccount.L2Addr, leafNFTAccount.EthAddress),
 		Value: types.Encode(leafNFTAccount),
 	}
 	kvs = append(kvs, kv)
@@ -181,7 +181,7 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 	leaf := &zt.Leaf{
 		EthAddress:   ethAddress,
 		AccountId:    tree.GetTotalIndex(),
-		Chain33Addr:  chain33Addr,
+		L2Addr:       chain33Addr,
 		TokenIds:     make([]uint64, 0),
 		ProxyPubKeys: new(zt.AccountProxyPubKeys),
 	}
@@ -213,7 +213,7 @@ func AddNewLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, ethAddress
 	info.updateMap[string(kv.GetKey())] = kv.GetValue()
 
 	kv = &types.KeyValue{
-		Key:   GetChain33EthPrimaryKey(leaf.Chain33Addr, leaf.EthAddress),
+		Key:   GetChain33EthPrimaryKey(leaf.L2Addr, leaf.EthAddress),
 		Value: types.Encode(leaf),
 	}
 
@@ -342,7 +342,7 @@ func GetLeafByEthAddress(db dbm.KV, ethAddress string) ([]*zt.Leaf, error) {
 	for _, row := range rows {
 		data := row.Data.(*zt.Leaf)
 		data.EthAddress = zt.DecimalAddr2Hex(data.GetEthAddress())
-		data.Chain33Addr = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		data.L2Addr = zt.DecimalAddr2Hex(data.GetL2Addr())
 		datas = append(datas, data)
 	}
 	return datas, nil
@@ -363,7 +363,7 @@ func GetLeafByChain33Address(db dbm.KV, chain33Addr string) ([]*zt.Leaf, error) 
 	for _, row := range rows {
 		data := row.Data.(*zt.Leaf)
 		data.EthAddress = zt.DecimalAddr2Hex(data.GetEthAddress())
-		data.Chain33Addr = zt.DecimalAddr2Hex(data.GetChain33Addr())
+		data.L2Addr = zt.DecimalAddr2Hex(data.GetL2Addr())
 		datas = append(datas, data)
 	}
 	return datas, nil
@@ -560,7 +560,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 	info.updateMap[string(kv.GetKey())] = kv.GetValue()
 
 	kv = &types.KeyValue{
-		Key:   GetChain33EthPrimaryKey(leaf.Chain33Addr, leaf.EthAddress),
+		Key:   GetChain33EthPrimaryKey(leaf.L2Addr, leaf.EthAddress),
 		Value: types.Encode(leaf),
 	}
 
@@ -622,7 +622,7 @@ func UpdateLeaf(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, accountId 
 	if info.accountTable != nil {
 		accountTable = info.accountTable
 	}
-	err = accountTable.Update(GetLocalChain33EthPrimaryKey(leaf.GetChain33Addr(), leaf.GetEthAddress()), leaf)
+	err = accountTable.Update(GetLocalChain33EthPrimaryKey(leaf.GetL2Addr(), leaf.GetEthAddress()), leaf)
 	if err != nil {
 		return kvs, localKvs, errors.Wrapf(err, "accountTable.Update")
 	}
@@ -647,7 +647,7 @@ func getLeafHash(leaf *zt.Leaf) []byte {
 	accountIdBytes := new(fr.Element).SetUint64(leaf.GetAccountId()).Bytes()
 	h.Write(accountIdBytes[:])
 	h.Write(zt.Str2Byte(leaf.GetEthAddress()))
-	h.Write(zt.Str2Byte(leaf.GetChain33Addr()))
+	h.Write(zt.Str2Byte(leaf.GetL2Addr()))
 
 	getLeafPubKeyHash(h, leaf.GetPubKey())
 	getLeafPubKeyHash(h, leaf.GetProxyPubKeys().GetNormal())
@@ -886,7 +886,7 @@ func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *
 
 }
 
-func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy uint64, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, []*types.KeyValue, error) {
+func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy uint64, pubKey *zt.ZkPubKey, accountId uint64, chainAddr string) ([]*types.KeyValue, []*types.KeyValue, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 	tree, err := getAccountTree(statedb, info)
@@ -906,8 +906,10 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy
 	switch pubKeyTy {
 	case 0:
 		leaf.PubKey = pubKey
+		leaf.ChainAddr = chainAddr
 	case zt.NormalProxyPubKey:
 		leaf.ProxyPubKeys.Normal = pubKey
+		leaf.ProxyChainAddr = chainAddr
 	case zt.SystemProxyPubKey:
 		leaf.ProxyPubKeys.System = pubKey
 	case zt.SuperProxyPubKey:
@@ -925,7 +927,7 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy
 	info.updateMap[string(kv.GetKey())] = kv.GetValue()
 
 	kv = &types.KeyValue{
-		Key:   GetChain33EthPrimaryKey(leaf.Chain33Addr, leaf.EthAddress),
+		Key:   GetChain33EthPrimaryKey(leaf.L2Addr, leaf.EthAddress),
 		Value: types.Encode(leaf),
 	}
 
@@ -980,7 +982,7 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy
 		info.updateMap[string(kv.GetKey())] = kv.GetValue()
 	}
 	accountTable := NewAccountTreeTable(localdb)
-	err = accountTable.Update(GetLocalChain33EthPrimaryKey(leaf.GetChain33Addr(), leaf.GetEthAddress()), leaf)
+	err = accountTable.Update(GetLocalChain33EthPrimaryKey(leaf.GetL2Addr(), leaf.GetEthAddress()), leaf)
 	if err != nil {
 		return kvs, localKvs, errors.Wrapf(err, "accountTable.Update")
 	}
