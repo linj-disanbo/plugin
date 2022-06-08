@@ -14,18 +14,29 @@ var (
 )
 
 type Spot struct {
-	env    *drivers.DriverBase
-	tx     *et.TxInfo
-	feeAcc *SpotTrader
+	env     *drivers.DriverBase
+	tx      *et.TxInfo
+	feeAcc  *SpotTrader
+	feeAcc2 *DexAccount
 }
+
+type GetFeeAccount func() (*DexAccount, error)
 
 func NewSpot(e *drivers.DriverBase, tx *et.TxInfo) (*Spot, error) {
 	spot := &Spot{
 		env: e,
 		tx:  tx,
 	}
-	err := spot.GetFeeAcc()
-	return spot, err
+	return spot, nil
+}
+
+func (a *Spot) SetFeeAcc(funcGetFeeAccount GetFeeAccount) error {
+	feeAcc, err := funcGetFeeAccount()
+	if err != nil {
+		return err
+	}
+	a.feeAcc2 = feeAcc
+	return nil
 }
 
 func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types.Receipt, error) {
@@ -121,4 +132,35 @@ func (a *Spot) getFeeRate(fromaddr string, left, right uint32) (int32, int32, er
 
 	// Taker/Maker fee may relate to user (fromaddr) level in dex
 	return trade.Taker, trade.Maker, nil
+}
+
+func (a *Spot) LoadFee(trader *SpotTrader, left, right uint32) error {
+	t, m, err := a.getFeeRate(trader.acc.acc.Addr, left, right)
+	if err != nil {
+		return err
+	}
+
+	trader.takerFee = t
+	trader.makerFee = m
+	return nil
+}
+
+func (a *Spot) GetFees(fromaddr string, left, right uint32) (*feeDetail, error) {
+	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
+
+	if err != nil {
+		elog.Error("executor/exchangedb ParseConfig", "err", err)
+		return nil, err
+
+	}
+	trade := tCfg.GetTrade(left, right)
+
+	// Taker/Maker fee may relate to user (fromaddr) level in dex
+
+	return &feeDetail{
+		addr:  a.feeAcc2.acc.Addr,
+		id:    1, //
+		taker: trade.Taker,
+		maker: trade.Maker,
+	}, nil
 }

@@ -71,10 +71,32 @@ func (z *zktree) checkL2Auth(acc *zt.Leaf, pub *zt.ZkPubKey) error {
 	return nil
 }
 
-func getFeeAcc(statedb dbm.KV) (*zt.Leaf, error) {
-	accountID := et.SystemFeeAccountId
+func checkL2Auth(statedb dbm.KV, accountID uint64, pub *zt.ZkPubKey) error {
+	var zktree1 zktree
+	zkAcc, err := zktree1.getAccount(statedb, accountID)
+	if err != nil {
+		return err
+	}
+	err = zktree1.checkL2Auth(zkAcc, pub)
+	if err != nil {
+		return errors.Wrapf(err, "authVerification")
+	}
+	return nil
+}
+
+func (a *zkSpotDex) getFeeAcc() (*spot.DexAccount, error) {
+	accountID := uint64(et.SystemFeeAccountId)
 	z1 := &zktree{}
-	return z1.getAccount(statedb, uint64(accountID))
+	leaf, err := z1.getAccount(a.statedb, accountID)
+	if err != nil {
+		return nil, err
+	}
+	acc, err := spot.LoadSpotAccount(leaf.ChainAddr, accountID, a.statedb)
+	if err != nil {
+		elog.Error("LoadSpotAccount load taker account", "err", err)
+		return nil, err
+	}
+	return acc, nil
 }
 
 //LimitOrder ...
@@ -85,25 +107,21 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 		return nil, err
 	}
 
-	var zktree1 zktree
-	zkAcc, err := zktree1.getAccount(a.statedb, payload.Order.AccountID)
+	err = checkL2Auth(a.statedb, payload.Order.AccountID, payload.Order.Signature.PubKey)
 	if err != nil {
 		return nil, err
-	}
-	err = zktree1.checkL2Auth(zkAcc, payload.Order.Signature.PubKey)
-	if err != nil {
-		return nil, errors.Wrapf(err, "authVerification")
 	}
 
 	spot1, err := spot.NewSpot(base, &et.TxInfo{})
 	if err != nil {
 		return nil, err
 	}
-	taker, err := spot1.LoadUser(a.txinfo.From, payload.Order.AccountID)
+	err = spot1.SetFeeAcc(a.getFeeAcc)
 	if err != nil {
 		return nil, err
 	}
-	err = spot1.LoadFee(taker, payload.LeftAsset, payload.RightAsset)
+
+	taker, err := spot1.LoadUser(a.txinfo.From, payload.Order.AccountID)
 	if err != nil {
 		return nil, err
 	}
