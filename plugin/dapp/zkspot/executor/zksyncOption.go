@@ -1112,7 +1112,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, specialData)
 
 	if payload.PubKeyTy == 0 {
-		kvs, localKvs, err = a.SetDefultPubKey(payload, info, leaf, operationInfo)
+		kvs, localKvs, err = a.SetDefultPubKey(payload, a.fromaddr, info, leaf, operationInfo)
 		if err != nil {
 			return nil, errors.Wrapf(err, "setDefultPubKey")
 		}
@@ -1133,7 +1133,7 @@ func (a *Action) SetPubKey(payload *zt.ZkSetPubKey) (*types.Receipt, error) {
 	return receipts, nil
 }
 
-func (a *Action) SetDefultPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, leaf *zt.Leaf, operationInfo *zt.OperationInfo) ([]*types.KeyValue, []*types.KeyValue, error) {
+func (a *Action) SetDefultPubKey(payload *zt.ZkSetPubKey, from string, info *TreeUpdateInfo, leaf *zt.Leaf, operationInfo *zt.OperationInfo) ([]*types.KeyValue, []*types.KeyValue, error) {
 
 	//更新之前先计算证明
 	receipt, err := calProof(a.statedb, info, payload.AccountId, leaf.TokenIds[0])
@@ -1142,7 +1142,7 @@ func (a *Action) SetDefultPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, 
 	}
 	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.L2Addr, nil, nil, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 
-	kvs, localKvs, err := UpdatePubKey(a.statedb, a.localDB, info, payload.GetPubKeyTy(), payload.GetPubKey(), payload.AccountId)
+	kvs, localKvs, err := UpdatePubKey(a.statedb, a.localDB, info, payload.GetPubKeyTy(), payload.GetPubKey(), payload.AccountId, from)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}
@@ -1183,7 +1183,7 @@ func (a *Action) SetProxyPubKey(payload *zt.ZkSetPubKey, info *TreeUpdateInfo, l
 	}
 	before := getBranchByReceipt(receipt, operationInfo, leaf.EthAddress, leaf.L2Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 
-	kvs, localKvs, err := UpdatePubKey(a.statedb, a.localDB, info, payload.PubKeyTy, payload.GetPubKey(), payload.AccountId)
+	kvs, localKvs, err := UpdatePubKey(a.statedb, a.localDB, info, payload.PubKeyTy, payload.GetPubKey(), payload.AccountId, payload.ChainAddr)
 	if err != nil {
 		return nil, nil, errors.Wrapf(err, "db.UpdateLeaf")
 	}

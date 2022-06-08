@@ -886,7 +886,7 @@ func CalTokenProof(statedb dbm.KV, leaf *zt.Leaf, token *zt.TokenBalance, info *
 
 }
 
-func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy uint64, pubKey *zt.ZkPubKey, accountId uint64) ([]*types.KeyValue, []*types.KeyValue, error) {
+func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy uint64, pubKey *zt.ZkPubKey, accountId uint64, chainAddr string) ([]*types.KeyValue, []*types.KeyValue, error) {
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 	tree, err := getAccountTree(statedb, info)
@@ -906,8 +906,10 @@ func UpdatePubKey(statedb dbm.KV, localdb dbm.KV, info *TreeUpdateInfo, pubKeyTy
 	switch pubKeyTy {
 	case 0:
 		leaf.PubKey = pubKey
+		leaf.ChainAddr = chainAddr
 	case zt.NormalProxyPubKey:
 		leaf.ProxyPubKeys.Normal = pubKey
+		leaf.ProxyChainAddr = chainAddr
 	case zt.SystemProxyPubKey:
 		leaf.ProxyPubKeys.System = pubKey
 	case zt.SuperProxyPubKey:
