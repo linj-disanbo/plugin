@@ -383,6 +383,7 @@ func setPubKeyFlag(cmd *cobra.Command) {
 	cmd.Flags().StringP("pubkeyX", "x", "", "proxy pubkey x value")
 	cmd.Flags().StringP("pubkeyY", "y", "", "proxy pubkey y value")
 
+	cmd.Flags().StringP("chainAddr", "c", "", "chain addr")
 }
 
 func setPubKey(cmd *cobra.Command, args []string) {
@@ -390,11 +391,15 @@ func setPubKey(cmd *cobra.Command, args []string) {
 	pubkeyT, _ := cmd.Flags().GetUint64("pubkeyT")
 	pubkeyX, _ := cmd.Flags().GetString("pubkeyX")
 	pubkeyY, _ := cmd.Flags().GetString("pubkeyY")
+	chainAddr, _ := cmd.Flags().GetString("chainAddr")
 
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	if pubkeyT > 0 && (len(pubkeyX) == 0 || len(pubkeyY) == 0) {
 		fmt.Fprintln(os.Stderr, fmt.Sprintf("set proxy pubkey, need set pubkeyX pubkeyY"))
 		return
+	}
+	if pubkeyT > 0 && len(chainAddr) == 0 {
+		fmt.Fprintln(os.Stderr, fmt.Sprintf("set proxy pubkey, need set chainAddr"))
 	}
 
 	pubkey := &zt.ZkSetPubKey{
@@ -404,6 +409,7 @@ func setPubKey(cmd *cobra.Command, args []string) {
 			X: pubkeyX,
 			Y: pubkeyY,
 		},
+		ChainAddr: chainAddr,
 	}
 	payload := types.MustPBToJSON(pubkey)
 	params := &rpctypes.CreateTxIn{

@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common/address"
 
 	"github.com/33cn/chain33/common/db"
@@ -60,9 +61,9 @@ func (r *AccountTreeRow) SetPayload(data types.Message) error {
 //Get 按照indexName 查询 indexValue
 func (r *AccountTreeRow) Get(key string) ([]byte, error) {
 	if key == "address" {
-		return GetLocalChain33EthPrimaryKey(r.GetChain33Addr(), r.GetEthAddress()), nil
+		return GetLocalChain33EthPrimaryKey(r.GetL2Addr(), r.GetEthAddress()), nil
 	} else if key == "chain33_address" {
-		return []byte(fmt.Sprintf("%s", address.FormatAddrKey(r.GetChain33Addr()))), nil
+		return []byte(fmt.Sprintf("%s", address.FormatAddrKey(r.GetL2Addr()))), nil
 	} else if key == "eth_address" {
 		return []byte(fmt.Sprintf("%s", address.FormatAddrKey(r.GetEthAddress()))), nil
 	}

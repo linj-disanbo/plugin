@@ -106,7 +106,7 @@ func (z *zksync) Query_GetAccountById(in *zt.ZkQueryReq) (types.Message, error) 
 		return nil, err
 	}
 	leaf.EthAddress = zt.DecimalAddr2Hex(leaf.GetEthAddress())
-	leaf.Chain33Addr = zt.DecimalAddr2Hex(leaf.GetChain33Addr())
+	leaf.L2Addr = zt.DecimalAddr2Hex(leaf.GetL2Addr())
 	return &leaf, nil
 }
 
