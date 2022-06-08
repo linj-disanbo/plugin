@@ -142,6 +142,7 @@ message ZkSetPubKey {
   ZkPubKey  pubKey = 2;
   uint64    pubKeyTy = 3;
   ZkSignature signature = 4;
+  string chainAddr = 5;
 }
 
 message ZkFullExit {
