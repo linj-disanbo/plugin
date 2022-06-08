@@ -287,7 +287,7 @@ func queryMarketDepth(marketTable *tab.Table, left, right uint32, op int32, pric
 	return row.Data.(*et.SpotMarketDepth), nil
 }
 
-func (a *SpotAction) LoadDexAccount(chain33addr string, accountID uint64) (*dexAccount, error) {
+func (a *SpotAction) LoadDexAccount(chain33addr string, accountID uint64) (*DexAccount, error) {
 	return LoadSpotAccount(chain33addr, accountID, a.statedb)
 }
 

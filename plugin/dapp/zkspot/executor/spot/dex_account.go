@@ -42,11 +42,11 @@ func genAccountKey(dexType []byte, addr string, id uint64) []byte {
 	return []byte(fmt.Sprintf("%s:%d", dexType, id))
 }
 
-func LoadSpotAccount(addr string, id uint64, db dbm.KV) (*dexAccount, error) {
+func LoadSpotAccount(addr string, id uint64, db dbm.KV) (*DexAccount, error) {
 	return newSpotDex().LoadAccount(addr, id, db)
 }
 
-func (dex *Dex) LoadAccount(addr string, id uint64, db dbm.KV) (*dexAccount, error) {
+func (dex *Dex) LoadAccount(addr string, id uint64, db dbm.KV) (*DexAccount, error) {
 	key := genAccountKey(dex.keyPrefix, addr, id)
 	v, err := db.Get(key)
 	if err == types.ErrNotFound {
@@ -63,14 +63,14 @@ func (dex *Dex) LoadAccount(addr string, id uint64, db dbm.KV) (*dexAccount, err
 	return GetDexAccount(&acc, db), nil
 }
 
-type dexAccount struct {
+type DexAccount struct {
 	ty  string // spot, future, asset
 	acc *et.DexAccount
 	db  dbm.KV
 }
 
-func NewDexAccount(ty string, id uint64, addr string) *dexAccount {
-	return &dexAccount{
+func NewDexAccount(ty string, id uint64, addr string) *DexAccount {
+	return &DexAccount{
 		ty: ty,
 		acc: &et.DexAccount{
 			Id:      id,
@@ -80,11 +80,11 @@ func NewDexAccount(ty string, id uint64, addr string) *dexAccount {
 	}
 }
 
-func GetDexAccount(acc *et.DexAccount, db dbm.KV) *dexAccount {
-	return &dexAccount{acc: acc, db: db}
+func GetDexAccount(acc *et.DexAccount, db dbm.KV) *DexAccount {
+	return &DexAccount{acc: acc, db: db}
 }
 
-func (acc *dexAccount) findTokenIndex(tid uint32) int {
+func (acc *DexAccount) findTokenIndex(tid uint32) int {
 	for i, token := range acc.acc.Balance {
 		if token.Id == tid {
 			return i
@@ -93,18 +93,18 @@ func (acc *dexAccount) findTokenIndex(tid uint32) int {
 	return -1
 }
 
-func (acc *dexAccount) newToken(tid uint32, amount uint64) int {
+func (acc *DexAccount) newToken(tid uint32, amount uint64) int {
 	acc.acc.Balance = append(acc.acc.Balance, &et.DexAccountBalance{
 		Id:      tid,
 		Balance: amount,
 	})
 	return len(acc.acc.Balance) - 1
 }
-func (acc *dexAccount) GetBalance(tid uint32) uint64 {
+func (acc *DexAccount) GetBalance(tid uint32) uint64 {
 	return acc.getBalance(tid)
 }
 
-func (acc *dexAccount) getBalance(tid uint32) uint64 {
+func (acc *DexAccount) getBalance(tid uint32) uint64 {
 	idx := acc.findTokenIndex(tid)
 	if idx == -1 {
 		return 0
@@ -112,7 +112,7 @@ func (acc *dexAccount) getBalance(tid uint32) uint64 {
 	return acc.acc.Balance[idx].Balance
 }
 
-func (acc *dexAccount) getFrozen(tid uint32) uint64 {
+func (acc *DexAccount) getFrozen(tid uint32) uint64 {
 	idx := acc.findTokenIndex(tid)
 	if idx == -1 {
 		return 0
@@ -120,7 +120,7 @@ func (acc *dexAccount) getFrozen(tid uint32) uint64 {
 	return acc.acc.Balance[idx].Frozen
 }
 
-func (acc *dexAccount) doMint(tid uint32, amount uint64) error {
+func (acc *DexAccount) doMint(tid uint32, amount uint64) error {
 	idx := acc.findTokenIndex(tid)
 	if idx == -1 {
 		acc.acc.Balance = append(acc.acc.Balance, &et.DexAccountBalance{
@@ -133,7 +133,7 @@ func (acc *dexAccount) doMint(tid uint32, amount uint64) error {
 	return nil
 }
 
-func (acc *dexAccount) doBurn(tid uint32, amount uint64) error {
+func (acc *DexAccount) doBurn(tid uint32, amount uint64) error {
 	idx := acc.findTokenIndex(tid)
 	if idx == -1 {
 		return et.ErrDexNotEnough
@@ -147,7 +147,7 @@ func (acc *dexAccount) doBurn(tid uint32, amount uint64) error {
 	return nil
 }
 
-func (acc *dexAccount) doFrozen(token uint32, amount uint64) error {
+func (acc *DexAccount) doFrozen(token uint32, amount uint64) error {
 	idx := acc.findTokenIndex(token)
 	if idx < 0 {
 		return et.ErrDexNotEnough
@@ -160,7 +160,7 @@ func (acc *dexAccount) doFrozen(token uint32, amount uint64) error {
 	return nil
 }
 
-func (acc *dexAccount) doActive(token uint32, amount uint64) error {
+func (acc *DexAccount) doActive(token uint32, amount uint64) error {
 	idx := acc.findTokenIndex(token)
 	if idx < 0 {
 		return et.ErrDexNotEnough
@@ -185,7 +185,7 @@ func dupAccount(acc *et.DexAccount) *et.DexAccount {
 }
 
 // GetKVSet account to statdb kv
-func (acc *dexAccount) GetKVSet() (kvset []*types.KeyValue) {
+func (acc *DexAccount) GetKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(acc.acc)
 	key := genAccountKey(spotAccountKey, acc.acc.Addr, acc.acc.Id)
 	acc.db.Set(key, value)
@@ -198,25 +198,25 @@ func (acc *dexAccount) GetKVSet() (kvset []*types.KeyValue) {
 	return kvset
 }
 
-func (acc *dexAccount) Frozen(token uint32, amount uint64) (*types.Receipt, error) {
+func (acc *DexAccount) Frozen(token uint32, amount uint64) (*types.Receipt, error) {
 	return acc.updateWithFunc(token, amount, acc.doFrozen, et.TyDexAccountFrozen)
 }
 
-func (acc *dexAccount) Active(token uint32, amount uint64) (*types.Receipt, error) {
+func (acc *DexAccount) Active(token uint32, amount uint64) (*types.Receipt, error) {
 	return acc.updateWithFunc(token, amount, acc.doActive, et.TyDexAccountActive)
 }
 
-func (acc *dexAccount) Mint(token uint32, amount uint64) (*types.Receipt, error) {
+func (acc *DexAccount) Mint(token uint32, amount uint64) (*types.Receipt, error) {
 	return acc.updateWithFunc(token, amount, acc.doMint, et.TyDexAccountMint)
 }
 
-func (acc *dexAccount) Burn(token uint32, amount uint64) (*types.Receipt, error) {
+func (acc *DexAccount) Burn(token uint32, amount uint64) (*types.Receipt, error) {
 	return acc.updateWithFunc(token, amount, acc.doBurn, et.TyDexAccountBurn)
 }
 
 type updateDexAccount func(token uint32, amount uint64) error
 
-func (acc *dexAccount) updateWithFunc(token uint32, amount uint64, f updateDexAccount, logType int32) (*types.Receipt, error) {
+func (acc *DexAccount) updateWithFunc(token uint32, amount uint64, f updateDexAccount, logType int32) (*types.Receipt, error) {
 	copyAcc := dupAccount(acc.acc)
 	err := f(token, amount)
 	if err != nil {
@@ -230,7 +230,7 @@ func (acc *dexAccount) updateWithFunc(token uint32, amount uint64, f updateDexAc
 	return acc.genReceipt(logType, acc, &receiptlog), nil
 }
 
-func (acc *dexAccount) genReceipt(ty int32, acc1 *dexAccount, r *et.ReceiptDexAccount) *types.Receipt {
+func (acc *DexAccount) genReceipt(ty int32, acc1 *DexAccount, r *et.ReceiptDexAccount) *types.Receipt {
 	log1 := &types.ReceiptLog{
 		Ty:  ty,
 		Log: types.Encode(r),
@@ -258,7 +258,7 @@ func (acc *dexAccount) Swap(accTo *dexAccount, got, gave *et.DexAccountBalance) 
 }
 */
 
-func (acc *dexAccount) doTranfer(accTo *dexAccount, token uint32, balance uint64) error {
+func (acc *DexAccount) doTranfer(accTo *DexAccount, token uint32, balance uint64) error {
 	idx := acc.findTokenIndex(token)
 	if idx < 0 {
 		return et.ErrDexNotEnough
@@ -278,7 +278,7 @@ func (acc *dexAccount) doTranfer(accTo *dexAccount, token uint32, balance uint64
 	return nil
 }
 
-func (acc *dexAccount) doFrozenTranfer(accTo *dexAccount, token uint32, amount uint64) error {
+func (acc *DexAccount) doFrozenTranfer(accTo *DexAccount, token uint32, amount uint64) error {
 	idx := acc.findTokenIndex(token)
 	if idx < 0 {
 		return et.ErrDexNotEnough
