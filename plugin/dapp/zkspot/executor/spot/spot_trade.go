@@ -1,6 +1,7 @@
 package spot
 
 import (
+	"encoding/hex"
 	"reflect"
 
 	"github.com/33cn/chain33/types"
@@ -459,8 +460,8 @@ func (a *Spot) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
 		order.Index = a.GetIndex()
 		order.CreateTime = a.env.GetBlockTime()
 		order.UpdateTime = a.env.GetBlockTime()
-		order.Hash = "hex.EncodeToString(a.tx.Hash) TODO"
-		order.Addr = "a.fromaddr TODO"
+		order.Hash = hex.EncodeToString(a.tx.Hash)
+		order.Addr = a.tx.From
 		return order
 	}
 }

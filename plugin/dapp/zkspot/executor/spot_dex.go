@@ -19,6 +19,7 @@ type SpotDex struct {
 	localDB   dbm.KVDB
 	api       client.QueueProtocolAPI
 	txinfo    *et.TxInfo
+	env       *dapp.DriverBase
 }
 
 //NewTxInfo ...
@@ -37,18 +38,13 @@ func NewTxInfo(tx *types.Transaction, index int) *et.TxInfo {
 func NewSpotDex(e *zkspot, tx *types.Transaction, index int) *SpotDex {
 	return &SpotDex{
 		txinfo:    NewTxInfo(tx, index),
+		env:       &e.DriverBase,
 		statedb:   e.GetStateDB(),
 		blocktime: e.GetBlockTime(),
 		height:    e.GetHeight(),
 		localDB:   e.GetLocalDB(),
 		api:       e.GetAPI(),
 	}
-}
-
-//GetIndex get index
-func (a *SpotDex) GetIndex() int64 {
-	// Add four zeros to match multiple MatchOrder indexes
-	return (a.height*types.MaxTxsPerBlock + int64(a.txinfo.Index)) * 1e4
 }
 
 type zktree struct {
@@ -73,6 +69,16 @@ func (z *zktree) checkAuth(acc *zt.Leaf, pub *zt.ZkPubKey) error {
 		return errors.Wrapf(err, "authVerification")
 	}
 	return nil
+}
+
+func (z *zktree) getFeeAcc(statedb dbm.KV) (accountID uint64, addr string, err error) {
+	accountID = et.SystemFeeAccountId
+	leaf, err := z.getAccount(statedb, accountID)
+	if err != nil {
+		return
+	}
+	addr = leaf.Chain33Addr
+	return
 }
 
 //LimitOrder ...
