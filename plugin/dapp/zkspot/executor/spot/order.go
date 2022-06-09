@@ -9,6 +9,18 @@ import (
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
+func orderFrozenToken(order *et.SpotOrder, precision int64) (uint32, uint64) {
+	price := order.GetLimitOrder().GetPrice()
+	balance := order.GetBalance()
+
+	if order.GetLimitOrder().GetOp() == et.OpBuy {
+		amount := CalcActualCost(et.OpBuy, balance, price, precision)
+		amount += SafeMul(balance, int64(order.Rate), precision)
+		return order.GetLimitOrder().RightAsset, uint64(amount)
+	}
+	return order.GetLimitOrder().LeftAsset, uint64(balance)
+}
+
 // statedb: order, account
 // localdb: market-depth, market-orders, history-orders
 

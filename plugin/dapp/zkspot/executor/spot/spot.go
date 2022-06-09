@@ -60,40 +60,17 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 		return nil, et.ErrOrderSatus
 	}
 
-	price := order.GetLimitOrder().GetPrice()
-	balance := order.GetBalance()
 	cfg := a.env.GetAPI().GetConfig()
+	token, amount := orderFrozenToken(order, cfg.GetCoinPrecision())
 
-	if order.GetLimitOrder().GetOp() == et.OpBuy {
-		accX, err := LoadSpotAccount(order.Addr, uint64(order.GetLimitOrder().RightAsset), a.env.GetStateDB())
-		if err != nil {
-			return nil, err
-		}
-		amount := CalcActualCost(et.OpBuy, balance, price, cfg.GetCoinPrecision())
-		amount += SafeMul(balance, int64(order.Rate), cfg.GetCoinPrecision())
-
-		receipt, err := accX.Active(order.GetLimitOrder().RightAsset, uint64(amount))
-		if err != nil {
-			elog.Error("RevokeOrder.ExecActive", "addr", fromaddr, "amount", amount, "err", err.Error())
-			return nil, err
-		}
-		logs = append(logs, receipt.Logs...)
-		kvs = append(kvs, receipt.KV...)
+	accX, err := LoadSpotAccount(order.Addr, uint64(token), a.env.GetStateDB())
+	receipt, err := accX.Active(token, uint64(amount))
+	if err != nil {
+		elog.Error("RevokeOrder.ExecActive", "addr", fromaddr, "amount", amount, "err", err.Error())
+		return nil, err
 	}
-	if order.GetLimitOrder().GetOp() == et.OpSell {
-		accX, err := LoadSpotAccount(order.Addr, uint64(order.GetLimitOrder().RightAsset), a.env.GetStateDB())
-		if err != nil {
-			return nil, err
-		}
-
-		receipt, err := accX.Active(order.GetLimitOrder().RightAsset, uint64(balance))
-		if err != nil {
-			elog.Error("RevokeOrder.ExecActive", "addr", fromaddr, "amount", balance, "err", err.Error())
-			return nil, err
-		}
-		logs = append(logs, receipt.Logs...)
-		kvs = append(kvs, receipt.KV...)
-	}
+	logs = append(logs, receipt.Logs...)
+	kvs = append(kvs, receipt.KV...)
 
 	order.Status = et.Revoked
 	order.UpdateTime = a.env.GetBlockTime()
