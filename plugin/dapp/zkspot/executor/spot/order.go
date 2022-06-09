@@ -20,6 +20,7 @@ func FindOrderByOrderID1(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.Spo
 }
 
 func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.SpotOrder, error) {
+	// TODO
 	data, err := statedb.Get(calcOrderKey(orderID))
 	if err != nil {
 		elog.Error("findOrderByOrderID.Get", "orderID", orderID, "err", err.Error())
