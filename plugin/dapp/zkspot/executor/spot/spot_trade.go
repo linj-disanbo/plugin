@@ -401,6 +401,10 @@ func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.Sp
 		return nil, err
 	}
 	acc.order = order
+	acc.matches = &et.ReceiptSpotMatch{
+		Order: acc.order,
+		Index: a.GetIndex(),
+	}
 
 	return order, nil
 }

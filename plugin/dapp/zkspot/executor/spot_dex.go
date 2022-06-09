@@ -121,6 +121,7 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 		return nil, err
 	}
 
+	// 下面流程是否要放到 spot1中
 	taker, err := spot1.LoadUser(a.txinfo.From, payload.Order.AccountID)
 	if err != nil {
 		return nil, err
@@ -132,7 +133,7 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 	}
 	_ = order // set to order trader
 
-	receipt1, err := spot1.MatchLimitOrder(payload, entrustAddr, taker)
+	receipt1, err := spot1.MatchLimitOrder(payload, taker)
 	if err != nil {
 		return nil, err
 	}
