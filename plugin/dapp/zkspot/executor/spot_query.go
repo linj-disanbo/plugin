@@ -18,7 +18,7 @@ func (e *zkspot) Query_QueryMarketDepth(in *et.SpotQueryMarketDepth) (types.Mess
 	if !et.CheckOp(in.Op) {
 		return nil, et.ErrAssetOp
 	}
-	return spot.QueryMarketDepth(e.GetLocalDB(), in.LeftAsset, in.RightAsset, in.Op, in.PrimaryKey, in.Count)
+	return spot.QueryMarketDepth(e.GetLocalDB(), &dbprefix{}, in)
 }
 
 //查询已经完成得订单
@@ -60,5 +60,5 @@ func (e *zkspot) Query_QueryOrderList(in *et.SpotQueryOrderList) (types.Message,
 	if in.Address == "" {
 		return nil, et.ErrAddr
 	}
-	return spot.QueryOrderList(e.GetLocalDB(), in.Address, in.Status, in.Count, in.Direction, in.PrimaryKey)
+	return spot.QueryOrderList(e.GetLocalDB(), &dbprefix{}, in)
 }

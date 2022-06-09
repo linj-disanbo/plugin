@@ -91,9 +91,11 @@ func Direction(op int32) int32 {
 
 //QueryMarketDepth 这里primaryKey当作主键索引来用，
 //The first query does not need to fill in the value, pay according to the price from high to low, selling orders according to the price from low to high query
-func QueryMarketDepth(localdb dbm.KV, left, right uint32, op int32, primaryKey string, count int32) (*et.SpotMarketDepthList, error) {
-	var todo et.DBprefix
-	table := NewMarketDepthTable(localdb, todo)
+func QueryMarketDepth(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryMarketDepth) (*et.SpotMarketDepthList, error) {
+	left, right, op := in.LeftAsset, in.RightAsset, in.Op
+	count, primaryKey := in.Count, in.PrimaryKey
+
+	table := NewMarketDepthTable(localdb, dbprefix)
 	prefix := []byte(fmt.Sprintf("%08d:%08d:%d", left, right, op))
 	if count == 0 {
 		count = et.Count

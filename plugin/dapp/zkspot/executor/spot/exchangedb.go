@@ -88,28 +88,28 @@ HERE:
 }
 
 //QueryOrderList Displays the latest by default
-func QueryOrderList(localdb dbm.KV, addr string, status, count, direction int32, primaryKey string) (types.Message, error) {
-	var todo et.DBprefix
+func QueryOrderList(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryOrderList) (types.Message, error) {
 	var table *tab.Table
-	if status == et.Completed || status == et.Revoked {
-		table = NewHistoryOrderTable(localdb, todo)
+	if in.Status == et.Completed || in.Status == et.Revoked {
+		table = NewHistoryOrderTable(localdb, dbprefix)
 	} else {
-		table = NewMarketOrderTable(localdb, todo)
+		table = NewMarketOrderTable(localdb, dbprefix)
 	}
-	prefix := []byte(fmt.Sprintf("%s:%d", addr, status))
+	prefix := []byte(fmt.Sprintf("%s:%d", in.Address, in.Status))
 	indexName := "addr_status"
+	count := in.Count
 	if count == 0 {
 		count = et.Count
 	}
 	var rows []*tab.Row
 	var err error
-	if primaryKey == "" {
-		rows, err = table.ListIndex(indexName, prefix, nil, count, direction)
+	if in.PrimaryKey == "" {
+		rows, err = table.ListIndex(indexName, prefix, nil, count, in.Direction)
 	} else {
-		rows, err = table.ListIndex(indexName, prefix, []byte(primaryKey), count, direction)
+		rows, err = table.ListIndex(indexName, prefix, []byte(in.PrimaryKey), count, in.Direction)
 	}
 	if err != nil {
-		elog.Error("QueryOrderList.", "addr", addr, "err", err.Error())
+		elog.Error("QueryOrderList.", "addr", in.Address, "err", err.Error())
 		return nil, err
 	}
 	var orderList et.SpotOrderList
