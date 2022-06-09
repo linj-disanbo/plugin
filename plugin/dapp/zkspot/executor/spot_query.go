@@ -41,7 +41,7 @@ func (e *zkspot) Query_QueryOrder(in *et.SpotQueryOrder) (types.Message, error) 
 	if in.OrderID == 0 {
 		return nil, et.ErrOrderID
 	}
-	return spot.FindOrderByOrderID1(e.GetStateDB(), e.GetLocalDB(), in.OrderID)
+	return spot.FindOrderByOrderID(e.GetStateDB(), e.GetLocalDB(), &dbprefix{}, in.OrderID)
 }
 
 //根据订单状态，查询订单信息（这里面包含所有交易对）

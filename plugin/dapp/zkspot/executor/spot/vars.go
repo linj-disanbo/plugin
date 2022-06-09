@@ -1,5 +1,6 @@
 package spot
 
 const (
-	logName = "zkspot.spot"
+	logName     = "zkspot.spot"
+	orderKeyFmt = "orderID:%022d"
 )

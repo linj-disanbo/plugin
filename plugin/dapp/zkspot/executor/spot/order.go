@@ -9,19 +9,37 @@ import (
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
-// TODO
+// statedb: order, account
+// localdb: market-depth, market-orders, history-orders
 
-func calcOrderKey(orderID int64) []byte {
-	return []byte("TODO")
+func calcOrderKey(prefix string, orderID int64) []byte {
+	return []byte(fmt.Sprintf("%s"+orderKeyFmt, prefix, orderID))
 }
 
-func FindOrderByOrderID1(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.SpotOrder, error) {
-	return findOrderByOrderID(statedb, localdb, orderID)
+func FindOrderByOrderID(statedb dbm.KV, localdb dbm.KV, dbprefix et.DBprefix, orderID int64) (*et.SpotOrder, error) {
+	return newOrderSRepo(statedb, dbprefix).findOrderBy(orderID)
 }
 
-func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.SpotOrder, error) {
-	// TODO
-	data, err := statedb.Get(calcOrderKey(orderID))
+// orderSRepo statedb repo
+type orderSRepo struct {
+	statedb  dbm.KV
+	dbprefix et.DBprefix
+}
+
+func newOrderSRepo(statedb dbm.KV, dbprefix et.DBprefix) *orderSRepo {
+	return &orderSRepo{
+		statedb:  statedb,
+		dbprefix: dbprefix,
+	}
+}
+
+func (repo *orderSRepo) orderKey(orderID int64) []byte {
+	return calcOrderKey(repo.dbprefix.GetStatedbPrefix(), orderID)
+}
+
+func (repo *orderSRepo) findOrderBy(orderID int64) (*et.SpotOrder, error) {
+	key := repo.orderKey(orderID)
+	data, err := repo.statedb.Get(key)
 	if err != nil {
 		elog.Error("findOrderByOrderID.Get", "orderID", orderID, "err", err.Error())
 		return nil, err
@@ -36,8 +54,8 @@ func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.Spot
 	return &order, nil
 }
 
-func GetOrderKvSet1(order *et.SpotOrder) (kvset []*types.KeyValue) {
-	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(order.OrderID), Value: types.Encode(order)})
+func (repo *orderSRepo) GetOrderKvSet(order *et.SpotOrder) (kvset []*types.KeyValue) {
+	kvset = append(kvset, &types.KeyValue{Key: repo.orderKey(order.OrderID), Value: types.Encode(order)})
 	return kvset
 }
 

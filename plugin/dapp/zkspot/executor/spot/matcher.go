@@ -11,9 +11,10 @@ import (
 // price - list
 // order - list for each price
 type matcher struct {
-	localdb dbm.KV
-	statedb dbm.KV
-	api     client.QueueProtocolAPI
+	localdb  dbm.KV
+	statedb  dbm.KV
+	api      client.QueueProtocolAPI
+	dbprefix et.DBprefix
 
 	matchCount int
 	maxMatch   int
@@ -29,11 +30,12 @@ type matcher struct {
 	endOrderList   bool
 }
 
-func newMatcher(statedb, localdb dbm.KV, api client.QueueProtocolAPI) *matcher {
+func newMatcher(statedb, localdb dbm.KV, api client.QueueProtocolAPI, dbprefix et.DBprefix) *matcher {
 	return &matcher{
-		localdb: localdb,
-		statedb: statedb,
-		api:     api,
+		localdb:  localdb,
+		statedb:  statedb,
+		api:      api,
+		dbprefix: dbprefix,
 
 		pricekey:     "",
 		matchCount:   0,
@@ -51,6 +53,8 @@ func newMatcher(statedb, localdb dbm.KV, api client.QueueProtocolAPI) *matcher {
 func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
+
+	orderdb := newOrderSRepo(matcher1.statedb, matcher1.dbprefix)
 
 	for {
 		if matcher1.isDone() {
@@ -83,7 +87,7 @@ func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *Spot
 						break
 					}
 					// Check the order status
-					order, err := findOrderByOrderID(matcher1.statedb, matcher1.localdb, matchorder.GetOrderID())
+					order, err := orderdb.findOrderBy(matchorder.GetOrderID())
 					if err != nil || order.Status != et.Ordered {
 						continue
 					}
@@ -108,7 +112,7 @@ func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *Spot
 		}
 	}
 
-	kvs = append(kvs, GetOrderKvSet(taker.order)...)
+	kvs = append(kvs, GetOrderKvSet(matcher1.dbprefix.GetStatedbPrefix(), taker.order)...)
 	receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(taker.matches)}
 	logs = append(logs, receiptlog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}

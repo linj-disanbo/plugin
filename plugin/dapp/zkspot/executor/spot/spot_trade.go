@@ -319,7 +319,7 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOr
 	// order matched
 	m.order.Executed = matched
 	m.order.Balance -= matched
-	kvs := GetOrderKvSet(m.order)
+	kvs := GetOrderKvSet("TODO", m.order)
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
@@ -367,8 +367,8 @@ func createLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, inits []or
 	return or
 }
 
-func GetOrderKvSet(order *et.SpotOrder) (kvset []*types.KeyValue) {
-	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(order.OrderID), Value: types.Encode(order)})
+func GetOrderKvSet(prefix string, order *et.SpotOrder) (kvset []*types.KeyValue) {
+	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(prefix, order.OrderID), Value: types.Encode(order)})
 	return kvset
 }
 

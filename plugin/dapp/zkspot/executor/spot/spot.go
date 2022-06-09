@@ -46,7 +46,8 @@ func (a *Spot) SetFeeAcc(funcGetFeeAccount GetFeeAccount) error {
 func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	order, err := findOrderByOrderID(a.env.GetStateDB(), a.env.GetLocalDB(), payload.GetOrderID())
+	orderdb := newOrderSRepo(a.env.GetStateDB(), a.dbprefix)
+	order, err := orderdb.findOrderBy(payload.GetOrderID())
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +98,7 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 	order.Status = et.Revoked
 	order.UpdateTime = a.env.GetBlockTime()
 	order.RevokeHash = hex.EncodeToString([]byte(a.tx.Hash))
-	kvs = append(kvs, GetOrderKvSet(order)...)
+	kvs = append(kvs, orderdb.GetOrderKvSet(order)...)
 	re := &et.ReceiptSpotMatch{
 		Order: order,
 		Index: int64(a.tx.Index),
