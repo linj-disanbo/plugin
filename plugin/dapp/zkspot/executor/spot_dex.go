@@ -157,21 +157,8 @@ func (a *zkSpotDex) RevokeOrder(payload *et.SpotRevokeOrder, entrustAddr string)
 	return spot.RevokeOrder(a.txinfo.From, payload)
 }
 
-//QueryMarketDepth 这里primaryKey当作主键索引来用，
-//The first query does not need to fill in the value, pay according to the price from high to low, selling orders according to the price from low to high query
-
-// 使用 chain33 地址为key
-// 同样提供: account 基本和 token 级别的信息
-
-// 现在为了实现简单: 只有一个交易所,
-// 所以 资金帐号和现货交易所帐号是同一个
-
-// 存款交易是系统代为存入的, 存到指定帐号上, 不是签名帐号中
-
-// 用户帐号定义
-// dex1 -> accountid -> tokenids 是一个对象
-//  理论上, 对象越小越快, 但交易涉及两个资产. 如果一个资产是一个对象的. 要处理两个对象.
-//  先实现再说
+// 现在一个交易所, 资金帐号和现货交易所帐号是同一个
+// 在多个交易所的情况下, 会有一个资金帐号和多个交易所帐号
 func (a *zkSpotDex) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Receipt, error) {
 	chain33Addr := payload.GetChain33Addr()
 	amount, err := et.AmountFromZksync(payload.GetAmount())
@@ -217,8 +204,6 @@ func (a *zkSpotDex) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*typ
 
 	return acc.Burn(uint32(payload.TokenId), amountWithFee)
 }
-
-//
 
 func (a *zkSpotDex) newEntrust() *spot.Entrust {
 	e := spot.NewEntrust(a.txinfo.From, a.height, a.statedb)
