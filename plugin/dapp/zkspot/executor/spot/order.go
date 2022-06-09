@@ -94,8 +94,12 @@ func Direction(op int32) int32 {
 func QueryMarketDepth(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryMarketDepth) (*et.SpotMarketDepthList, error) {
 	left, right, op := in.LeftAsset, in.RightAsset, in.Op
 	count, primaryKey := in.Count, in.PrimaryKey
+	marketTable := NewMarketDepthTable(localdb, dbprefix)
 
-	table := NewMarketDepthTable(localdb, dbprefix)
+	return queryMarketDepthList(marketTable, left, right, op, primaryKey, count)
+}
+
+func queryMarketDepthList(table *tab.Table, left, right uint32, op int32, primaryKey string, count int32) (*et.SpotMarketDepthList, error) {
 	prefix := []byte(fmt.Sprintf("%08d:%08d:%d", left, right, op))
 	if count == 0 {
 		count = et.Count

@@ -125,11 +125,7 @@ func QueryOrderList(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryOrderL
 	return &orderList, nil
 }
 
-func QueryMarketDepth1(marketTable *tab.Table, left, right uint32, op int32, price int64) (*et.SpotMarketDepth, error) {
-	return queryMarketDepth(marketTable, left, right, op, price)
-}
-
-func queryMarketDepth(marketTable *tab.Table, left, right uint32, op int32, price int64) (*et.SpotMarketDepth, error) {
+func getMarketDepth(marketTable *tab.Table, left, right uint32, op int32, price int64) (*et.SpotMarketDepth, error) {
 	primaryKey := []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
 	row, err := marketTable.GetData(primaryKey)
 	if err != nil {

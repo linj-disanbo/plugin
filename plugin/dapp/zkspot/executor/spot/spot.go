@@ -232,7 +232,7 @@ func (a *Spot) updateOrder(marketTable, orderTable, historyTable *table.Table, o
 	switch order.Status {
 	case et.Ordered:
 		var markDepth et.SpotMarketDepth
-		depth, err := QueryMarketDepth1(marketTable, left, right, op, price)
+		depth, err := getMarketDepth(marketTable, left, right, op, price)
 		if err == types.ErrNotFound {
 			markDepth.Price = price
 			markDepth.LeftAsset = left
@@ -262,7 +262,7 @@ func (a *Spot) updateOrder(marketTable, orderTable, historyTable *table.Table, o
 		}
 	case et.Revoked:
 		var marketDepth et.SpotMarketDepth
-		depth, err := QueryMarketDepth1(marketTable, left, right, op, price)
+		depth, err := getMarketDepth(marketTable, left, right, op, price)
 		if err == nil {
 			marketDepth.Price = price
 			marketDepth.LeftAsset = left
@@ -341,7 +341,7 @@ func (a *Spot) updateMatchOrders(marketTable, orderTable, historyTable *table.Ta
 
 		for pr, executed := range cache {
 			var matchDepth et.SpotMarketDepth
-			depth, err := QueryMarketDepth1(marketTable, left, right, OpSwap(op), pr)
+			depth, err := getMarketDepth(marketTable, left, right, OpSwap(op), pr)
 			if err != nil {
 				continue
 			} else {

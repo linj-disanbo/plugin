@@ -149,7 +149,9 @@ func (m *matcher) QueryMarketDepth(payload *et.SpotLimitOrder) (*et.SpotMarketDe
 		m.done = true
 		return nil, nil
 	}
-	marketDepthList, _ := QueryMarketDepth(m.localdb, payload.GetLeftAsset(), payload.GetRightAsset(), OpSwap(payload.Op), m.pricekey, et.Count)
+	var todo et.DBprefix
+	marketTable := NewMarketDepthTable(m.localdb, todo)
+	marketDepthList, _ := queryMarketDepthList(marketTable, payload.GetLeftAsset(), payload.GetRightAsset(), OpSwap(payload.Op), m.pricekey, et.Count)
 	if marketDepthList == nil || len(marketDepthList.List) == 0 {
 		return nil, nil
 	}
