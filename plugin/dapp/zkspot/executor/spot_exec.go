@@ -4,7 +4,6 @@ import (
 	"time"
 
 	"github.com/33cn/chain33/types"
-	"github.com/33cn/plugin/plugin/dapp/zkspot/executor/spot"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	exchangetypes "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
@@ -47,13 +46,8 @@ func (e *zkspot) Exec_MarketOrder(payload *exchangetypes.SpotMarketOrder, tx *ty
 
 // 撤单
 func (e *zkspot) Exec_RevokeOrder(payload *exchangetypes.SpotRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	txinfo := NewTxInfo(tx, index)
-	spot, err := spot.NewSpot(&e.DriverBase, txinfo)
-	if err != nil {
-		return nil, err
-	}
 	action := NewZkSpotDex(e, tx, index)
-	return spot.RevokeOrder(action.txinfo.From, payload)
+	return action.RevokeOrder(payload, "")
 }
 
 // 绑定委托交易地址
@@ -65,7 +59,25 @@ func (e *zkspot) Exec_ExchangeBind(payload *exchangetypes.SpotExchangeBind, tx *
 // 委托交易
 func (e *zkspot) Exec_EntrustOrder(payload *exchangetypes.SpotEntrustOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewZkSpotDex(e, tx, index)
-	return action.EntrustOrder(&e.DriverBase, payload)
+	r, err := action.EntrustOrder(&e.DriverBase, payload)
+	// 构造 LimitOrder 的结算清单
+	list := GetSpotMatch(r)
+
+	action2 := NewAction(e, tx, index)
+	// TODO 这里参数如何统一
+	limitOrder := &et.SpotLimitOrder{
+		LeftAsset:  payload.LeftAsset,
+		RightAsset: payload.RightAsset,
+		Price:      payload.Price,
+		Amount:     payload.Amount,
+		Op:         payload.Op,
+		Order:      payload.Order,
+	}
+	r2, err := action2.SpotMatch(limitOrder, list)
+	if err != nil {
+		return r, err
+	}
+	return mergeReceipt(r, r2), nil
 }
 
 // 委托撤单
@@ -79,12 +91,6 @@ func (e *zkspot) Exec_EntrustRevokeOrder(payload *exchangetypes.SpotEntrustRevok
 	p := et.SpotRevokeOrder{
 		OrderID: payload.OrderID,
 	}
-
-	txinfo := NewTxInfo(tx, index)
-	spot, err := spot.NewSpot(&e.DriverBase, txinfo)
-	if err != nil {
-		return nil, err
-	}
 	action := NewZkSpotDex(e, tx, index)
-	return spot.RevokeOrder(action.txinfo.From, &p)
+	return action.RevokeOrder(&p, action.txinfo.From)
 }

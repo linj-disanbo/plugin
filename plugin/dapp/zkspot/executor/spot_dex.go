@@ -138,6 +138,7 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 		return nil, err
 	}
 
+	// TODO
 	if taker.GetOrder().Status != et.Completed {
 		receipt3, err := taker.FrozenForLimitOrder()
 		if err != nil {
@@ -146,6 +147,14 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 		receipt1 = mergeReceipt(receipt1, receipt3)
 	}
 	return receipt1, nil
+}
+
+func (a *zkSpotDex) RevokeOrder(payload *et.SpotRevokeOrder, entrustAddr string) (*types.Receipt, error) {
+	spot, err := spot.NewSpot(a.env, a.txinfo)
+	if err != nil {
+		return nil, err
+	}
+	return spot.RevokeOrder(a.txinfo.From, payload)
 }
 
 //QueryMarketDepth 这里primaryKey当作主键索引来用，
