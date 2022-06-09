@@ -160,15 +160,16 @@ func (a *zkSpotDex) RevokeOrder(payload *et.SpotRevokeOrder, entrustAddr string)
 // 现在一个交易所, 资金帐号和现货交易所帐号是同一个
 // 在多个交易所的情况下, 会有一个资金帐号和多个交易所帐号
 func (a *zkSpotDex) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Receipt, error) {
-	chain33Addr := payload.GetChain33Addr()
 	amount, err := et.AmountFromZksync(payload.GetAmount())
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO tid 哪里定义, 里面不需要知道tid 是什么, 在合约里 id1 换 id2
-
-	acc, err := spot.LoadSpotAccount(chain33Addr, accountID, a.statedb)
+	var zktree1 zktree
+	leaf, err := zktree1.getAccount(a.statedb, accountID)
+	if err != nil {
+		return nil, err
+	}
+	acc, err := spot.LoadSpotAccount(leaf.ChainAddr, accountID, a.statedb)
 	if err != nil {
 		return nil, err
 	}
