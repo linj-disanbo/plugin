@@ -3,89 +3,16 @@ package spot
 import (
 	"fmt"
 
-	"github.com/33cn/chain33/client"
 	dbm "github.com/33cn/chain33/common/db"
 	tab "github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
-// Action action struct
-type SpotAction struct {
-	statedb   dbm.KV
-	txhash    []byte
-	fromaddr  string
-	toaddr    string
-	blocktime int64
-	height    int64
-	execaddr  string
-	localDB   dbm.KVDB
-	index     int
-	api       client.QueueProtocolAPI
-}
-
 //GetIndex get index
 func GetIndex(height int64, index int64) int64 {
 	// Add four zeros to match multiple MatchOrder indexes
 	return (height*types.MaxTxsPerBlock + int64(index)) * 1e4
-}
-
-//GetKVSet get kv set
-func (a *SpotAction) GetKVSet(order *et.SpotOrder) (kvset []*types.KeyValue) {
-	return GetOrderKvSet(order)
-}
-
-//CheckPrice price  1<=price<=1e16
-func CheckPrice(price int64) bool {
-	if price > 1e16 || price < 1 {
-		return false
-	}
-	return true
-}
-
-//CheckOp ...
-func CheckOp(op int32) bool {
-	if op == et.OpBuy || op == et.OpSell {
-		return true
-	}
-	return false
-}
-
-//CheckCount ...
-func CheckCount(count int32) bool {
-	return count <= 20 && count >= 0
-}
-
-//CheckAmount 最小交易 1coin
-func CheckAmount(amount, coinPrecision int64) bool {
-	if amount < 1 || amount >= types.MaxCoin*coinPrecision {
-		return false
-	}
-	return true
-}
-
-//CheckDirection ...
-func CheckDirection(direction int32) bool {
-	if direction == et.ListASC || direction == et.ListDESC {
-		return true
-	}
-	return false
-}
-
-//CheckStatus ...
-func CheckStatus(status int32) bool {
-	if status == et.Ordered || status == et.Completed || status == et.Revoked {
-		return true
-	}
-	return false
-}
-
-//CheckExchangeAsset
-func CheckExchangeAsset(coinExec string, left, right uint32) bool {
-	if left == right {
-		return false
-	}
-	return true
 }
 
 // set the transaction logic method
@@ -285,20 +212,4 @@ func queryMarketDepth(marketTable *tab.Table, left, right uint32, op int32, pric
 		return nil, err
 	}
 	return row.Data.(*et.SpotMarketDepth), nil
-}
-
-func (a *SpotAction) LoadDexAccount(chain33addr string, accountID uint64) (*DexAccount, error) {
-	return LoadSpotAccount(chain33addr, accountID, a.statedb)
-}
-
-func (a *SpotAction) CalcMaxActive(accountID uint64, token uint32, amount string) (uint64, error) {
-	acc, err := LoadSpotAccount(a.fromaddr, accountID, a.statedb)
-	if err != nil {
-		return 0, err
-	}
-	idx := acc.findTokenIndex(token)
-	if idx < 0 {
-		return 0, nil
-	}
-	return acc.acc.Balance[idx].Balance, nil
 }
