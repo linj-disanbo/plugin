@@ -55,7 +55,11 @@ func (z *zkspot) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, in
 	if err != nil {
 		return nil, err
 	}
-	receipt2, err := dex1.Withdraw(payload, totalAmount.Uint64())
+	chainAmount, err := et.AmountFromZksync(totalAmount.String())
+	if err != nil {
+		return nil, err
+	}
+	receipt2, err := dex1.Withdraw(payload, chainAmount)
 	if err != nil {
 		return nil, err
 	}
