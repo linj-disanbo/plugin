@@ -33,7 +33,7 @@ func (e *zkspot) Query_QueryHistoryOrderList(in *et.SpotQueryHistoryOrderList) (
 	if !et.CheckDirection(in.Direction) {
 		return nil, et.ErrDirection
 	}
-	return spot.QueryHistoryOrderList(e.GetLocalDB(), in.LeftAsset, in.RightAsset, in.PrimaryKey, in.Count, in.Direction)
+	return spot.QueryHistoryOrderList(e.GetLocalDB(), &dbprefix{}, in)
 }
 
 //根据orderID查询订单信息

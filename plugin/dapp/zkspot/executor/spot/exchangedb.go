@@ -42,9 +42,10 @@ func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.Spot
 }
 */
 //QueryHistoryOrderList Only the order information is returned
-func QueryHistoryOrderList(localdb dbm.KV, left, right uint32, primaryKey string, count, direction int32) (types.Message, error) {
-	var todo et.DBprefix
-	table := NewHistoryOrderTable(localdb, todo)
+func QueryHistoryOrderList(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryHistoryOrderList) (types.Message, error) {
+	left, right, primaryKey, count, direction := in.LeftAsset, in.RightAsset, in.PrimaryKey, in.Count, in.Direction
+
+	table := NewHistoryOrderTable(localdb, dbprefix)
 	prefix := []byte(fmt.Sprintf("%08d:%08d", left, right))
 	indexName := "name"
 	if count == 0 {
