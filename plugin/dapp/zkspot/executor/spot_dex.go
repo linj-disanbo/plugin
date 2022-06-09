@@ -186,18 +186,7 @@ func (a *zkSpotDex) CalcMaxActive(accountID uint64, token uint32, amount string)
 }
 
 func (a *zkSpotDex) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*types.Receipt, error) {
-	// TODO amountWithFee to chain33amount
 	chain33Addr := a.txinfo.From
-	/*
-		amount := payload.GetAmount()
-		amount2, ok := big.NewInt(0).SetString(amount, 10)
-		if !ok {
-			return nil, et.ErrAssetBalance
-		}
-		_ = amount2
-	*/
-	// TODO tid 哪里定义, 里面不需要知道tid 是什么, 在合约里 id1 换 id2
-
 	acc, err := spot.LoadSpotAccount(chain33Addr, payload.AccountId, a.statedb)
 	if err != nil {
 		return nil, err
