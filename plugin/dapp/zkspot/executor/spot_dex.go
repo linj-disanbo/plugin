@@ -112,7 +112,7 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 		return nil, err
 	}
 
-	spot1, err := spot.NewSpot(base, &et.TxInfo{})
+	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
 	if err != nil {
 		return nil, err
 	}
@@ -150,7 +150,7 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 }
 
 func (a *zkSpotDex) RevokeOrder(payload *et.SpotRevokeOrder, entrustAddr string) (*types.Receipt, error) {
-	spot, err := spot.NewSpot(a.env, a.txinfo)
+	spot, err := spot.NewSpot(a.env, a.txinfo, &dbprefix{})
 	if err != nil {
 		return nil, err
 	}
@@ -247,4 +247,12 @@ func (a *zkSpotDex) EntrustOrder(d *dapp.DriverBase, payload *et.SpotEntrustOrde
 	}
 
 	return a.LimitOrder(d, limitOrder, payload.Addr)
+}
+
+func (a *zkSpotDex) execLocal(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	spot, err := spot.NewSpot(a.env, a.txinfo, &dbprefix{})
+	if err != nil {
+		return nil, err
+	}
+	return spot.ExecLocal(tx, receiptData, index)
 }
