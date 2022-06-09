@@ -16,11 +16,13 @@ type spotTaker struct {
 }
 
 type SpotTrader struct {
-	acc      *DexAccount
-	order    *et.SpotOrder
-	cfg      *types.Chain33Config
-	takerFee int32
-	makerFee int32
+	cfg   *types.Chain33Config
+	acc   *DexAccount
+	order *et.SpotOrder
+	fee   *spotFee
+	//takerFee int32
+	//makerFee int32
+
 	//
 	matches *et.ReceiptSpotMatch
 	accFee  *DexAccount
@@ -365,21 +367,6 @@ func createLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, inits []or
 	return or
 }
 
-type feeDetail struct {
-	addr  string
-	id    uint64
-	taker int32
-	maker int32
-}
-
-func (f *feeDetail) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
-	return func(order *et.SpotOrder) *et.SpotOrder {
-		order.Rate = f.maker
-		order.TakerRate = f.taker
-		return order
-	}
-}
-
 func GetOrderKvSet(order *et.SpotOrder) (kvset []*types.KeyValue) {
 	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(order.OrderID), Value: types.Encode(order)})
 	return kvset
@@ -399,11 +386,12 @@ func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) 
 }
 
 func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
-	fees, err := a.GetFees(fromaddr, payload.LeftAsset, payload.RightAsset)
+	fees, err := a.GetSpotFee(fromaddr, payload.LeftAsset, payload.RightAsset)
 	if err != nil {
 		elog.Error("executor/exchangedb getFees", "err", err)
 		return nil, err
 	}
+	acc.fee = fees
 
 	order := createLimitOrder(payload, entrustAddr,
 		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})

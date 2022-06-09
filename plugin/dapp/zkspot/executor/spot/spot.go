@@ -104,63 +104,42 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 	return receipts, nil
 }
 
-// fee
-func (a *Spot) GetFeeAcc() error {
-	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
-	if err != nil {
-		elog.Error("executor/spot ParseConfig", "err", err)
-		return err
-	}
-	// Taker/Maker fee may relate to user (fromaddr) level in dex
-
-	feeAcc, err := a.LoadUser(tCfg.GetFeeAddr(), tCfg.GetFeeAddrID())
-	if err != nil {
-		elog.Error("executor/spot LoadUser", "err", err)
-		return err
-	}
-	a.feeAcc = feeAcc
-	return nil
-}
-
 func (a *Spot) getFeeRate(fromaddr string, left, right uint32) (int32, int32, error) {
 	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
 	if err != nil {
-		elog.Error("executor/exchangedb ParseConfig", "err", err)
+		elog.Error("getFeeRate ParseConfig", "err", err)
 		return 0, 0, err
 	}
-	trade := tCfg.GetTrade(left, right)
+	tradeFee := tCfg.GetTrade(left, right)
 
 	// Taker/Maker fee may relate to user (fromaddr) level in dex
-	return trade.Taker, trade.Maker, nil
+	return tradeFee.Taker, tradeFee.Maker, nil
 }
 
-func (a *Spot) LoadFee(trader *SpotTrader, left, right uint32) error {
-	t, m, err := a.getFeeRate(trader.acc.acc.Addr, left, right)
+func (a *Spot) GetSpotFee(fromaddr string, left, right uint32) (*spotFee, error) {
+	takerFee, makerFee, err := a.getFeeRate(fromaddr, left, right)
 	if err != nil {
-		return err
-	}
-
-	trader.takerFee = t
-	trader.makerFee = m
-	return nil
-}
-
-func (a *Spot) GetFees(fromaddr string, left, right uint32) (*feeDetail, error) {
-	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
-
-	if err != nil {
-		elog.Error("executor/exchangedb ParseConfig", "err", err)
 		return nil, err
-
 	}
-	trade := tCfg.GetTrade(left, right)
-
-	// Taker/Maker fee may relate to user (fromaddr) level in dex
-
-	return &feeDetail{
+	return &spotFee{
 		addr:  a.feeAcc2.acc.Addr,
-		id:    1, //
-		taker: trade.Taker,
-		maker: trade.Maker,
+		id:    a.feeAcc2.acc.Id,
+		taker: takerFee,
+		maker: makerFee,
 	}, nil
+}
+
+type spotFee struct {
+	addr  string
+	id    uint64
+	taker int32
+	maker int32
+}
+
+func (f *spotFee) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
+	return func(order *et.SpotOrder) *et.SpotOrder {
+		order.Rate = f.maker
+		order.TakerRate = f.taker
+		return order
+	}
 }
