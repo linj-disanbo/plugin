@@ -66,6 +66,8 @@ func (z *zkspot) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, in
 	return mergeReceipt(receipt1, receipt2), nil
 }
 
+// TODO 下面如果有涉及资金变化的, 需要处理dex account
+
 func (z *zkspot) Exec_ContractToTree(payload *zt.ZkContractToTree, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
 	return action.ContractToTree(payload)
