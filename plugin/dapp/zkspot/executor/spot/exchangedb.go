@@ -9,38 +9,12 @@ import (
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
-//GetIndex get index
-func GetIndex(height int64, index int64) int64 {
-	// Add four zeros to match multiple MatchOrder indexes
-	return (height*types.MaxTxsPerBlock + int64(index)) * 1e4
-}
-
 func (a *Spot) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
 	matcher1 := newMatcher(a.env.GetStateDB(), a.env.GetLocalDB(), a.env.GetAPI(), a.dbprefix)
 	elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.GetOrderID())
 	return matcher1.MatchLimitOrder(payload, taker)
 }
 
-// Query the status database according to the order number
-// Localdb deletion sequence: delete the cache in real time first, and modify the DB uniformly during block generation.
-// The cache data will be deleted. However, if the cache query fails, the deleted data can still be queried in the DB
-/*
-func findOrderByOrderID(statedb dbm.KV, localdb dbm.KV, orderID int64) (*et.SpotOrder, error) {
-	data, err := statedb.Get(calcOrderKey(orderID))
-	if err != nil {
-		elog.Error("findOrderByOrderID.Get", "orderID", orderID, "err", err.Error())
-		return nil, err
-	}
-	var order et.SpotOrder
-	err = types.Decode(data, &order)
-	if err != nil {
-		elog.Error("findOrderByOrderID.Decode", "orderID", orderID, "err", err.Error())
-		return nil, err
-	}
-	order.Executed = order.GetLimitOrder().Amount - order.Balance
-	return &order, nil
-}
-*/
 //QueryHistoryOrderList Only the order information is returned
 func QueryHistoryOrderList(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryHistoryOrderList) (types.Message, error) {
 	left, right, primaryKey, count, direction := in.LeftAsset, in.RightAsset, in.PrimaryKey, in.Count, in.Direction
