@@ -15,26 +15,7 @@ import (
  */
 
 func (e *zkspot) ExecLocal_LimitOrder(payload *ety.SpotLimitOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	dbSet, err := e.execLocalZksync(tx, receiptData, index)
-	if err != nil {
-		return dbSet, err
-	}
-	set2, err := e.interExecLocal2(tx, receiptData, index)
-	if err != nil {
-		return dbSet, err
-	}
-	dbSet.KV = append(dbSet.KV, set2.KV...)
-	dbSet = e.addAutoRollBack(tx, dbSet.KV)
-	localDB := e.GetLocalDB()
-	for _, kv1 := range dbSet.KV {
-		//elog.Info("updateIndex", "localDB.Set", string(kv1.Key))
-		err := localDB.Set(kv1.Key, kv1.Value)
-		if err != nil {
-			elog.Error("updateIndex", "localDB.Set", err.Error())
-			return dbSet, err
-		}
-	}
-	return dbSet, nil
+	return e.interExecLocalWithZk(tx, receiptData, index)
 }
 
 func (e *zkspot) ExecLocal_MarketOrder(payload *ety.SpotMarketOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
@@ -46,7 +27,7 @@ func (e *zkspot) ExecLocal_RevokeOrder(payload *ety.SpotRevokeOrder, tx *types.T
 }
 
 func (e *zkspot) ExecLocal_EntrustOrder(payload *ety.SpotLimitOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
-	return e.interExecLocal(tx, receiptData, index)
+	return e.interExecLocalWithZk(tx, receiptData, index)
 }
 
 func (e *zkspot) ExecLocal_EntrustRevokeOrder(payload *ety.SpotMarketOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
@@ -104,6 +85,29 @@ func (e *zkspot) interExecLocal(tx *types.Transaction, receiptData *types.Receip
 		return nil, err
 	}
 
+	dbSet = e.addAutoRollBack(tx, dbSet.KV)
+	localDB := e.GetLocalDB()
+	for _, kv1 := range dbSet.KV {
+		//elog.Info("updateIndex", "localDB.Set", string(kv1.Key))
+		err := localDB.Set(kv1.Key, kv1.Value)
+		if err != nil {
+			elog.Error("updateIndex", "localDB.Set", err.Error())
+			return dbSet, err
+		}
+	}
+	return dbSet, nil
+}
+
+func (e *zkspot) interExecLocalWithZk(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	dbSet, err := e.execLocalZksync(tx, receiptData, index)
+	if err != nil {
+		return dbSet, err
+	}
+	set2, err := e.interExecLocal2(tx, receiptData, index)
+	if err != nil {
+		return dbSet, err
+	}
+	dbSet.KV = append(dbSet.KV, set2.KV...)
 	dbSet = e.addAutoRollBack(tx, dbSet.KV)
 	localDB := e.GetLocalDB()
 	for _, kv1 := range dbSet.KV {
