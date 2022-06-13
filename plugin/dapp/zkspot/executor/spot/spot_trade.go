@@ -290,7 +290,7 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOr
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func matchModel(matchorder *et.SpotOrder, taker *SpotTrader, statedb dbm.KV) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (taker *SpotTrader) matchModel(matchorder *et.SpotOrder, statedb dbm.KV) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
