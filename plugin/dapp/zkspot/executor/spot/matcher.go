@@ -151,8 +151,7 @@ func (m *matcher) QueryMarketDepth(payload *et.SpotLimitOrder) (*et.SpotMarketDe
 		m.done = true
 		return nil, nil
 	}
-	var todo et.DBprefix
-	marketTable := NewMarketDepthTable(m.localdb, todo)
+	marketTable := NewMarketDepthTable(m.localdb, m.dbprefix)
 	marketDepthList, _ := queryMarketDepthList(marketTable, payload.GetLeftAsset(), payload.GetRightAsset(), OpSwap(payload.Op), m.pricekey, et.Count)
 	if marketDepthList == nil || len(marketDepthList.List) == 0 {
 		return nil, nil
@@ -176,7 +175,7 @@ func (m *matcher) findOrderIDListByPrice(payload *et.SpotLimitOrder, marketDepth
 		m.endOrderList = false
 	}
 
-	orderList, err := findOrderIDListByPrice(m.localdb, payload.GetLeftAsset(), payload.GetRightAsset(), price, OpSwap(payload.Op), direction, m.orderKey)
+	orderList, err := findOrderIDListByPrice(m.localdb, payload.GetLeftAsset(), payload.GetRightAsset(), price, OpSwap(payload.Op), direction, m.orderKey, m.dbprefix)
 	if err != nil {
 		if err == types.ErrNotFound {
 			return &et.SpotOrderList{List: []*et.SpotOrder{}, PrimaryKey: ""}, nil

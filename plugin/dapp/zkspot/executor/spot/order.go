@@ -159,9 +159,8 @@ func (repo *orderSRepo) GetOrderKvSet(order *et.SpotOrder) (kvset []*types.KeyVa
 	return kvset
 }
 
-func findOrderIDListByPrice(localdb dbm.KV, left, right uint32, price int64, op, direction int32, primaryKey string) (*et.SpotOrderList, error) {
-	var todo et.DBprefix
-	table := NewMarketOrderTable(localdb, todo)
+func findOrderIDListByPrice(localdb dbm.KV, left, right uint32, price int64, op, direction int32, primaryKey string, dbprefix et.DBprefix) (*et.SpotOrderList, error) {
+	table := NewMarketOrderTable(localdb, dbprefix)
 	prefix := []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
 
 	var rows []*tab.Row
