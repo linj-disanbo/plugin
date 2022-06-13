@@ -1,8 +1,6 @@
 package spot
 
 import (
-	"encoding/hex"
-
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
@@ -315,79 +313,4 @@ func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *SpotTrader) ([]*ty
 	elog.Info("try match2", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
 		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
 	return logs, kvs, err
-}
-
-type orderInit func(*et.SpotOrder) *et.SpotOrder
-
-func createLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, inits []orderInit) *et.SpotOrder {
-	or := &et.SpotOrder{
-		Value:       &et.SpotOrder_LimitOrder{LimitOrder: payload},
-		Ty:          et.TyLimitOrderAction,
-		EntrustAddr: entrustAddr,
-		Executed:    0,
-		AVGPrice:    0,
-		Balance:     payload.GetAmount(),
-		Status:      et.Ordered,
-	}
-	for _, initFun := range inits {
-		or = initFun(or)
-	}
-	return or
-}
-
-func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) {
-	acc, err := LoadSpotAccount(fromaddr, accountID, a.env.GetStateDB())
-	if err != nil {
-		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
-		return nil, err
-	}
-
-	return &SpotTrader{
-		acc: acc,
-		cfg: a.env.GetAPI().GetConfig(),
-	}, nil
-}
-
-func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
-	fees, err := a.GetSpotFee(fromaddr, payload.LeftAsset, payload.RightAsset)
-	if err != nil {
-		elog.Error("executor/exchangedb getFees", "err", err)
-		return nil, err
-	}
-	acc.fee = fees
-
-	order := createLimitOrder(payload, entrustAddr,
-		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
-	orderx := newSpotOrder(order, a.orderdb)
-
-	tid, amount := orderx.NeedToken(a.env.GetAPI().GetConfig().GetCoinPrecision())
-	err = acc.CheckTokenAmountForLimitOrder(tid, amount)
-	if err != nil {
-		return nil, err
-	}
-	acc.order.order = order
-	acc.matches = &et.ReceiptSpotMatch{
-		Order: acc.order.order,
-		Index: a.GetIndex(),
-	}
-
-	return order, nil
-}
-
-//GetIndex get index
-func (a *Spot) GetIndex() int64 {
-	// Add four zeros to match multiple MatchOrder indexes
-	return (a.env.GetHeight()*types.MaxTxsPerBlock + int64(a.tx.Index)) * 1e4
-}
-
-func (a *Spot) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
-	return func(order *et.SpotOrder) *et.SpotOrder {
-		order.OrderID = a.GetIndex()
-		order.Index = a.GetIndex()
-		order.CreateTime = a.env.GetBlockTime()
-		order.UpdateTime = a.env.GetBlockTime()
-		order.Hash = hex.EncodeToString(a.tx.Hash)
-		order.Addr = a.tx.From
-		return order
-	}
 }
