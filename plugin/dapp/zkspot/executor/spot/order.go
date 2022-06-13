@@ -1,6 +1,7 @@
 package spot
 
 import (
+	"encoding/hex"
 	"fmt"
 
 	dbm "github.com/33cn/chain33/common/db"
@@ -9,7 +10,41 @@ import (
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
-func orderFrozenToken(order *et.SpotOrder, precision int64) (uint32, uint64) {
+type spotOrder struct {
+	statedb  dbm.KV
+	localdb  dbm.KV
+	dbprefix et.DBprefix
+	repo     *orderSRepo
+}
+
+// type spotOrder et.SpotOrder
+
+func newSpotOrder(statedb dbm.KV, localdb dbm.KV, dbprefix et.DBprefix) *spotOrder {
+	return &spotOrder{
+		repo:     newOrderSRepo(statedb, dbprefix),
+		statedb:  statedb,
+		localdb:  localdb,
+		dbprefix: dbprefix,
+	}
+}
+
+func (o *spotOrder) find(id int64) (*et.SpotOrder, error) {
+	return o.repo.findOrderBy(id)
+}
+
+func (o *spotOrder) checkRevoke(fromaddr string, order *et.SpotOrder) error {
+	if order.Addr != fromaddr {
+		elog.Error("RevokeOrder.OrderCheck", "addr", fromaddr, "order.addr", order.Addr, "order.status", order.Status)
+		return et.ErrAddr
+	}
+	if order.Status == et.Completed || order.Status == et.Revoked {
+		elog.Error("RevokeOrder.OrderCheck", "addr", fromaddr, "order.addr", order.Addr, "order.status", order.Status)
+		return et.ErrOrderSatus
+	}
+	return nil
+}
+
+func (o *spotOrder) calcFrozenToken(order *et.SpotOrder, precision int64) (uint32, uint64) {
 	price := order.GetLimitOrder().GetPrice()
 	balance := order.GetBalance()
 
@@ -19,6 +54,20 @@ func orderFrozenToken(order *et.SpotOrder, precision int64) (uint32, uint64) {
 		return order.GetLimitOrder().RightAsset, uint64(amount)
 	}
 	return order.GetLimitOrder().LeftAsset, uint64(balance)
+}
+
+func (o *spotOrder) Revoke(order *et.SpotOrder, blockTime int64, txhash []byte, txindex int) (*types.Receipt, error) {
+	order.Status = et.Revoked
+	order.UpdateTime = blockTime
+	order.RevokeHash = hex.EncodeToString(txhash)
+	kvs := o.repo.GetOrderKvSet(order)
+
+	re := &et.ReceiptSpotMatch{
+		Order: order,
+		Index: int64(txindex),
+	}
+	receiptlog := &types.ReceiptLog{Ty: et.TyRevokeOrderLog, Log: types.Encode(re)}
+	return &types.Receipt{KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}, nil
 }
 
 // statedb: order, account

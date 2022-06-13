@@ -1,7 +1,6 @@
 package spot
 
 import (
-	"encoding/hex"
 	"fmt"
 
 	"github.com/33cn/chain33/common/db/table"
@@ -21,6 +20,11 @@ type Spot struct {
 	dbprefix et.DBprefix
 	feeAcc   *SpotTrader
 	feeAcc2  *DexAccount
+
+	//
+	order    *spotOrder
+	matcher1 *matcher
+	// fee
 }
 
 type GetFeeAccount func() (*DexAccount, error)
@@ -30,6 +34,8 @@ func NewSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Spot,
 		env:      e,
 		tx:       tx,
 		dbprefix: dbprefix,
+		order:    newSpotOrder(e.GetStateDB(), e.GetLocalDB(), dbprefix),
+		matcher1: newMatcher(e.GetStateDB(), e.GetLocalDB(), e.GetAPI(), dbprefix),
 	}
 	return spot, nil
 }
@@ -46,22 +52,18 @@ func (a *Spot) SetFeeAcc(funcGetFeeAccount GetFeeAccount) error {
 func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-	orderdb := newOrderSRepo(a.env.GetStateDB(), a.dbprefix)
-	order, err := orderdb.findOrderBy(payload.GetOrderID())
+
+	order, err := a.order.find(payload.GetOrderID())
 	if err != nil {
 		return nil, err
 	}
-	if order.Addr != fromaddr {
-		elog.Error("RevokeOrder.OrderCheck", "addr", fromaddr, "order.addr", order.Addr, "order.status", order.Status)
-		return nil, et.ErrAddr
-	}
-	if order.Status == et.Completed || order.Status == et.Revoked {
-		elog.Error("RevokeOrder.OrderCheck", "addr", fromaddr, "order.addr", order.Addr, "order.status", order.Status)
-		return nil, et.ErrOrderSatus
+	err = a.order.checkRevoke(fromaddr, order)
+	if err != nil {
+		return nil, err
 	}
 
 	cfg := a.env.GetAPI().GetConfig()
-	token, amount := orderFrozenToken(order, cfg.GetCoinPrecision())
+	token, amount := a.order.calcFrozenToken(order, cfg.GetCoinPrecision())
 
 	accX, err := LoadSpotAccount(order.Addr, uint64(token), a.env.GetStateDB())
 	receipt, err := accX.Active(token, uint64(amount))
@@ -72,16 +74,14 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 	logs = append(logs, receipt.Logs...)
 	kvs = append(kvs, receipt.KV...)
 
-	order.Status = et.Revoked
-	order.UpdateTime = a.env.GetBlockTime()
-	order.RevokeHash = hex.EncodeToString([]byte(a.tx.Hash))
-	kvs = append(kvs, orderdb.GetOrderKvSet(order)...)
-	re := &et.ReceiptSpotMatch{
-		Order: order,
-		Index: int64(a.tx.Index),
+	r1, err := a.order.Revoke(order, a.env.GetBlockTime(), a.tx.Hash, a.tx.Index)
+	if err != nil {
+		elog.Error("RevokeOrder.Revoke", "addr", fromaddr, "amount", amount, "err", err.Error())
+		return nil, err
 	}
-	receiptlog := &types.ReceiptLog{Ty: et.TyRevokeOrderLog, Log: types.Encode(re)}
-	logs = append(logs, receiptlog)
+
+	kvs = append(kvs, r1.KV...)
+	logs = append(logs, r1.Logs...)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
