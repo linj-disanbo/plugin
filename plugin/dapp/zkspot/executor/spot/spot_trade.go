@@ -335,11 +335,6 @@ func createLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, inits []or
 	return or
 }
 
-func GetOrderKvSet1(prefix string, order *et.SpotOrder) (kvset []*types.KeyValue) {
-	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(prefix, order.OrderID), Value: types.Encode(order)})
-	return kvset
-}
-
 func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) {
 	acc, err := LoadSpotAccount(fromaddr, accountID, a.env.GetStateDB())
 	if err != nil {
