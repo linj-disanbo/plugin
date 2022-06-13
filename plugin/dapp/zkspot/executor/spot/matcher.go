@@ -50,11 +50,9 @@ func newMatcher(statedb, localdb dbm.KV, api client.QueueProtocolAPI, dbprefix e
 //1. The purchase price is higher than the market price, and the price is matched from low to high.
 //2. Sell orders are matched at prices lower than market prices.
 //3. Match the same prices on a first-in, first-out basis
-func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
+func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader, orderdb *spotOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
-
-	orderdb := newOrderSRepo(matcher1.statedb, matcher1.dbprefix)
 
 	for {
 		if matcher1.isDone() {
@@ -87,7 +85,7 @@ func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *Spot
 						break
 					}
 					// Check the order status
-					order, err := orderdb.findOrderBy(matchorder.GetOrderID())
+					order, err := orderdb.find(matchorder.GetOrderID())
 					if err != nil || order.Status != et.Ordered {
 						continue
 					}
@@ -112,7 +110,7 @@ func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *Spot
 		}
 	}
 
-	kvs = append(kvs, GetOrderKvSet(matcher1.dbprefix.GetStatedbPrefix(), taker.order)...)
+	kvs = append(kvs, orderdb.repo.GetOrderKvSet(taker.order)...)
 	receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(taker.matches)}
 	logs = append(logs, receiptlog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
