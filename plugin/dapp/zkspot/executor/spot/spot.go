@@ -223,14 +223,13 @@ func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.Sp
 
 	order := createLimitOrder(payload, entrustAddr,
 		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
-	orderx := newSpotOrder(order, a.orderdb)
+	acc.order = newSpotOrder(order, a.orderdb)
 
-	tid, amount := orderx.NeedToken(a.env.GetAPI().GetConfig().GetCoinPrecision())
+	tid, amount := acc.order.NeedToken(a.env.GetAPI().GetConfig().GetCoinPrecision())
 	err = acc.CheckTokenAmountForLimitOrder(tid, amount)
 	if err != nil {
 		return nil, err
 	}
-	acc.order.order = order
 	acc.matches = &et.ReceiptSpotMatch{
 		Order: acc.order.order,
 		Index: a.GetIndex(),
