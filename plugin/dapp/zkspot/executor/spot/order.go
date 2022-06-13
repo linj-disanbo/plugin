@@ -86,6 +86,10 @@ func (o *spotOrder) Revoke(order *et.SpotOrder, blockTime int64, txhash []byte, 
 	return &types.Receipt{KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}, nil
 }
 
+func (o *spotOrder) isActiveOrder(order *et.SpotOrder) bool {
+	return order.Status == et.Ordered
+}
+
 // statedb: order, account
 // localdb: market-depth, market-orders, history-orders
 
