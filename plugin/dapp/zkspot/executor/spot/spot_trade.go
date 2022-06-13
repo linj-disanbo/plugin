@@ -36,31 +36,11 @@ type spotMaker struct {
 	SpotTrader
 }
 
-// buy 按最大量判断余额是否够
-// 因为在吃单时, 价格是变动的, 所以实际锁定的量是会浮动的
-// 实现上, 按最大量判断余额是否够, 在成交时, 按实际需要量扣除. 最后变成挂单时, 进行锁定
-func (s *SpotTrader) CheckTokenAmountForLimitOrder(order *et.SpotOrder) error {
-	precision := s.cfg.GetCoinPrecision()
-	or := order.GetLimitOrder()
-	if or.GetOp() == et.OpBuy {
-		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
-		fee := calcMtfFee(amount, int32(order.TakerRate))
-		total := SafeAdd(amount, int64(fee))
-
-		if s.acc.getBalance(or.RightAsset) < uint64(total) {
-			elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "b", s.acc.getBalance(or.RightAsset), "need", total)
-			return et.ErrAssetBalance
-		}
-		return nil
-	}
-
-	/* if payload.GetOp() == et.OpSell */
-	amount := or.GetAmount()
-	if s.acc.getBalance(or.LeftAsset) < uint64(amount) {
-		elog.Error("limit check left balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "b", s.acc.getBalance(or.LeftAsset), "need", amount)
+func (s *SpotTrader) CheckTokenAmountForLimitOrder(tid uint32, total int64) error {
+	if s.acc.getBalance(tid) < uint64(total) {
+		elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "b", s.acc.getBalance(tid), "need", total)
 		return et.ErrAssetBalance
 	}
-
 	return nil
 }
 
@@ -396,7 +376,8 @@ func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.Sp
 	order := createLimitOrder(payload, entrustAddr,
 		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
 
-	err = acc.CheckTokenAmountForLimitOrder(order)
+	tid, amount := a.order.NeedToken(order, a.env.GetAPI().GetConfig().GetCoinPrecision())
+	err = acc.CheckTokenAmountForLimitOrder(tid, amount)
 	if err != nil {
 		return nil, err
 	}

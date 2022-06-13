@@ -56,6 +56,22 @@ func (o *spotOrder) calcFrozenToken(order *et.SpotOrder, precision int64) (uint3
 	return order.GetLimitOrder().LeftAsset, uint64(balance)
 }
 
+// buy 按最大量判断余额是否够
+// 因为在吃单时, 价格是变动的, 所以实际锁定的量是会浮动的
+// 实现上, 按最大量判断余额是否够, 在成交时, 按实际需要量扣除. 最后变成挂单时, 进行锁定
+func (o *spotOrder) NeedToken(order *et.SpotOrder, precision int64) (uint32, int64) {
+	or := order.GetLimitOrder()
+	if or.GetOp() == et.OpBuy {
+		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
+		fee := calcMtfFee(amount, int32(order.TakerRate))
+		total := SafeAdd(amount, int64(fee))
+		return or.LeftAsset, total
+	}
+
+	/* if payload.GetOp() == et.OpSell */
+	return or.LeftAsset, or.GetAmount()
+}
+
 func (o *spotOrder) Revoke(order *et.SpotOrder, blockTime int64, txhash []byte, txindex int) (*types.Receipt, error) {
 	order.Status = et.Revoked
 	order.UpdateTime = blockTime
