@@ -94,3 +94,12 @@ func AmountToZksync(a uint64) string {
 	amount := new(big.Int).Mul(new(big.Int).SetUint64(a), big.NewInt(precisionDiff))
 	return amount.String()
 }
+
+func MergeReceipt(receipt1, receipt2 *types.Receipt) *types.Receipt {
+	if receipt2 != nil {
+		receipt1.KV = append(receipt1.KV, receipt2.KV...)
+		receipt1.Logs = append(receipt1.Logs, receipt2.Logs...)
+	}
+
+	return receipt1
+}

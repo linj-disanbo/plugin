@@ -72,7 +72,7 @@ func (s *SpotTrader) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyV
 	balance := s.calcTradeBalance(maker.order)
 	matchDetail := s.calcTradeInfo(maker, balance)
 
-	receipt3, kvs3, err := maker.orderTraded(&matchDetail, s.order)
+	receipt3, kvs3, err := maker.orderTraded(&matchDetail, s.order, nil) // TODO
 	if err != nil {
 		elog.Error("maker.orderTraded", "err", err)
 		return receipt3, kvs3, err
@@ -280,7 +280,8 @@ func (s *SpotTrader) orderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder)
 	return []*types.ReceiptLog{}, []*types.KeyValue{}, nil
 }
 
-func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+// 2 -> 1 update, 2 kv
+func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOrder, orderx *spotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
@@ -299,7 +300,7 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOr
 	// order matched
 	m.order.Executed = matched
 	m.order.Balance -= matched
-	kvs := GetOrderKvSet("TODO", m.order)
+	kvs := orderx.repo.GetOrderKvSet(m.order)
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
@@ -347,7 +348,7 @@ func createLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, inits []or
 	return or
 }
 
-func GetOrderKvSet(prefix string, order *et.SpotOrder) (kvset []*types.KeyValue) {
+func GetOrderKvSet1(prefix string, order *et.SpotOrder) (kvset []*types.KeyValue) {
 	kvset = append(kvset, &types.KeyValue{Key: calcOrderKey(prefix, order.OrderID), Value: types.Encode(order)})
 	return kvset
 }

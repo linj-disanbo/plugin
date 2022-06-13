@@ -137,15 +137,6 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 	if err != nil {
 		return nil, err
 	}
-
-	// TODO
-	if taker.GetOrder().Status != et.Completed {
-		receipt3, err := taker.FrozenForLimitOrder()
-		if err != nil {
-			return nil, err
-		}
-		receipt1 = mergeReceipt(receipt1, receipt3)
-	}
 	return receipt1, nil
 }
 

@@ -12,7 +12,21 @@ import (
 func (a *Spot) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
 	matcher1 := newMatcher(a.env.GetStateDB(), a.env.GetLocalDB(), a.env.GetAPI(), a.dbprefix)
 	elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.GetOrderID())
-	return matcher1.MatchLimitOrder(payload, taker)
+	receipt1, err := matcher1.MatchLimitOrder(payload, taker, a.order)
+	if err != nil {
+		return nil, err
+	}
+
+	if a.order.isActiveOrder(taker.order) {
+		receipt3, err := taker.FrozenForLimitOrder()
+		if err != nil {
+			return nil, err
+		}
+		receipt1 = et.MergeReceipt(receipt1, receipt3)
+	}
+
+	return receipt1, nil
+
 }
 
 //QueryHistoryOrderList Only the order information is returned
