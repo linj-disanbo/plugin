@@ -81,7 +81,7 @@ func (o *spotOrder) NeedToken(precision int64) (uint32, int64) {
 	or := o.order.GetLimitOrder()
 	if or.GetOp() == et.OpBuy {
 		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
-		fee := calcMtfFee(amount, int32(o.order.TakerRate))
+		fee := calcMtfFee(amount, int32(o.order.TakerRate), precision)
 		total := SafeAdd(amount, int64(fee))
 		return or.LeftAsset, total
 	}

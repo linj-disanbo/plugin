@@ -3,7 +3,6 @@ package spot
 import (
 	"math/big"
 
-	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
@@ -31,9 +30,9 @@ func caclAVGPrice(order *et.SpotOrder, price int64, amount int64) int64 {
 }
 
 //计Calculation fee
-func calcMtfFee(cost int64, rate int32) int64 {
+func calcMtfFee(cost int64, rate int32, coinPrecision int64) int64 {
 	fee := big.NewInt(0).Mul(big.NewInt(cost), big.NewInt(int64(rate)))
-	fee = big.NewInt(0).Div(fee, big.NewInt(types.DefaultCoinPrecision))
+	fee = big.NewInt(0).Div(fee, big.NewInt(coinPrecision))
 	return fee.Int64()
 }
 
