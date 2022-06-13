@@ -175,7 +175,8 @@ func (m *matcher) findOrderIDListByPrice(payload *et.SpotLimitOrder, marketDepth
 		m.endOrderList = false
 	}
 
-	orderList, err := findOrderIDListByPrice(m.localdb, payload.GetLeftAsset(), payload.GetRightAsset(), price, OpSwap(payload.Op), direction, m.orderKey, m.dbprefix)
+	orderLdb := newOrderLRepo(m.localdb, m.dbprefix)
+	orderList, err := orderLdb.findOrderIDListByPrice(payload.GetLeftAsset(), payload.GetRightAsset(), price, OpSwap(payload.Op), direction, m.orderKey)
 	if err != nil {
 		if err == types.ErrNotFound {
 			return &et.SpotOrderList{List: []*et.SpotOrder{}, PrimaryKey: ""}, nil

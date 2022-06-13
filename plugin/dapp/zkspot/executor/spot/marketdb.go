@@ -282,3 +282,86 @@ func updateMatchedOrders(marketTable, orderTable, historyTable *table.Table, ord
 	}
 	return nil
 }
+
+type orderLRepo struct {
+	table *table.Table
+}
+
+func newOrderLRepo(localdb dbm.KV, p et.DBprefix) *orderLRepo {
+	table := NewMarketOrderTable(localdb, p)
+	return &orderLRepo{
+		table: table,
+	}
+}
+
+func (db *orderLRepo) pricePrefix(left, right uint32, price int64, op int32) []byte {
+	return []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
+}
+
+func (db *orderLRepo) findOrderIDListByPrice(left, right uint32, price int64, op, direction int32, primaryKey string) (*et.SpotOrderList, error) {
+	table := db.table
+	prefix := db.pricePrefix(left, right, price, op)
+
+	var rows []*tab.Row
+	var err error
+	if primaryKey == "" { // First query, the default display of the latest transaction record
+		rows, err = table.ListIndex("market_order", prefix, nil, et.Count, direction)
+	} else {
+		rows, err = table.ListIndex("market_order", prefix, []byte(primaryKey), et.Count, direction)
+	}
+	if err != nil {
+		if primaryKey == "" {
+			elog.Error("findOrderIDListByPrice.", "left", left, "right", right, "price", price, "err", err.Error())
+		}
+		return nil, err
+	}
+	var orderList et.SpotOrderList
+	for _, row := range rows {
+		order := row.Data.(*et.SpotOrder)
+		// The replacement has been done
+		order.Executed = order.GetLimitOrder().Amount - order.Balance
+		orderList.List = append(orderList.List, order)
+	}
+	// Set the primary key index
+	if len(rows) == int(et.Count) {
+		orderList.PrimaryKey = string(rows[len(rows)-1].Primary)
+	}
+	return &orderList, nil
+}
+
+//QueryMarketDepth 这里primaryKey当作主键索引来用，
+//The first query does not need to fill in the value, pay according to the price from high to low, selling orders according to the price from low to high query
+func QueryMarketDepth(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryMarketDepth) (*et.SpotMarketDepthList, error) {
+	left, right, op := in.LeftAsset, in.RightAsset, in.Op
+	count, primaryKey := in.Count, in.PrimaryKey
+	marketTable := NewMarketDepthTable(localdb, dbprefix)
+
+	return queryMarketDepthList(marketTable, left, right, op, primaryKey, count)
+}
+
+func queryMarketDepthList(table *tab.Table, left, right uint32, op int32, primaryKey string, count int32) (*et.SpotMarketDepthList, error) {
+	prefix := []byte(fmt.Sprintf("%08d:%08d:%d", left, right, op))
+	if count == 0 {
+		count = et.Count
+	}
+	var rows []*tab.Row
+	var err error
+	if primaryKey == "" { // First query, the default display of the latest transaction record
+		rows, err = table.ListIndex("price", prefix, nil, count, Direction(op))
+	} else {
+		rows, err = table.ListIndex("price", prefix, []byte(primaryKey), count, Direction(op))
+	}
+	if err != nil {
+		elog.Error("QueryMarketDepth.", "prefix", string(prefix), "left", left, "right", right, "err", err.Error())
+		return nil, err
+	}
+
+	var list et.SpotMarketDepthList
+	for _, row := range rows {
+		list.List = append(list.List, row.Data.(*et.SpotMarketDepth))
+	}
+	if len(rows) == int(count) {
+		list.PrimaryKey = string(rows[len(rows)-1].Primary)
+	}
+	return &list, nil
+}
