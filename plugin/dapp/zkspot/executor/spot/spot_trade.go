@@ -1,6 +1,7 @@
 package spot
 
 import (
+	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
@@ -289,7 +290,7 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOr
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *SpotTrader) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func matchModel(matchorder *et.SpotOrder, taker *SpotTrader, statedb dbm.KV) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -297,7 +298,7 @@ func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *SpotTrader) ([]*ty
 	elog.Info("try match", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
 		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
 
-	accMatch, err := LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, m.statedb)
+	accMatch, err := LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, statedb)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -305,7 +306,7 @@ func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *SpotTrader) ([]*ty
 		SpotTrader: SpotTrader{
 			acc:   accMatch,
 			order: newSpotOrder(matchorder, taker.order.repo),
-			cfg:   m.api.GetConfig(),
+			cfg:   taker.cfg,
 		},
 	}
 

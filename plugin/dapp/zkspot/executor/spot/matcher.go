@@ -89,7 +89,7 @@ func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *Spot
 					if err != nil || order.Status != et.Ordered {
 						continue
 					}
-					log, kv, err := matcher1.matchModel(order, taker)
+					log, kv, err := matchModel(order, taker, matcher1.statedb)
 					if err != nil {
 						elog.Error("matchModel", "height", "orderID", order.GetOrderID(), "payloadID", taker.order.order.GetOrderID(), "error", err)
 						return nil, err
