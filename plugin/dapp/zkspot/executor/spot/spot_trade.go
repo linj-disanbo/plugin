@@ -18,7 +18,7 @@ type spotTaker struct {
 type SpotTrader struct {
 	cfg   *types.Chain33Config
 	acc   *DexAccount
-	order *et.SpotOrder
+	order *spotOrder
 	fee   *spotFee
 	//takerFee int32
 	//makerFee int32
@@ -28,7 +28,7 @@ type SpotTrader struct {
 	accFee  *DexAccount
 }
 
-func (s *SpotTrader) GetOrder() *et.SpotOrder {
+func (s *SpotTrader) GetOrder() *spotOrder {
 	return s.order
 }
 
@@ -46,7 +46,7 @@ func (s *SpotTrader) CheckTokenAmountForLimitOrder(tid uint32, total int64) erro
 
 func (s *SpotTrader) FrozenForLimitOrder(orderx *spotOrder) (*types.Receipt, error) {
 	precision := s.cfg.GetCoinPrecision()
-	asset, amount := orderx.calcFrozenToken(s.order, precision)
+	asset, amount := orderx.calcFrozenToken(precision)
 
 	receipt, err := s.acc.Frozen(asset, uint64(amount))
 	if err != nil {
@@ -57,16 +57,16 @@ func (s *SpotTrader) FrozenForLimitOrder(orderx *spotOrder) (*types.Receipt, err
 }
 
 func (s *SpotTrader) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyValue, error) {
-	balance := s.calcTradeBalance(maker.order)
+	balance := s.calcTradeBalance(maker.order.order)
 	matchDetail := s.calcTradeInfo(maker, balance)
 
-	receipt3, kvs3, err := maker.orderTraded(&matchDetail, s.order, nil) // TODO
+	receipt3, kvs3, err := maker.orderTraded(&matchDetail, s.order.order, nil) // TODO
 	if err != nil {
 		elog.Error("maker.orderTraded", "err", err)
 		return receipt3, kvs3, err
 	}
 
-	receipt2, kvs2, err := s.orderTraded(&matchDetail, maker.order)
+	receipt2, kvs2, err := s.orderTraded(&matchDetail, maker.order.order)
 	if err != nil {
 		elog.Error("taker.orderTraded", "err", err)
 		return receipt2, kvs2, err
@@ -87,8 +87,8 @@ func (s *SpotTrader) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyV
 }
 
 func (s *SpotTrader) calcTradeBalance(order *et.SpotOrder) int64 {
-	if order.GetBalance() >= s.order.GetBalance() {
-		return s.order.GetBalance()
+	if order.GetBalance() >= s.order.order.GetBalance() {
+		return s.order.order.GetBalance()
 	}
 	return order.GetBalance()
 }
@@ -97,9 +97,9 @@ func (s *SpotTrader) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo
 	var info et.MatchInfo
 	info.Matched = balance
 	info.LeftBalance = balance
-	info.RightBalance = SafeMul(balance, maker.order.GetLimitOrder().Price, s.cfg.GetCoinPrecision())
-	info.FeeTaker = SafeMul(info.RightBalance, int64(s.order.TakerRate), s.cfg.GetCoinPrecision())
-	info.FeeMaker = SafeMul(info.RightBalance, int64(maker.order.Rate), s.cfg.GetCoinPrecision())
+	info.RightBalance = SafeMul(balance, maker.order.order.GetLimitOrder().Price, s.cfg.GetCoinPrecision())
+	info.FeeTaker = SafeMul(info.RightBalance, int64(s.order.order.TakerRate), s.cfg.GetCoinPrecision())
+	info.FeeMaker = SafeMul(info.RightBalance, int64(maker.order.order.Rate), s.cfg.GetCoinPrecision())
 	return info
 }
 
@@ -116,9 +116,9 @@ func (s *SpotTrader) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([
 	copyAccMaker := dupAccount(maker.acc.acc)
 	copyFeeAcc := dupAccount(s.accFee.acc)
 
-	leftToken, rightToken := s.order.GetLimitOrder().LeftAsset, s.order.GetLimitOrder().RightAsset
+	leftToken, rightToken := s.order.order.GetLimitOrder().LeftAsset, s.order.order.GetLimitOrder().RightAsset
 	var err error
-	if s.order.GetLimitOrder().Op == et.OpSell {
+	if s.order.order.GetLimitOrder().Op == et.OpSell {
 		err = s.acc.doTranfer(maker.acc, leftToken, uint64(tradeBalance.LeftBalance))
 		if err != nil {
 			elog.Error("settlement", "sell.doTranfer1", err)
@@ -181,7 +181,7 @@ func (s *SpotTrader) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([
 			Maker: maker.acc.acc,
 			Fee:   s.accFee.acc,
 		},
-		MakerOrder: maker.order.GetLimitOrder().Order,
+		MakerOrder: maker.order.order.GetLimitOrder().Order,
 	}
 
 	log1 := types.ReceiptLog{
@@ -196,7 +196,7 @@ func (s *SpotTrader) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo
 	copyAcc := dupAccount(s.acc.acc)
 	copyFeeAcc := dupAccount(s.accFee.acc)
 
-	leftToken, rightToken := s.order.GetLimitOrder().LeftAsset, s.order.GetLimitOrder().RightAsset
+	leftToken, rightToken := s.order.order.GetLimitOrder().LeftAsset, s.order.order.GetLimitOrder().RightAsset
 	err := s.acc.doActive(leftToken, uint64(tradeBalance.LeftBalance))
 	if err != nil {
 		return nil, nil, err
@@ -204,7 +204,7 @@ func (s *SpotTrader) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo
 	// taker 是buy, takerFee是活动的, makerFee 是活动的
 	// taker 是sell, takerFee是活动的, makerFee 是冻结的
 	rightAmount := tradeBalance.RightBalance
-	if s.order.GetLimitOrder().Op == et.OpSell {
+	if s.order.order.GetLimitOrder().Op == et.OpSell {
 		rightAmount += tradeBalance.FeeMaker
 	}
 	err = s.acc.doActive(rightToken, uint64(rightAmount))
@@ -232,7 +232,7 @@ func (s *SpotTrader) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo
 			Maker: s.acc.acc,
 			Fee:   s.accFee.acc,
 		},
-		MakerOrder: maker.order.GetLimitOrder().Order,
+		MakerOrder: maker.order.order.GetLimitOrder().Order,
 	}
 
 	log1 := types.ReceiptLog{
@@ -246,21 +246,21 @@ func (s *SpotTrader) orderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder)
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
-	s.order.DigestedFee += matchDetail.FeeTaker
-	s.order.AVGPrice = caclAVGPrice(s.order, s.order.GetLimitOrder().Price, matched)
+	s.order.order.DigestedFee += matchDetail.FeeTaker
+	s.order.order.AVGPrice = caclAVGPrice(s.order.order, s.order.order.GetLimitOrder().Price, matched)
 
 	// status
-	if matched == s.order.GetBalance() {
-		s.order.Status = et.Completed
+	if matched == s.order.order.GetBalance() {
+		s.order.order.Status = et.Completed
 	} else {
-		s.order.Status = et.Ordered
+		s.order.order.Status = et.Ordered
 	}
 
 	// order matched
-	s.order.Executed = matched
-	s.order.Balance -= matched
+	s.order.order.Executed = matched
+	s.order.order.Balance -= matched
 
-	s.matches.Order = s.order
+	s.matches.Order = s.order.order
 	s.matches.MatchOrders = append(s.matches.MatchOrders, order)
 	// receipt-log, order-kvs 在匹配完成后一次性生成, 不需要生成多次
 	// kvs := GetOrderKvSet(s.order)
@@ -273,22 +273,22 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOr
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
-	m.order.DigestedFee += matchDetail.FeeMaker
-	m.order.AVGPrice = caclAVGPrice(m.order, m.order.GetLimitOrder().Price, matched)
+	m.order.order.DigestedFee += matchDetail.FeeMaker
+	m.order.order.AVGPrice = caclAVGPrice(m.order.order, m.order.order.GetLimitOrder().Price, matched)
 
-	m.order.UpdateTime = takerOrder.UpdateTime
+	m.order.order.UpdateTime = takerOrder.UpdateTime
 
 	// status
-	if matched == m.order.GetBalance() {
-		m.order.Status = et.Completed
+	if matched == m.order.order.GetBalance() {
+		m.order.order.Status = et.Completed
 	} else {
-		m.order.Status = et.Ordered
+		m.order.order.Status = et.Ordered
 	}
 
 	// order matched
-	m.order.Executed = matched
-	m.order.Balance -= matched
-	kvs := orderx.repo.GetOrderKvSet(m.order)
+	m.order.order.Executed = matched
+	m.order.order.Balance -= matched
+	kvs := orderx.repo.GetOrderKvSet(m.order.order)
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
@@ -297,8 +297,8 @@ func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *SpotTrader) ([]*ty
 	var kvs []*types.KeyValue
 
 	matched := taker.calcTradeBalance(matchorder)
-	elog.Info("try match", "activeId", taker.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.Addr, "passiveAddr",
-		matchorder.Addr, "amount", matched, "price", taker.order.GetLimitOrder().Price)
+	elog.Info("try match", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
+		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
 
 	accMatch, err := LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, m.statedb)
 	if err != nil {
@@ -307,14 +307,14 @@ func (m *matcher) matchModel(matchorder *et.SpotOrder, taker *SpotTrader) ([]*ty
 	maker := spotMaker{
 		SpotTrader: SpotTrader{
 			acc:   accMatch,
-			order: matchorder,
+			order: newSpotOrder(matchorder, taker.order.repo),
 			cfg:   m.api.GetConfig(),
 		},
 	}
 
 	logs, kvs, err = taker.Trade(&maker)
-	elog.Info("try match2", "activeId", taker.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.Addr, "passiveAddr",
-		matchorder.Addr, "amount", matched, "price", taker.order.GetLimitOrder().Price)
+	elog.Info("try match2", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
+		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
 	return logs, kvs, err
 }
 
@@ -364,15 +364,16 @@ func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.Sp
 
 	order := createLimitOrder(payload, entrustAddr,
 		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
+	orderx := newSpotOrder(order, a.orderdb)
 
-	tid, amount := a.order.NeedToken(order, a.env.GetAPI().GetConfig().GetCoinPrecision())
+	tid, amount := orderx.NeedToken(a.env.GetAPI().GetConfig().GetCoinPrecision())
 	err = acc.CheckTokenAmountForLimitOrder(tid, amount)
 	if err != nil {
 		return nil, err
 	}
-	acc.order = order
+	acc.order.order = order
 	acc.matches = &et.ReceiptSpotMatch{
-		Order: acc.order,
+		Order: acc.order.order,
 		Index: a.GetIndex(),
 	}
 

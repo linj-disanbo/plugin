@@ -22,7 +22,7 @@ type Spot struct {
 	feeAcc2  *DexAccount
 
 	//
-	order    *spotOrder
+	orderdb  *orderSRepo
 	matcher1 *matcher
 	// fee
 }
@@ -34,7 +34,7 @@ func NewSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Spot,
 		env:      e,
 		tx:       tx,
 		dbprefix: dbprefix,
-		order:    newSpotOrder(e.GetStateDB(), e.GetLocalDB(), dbprefix),
+		orderdb:  newOrderSRepo(e.GetStateDB(), dbprefix),
 		matcher1: newMatcher(e.GetStateDB(), e.GetLocalDB(), e.GetAPI(), dbprefix),
 	}
 	return spot, nil
@@ -49,23 +49,34 @@ func (a *Spot) SetFeeAcc(funcGetFeeAccount GetFeeAccount) error {
 	return nil
 }
 
+func (a *Spot) loadOrder(id int64) (*spotOrder, error) {
+	order, err := a.orderdb.findOrderBy(id)
+	if err != nil {
+		return nil, err
+	}
+
+	orderx := newSpotOrder(order, a.orderdb)
+	return orderx, nil
+}
+
 func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
-	order, err := a.order.find(payload.GetOrderID())
+	order, err := a.loadOrder(payload.GetOrderID())
 	if err != nil {
 		return nil, err
 	}
-	err = a.order.checkRevoke(fromaddr, order)
+
+	err = order.checkRevoke(fromaddr)
 	if err != nil {
 		return nil, err
 	}
 
 	cfg := a.env.GetAPI().GetConfig()
-	token, amount := a.order.calcFrozenToken(order, cfg.GetCoinPrecision())
+	token, amount := order.calcFrozenToken(cfg.GetCoinPrecision())
 
-	accX, err := LoadSpotAccount(order.Addr, uint64(token), a.env.GetStateDB())
+	accX, err := LoadSpotAccount(order.order.Addr, uint64(token), a.env.GetStateDB())
 	receipt, err := accX.Active(token, uint64(amount))
 	if err != nil {
 		elog.Error("RevokeOrder.ExecActive", "addr", fromaddr, "amount", amount, "err", err.Error())
@@ -74,7 +85,7 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 	logs = append(logs, receipt.Logs...)
 	kvs = append(kvs, receipt.KV...)
 
-	r1, err := a.order.Revoke(order, a.env.GetBlockTime(), a.tx.Hash, a.tx.Index)
+	r1, err := order.Revoke(a.env.GetBlockTime(), a.tx.Hash, a.tx.Index)
 	if err != nil {
 		elog.Error("RevokeOrder.Revoke", "addr", fromaddr, "amount", amount, "err", err.Error())
 		return nil, err

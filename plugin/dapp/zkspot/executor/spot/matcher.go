@@ -50,7 +50,7 @@ func newMatcher(statedb, localdb dbm.KV, api client.QueueProtocolAPI, dbprefix e
 //1. The purchase price is higher than the market price, and the price is matched from low to high.
 //2. Sell orders are matched at prices lower than market prices.
 //3. Match the same prices on a first-in, first-out basis
-func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader, orderdb *spotOrder) (*types.Receipt, error) {
+func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader, orderdb *orderSRepo) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -65,7 +65,7 @@ func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *Spot
 			break
 		}
 		for _, marketDepth := range marketDepthList.List {
-			elog.Info("LimitOrder debug find depth", "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.GetOrderID())
+			elog.Info("LimitOrder debug find depth", "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.order.GetOrderID())
 			if matcher1.isDone() || matcher1.priceDone(payload, marketDepth) {
 				break
 			}
@@ -85,18 +85,18 @@ func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *Spot
 						break
 					}
 					// Check the order status
-					order, err := orderdb.find(matchorder.GetOrderID())
+					order, err := orderdb.findOrderBy(matchorder.GetOrderID())
 					if err != nil || order.Status != et.Ordered {
 						continue
 					}
 					log, kv, err := matcher1.matchModel(order, taker)
 					if err != nil {
-						elog.Error("matchModel", "height", "orderID", order.GetOrderID(), "payloadID", taker.order.GetOrderID(), "error", err)
+						elog.Error("matchModel", "height", "orderID", order.GetOrderID(), "payloadID", taker.order.order.GetOrderID(), "error", err)
 						return nil, err
 					}
 					logs = append(logs, log...)
 					kvs = append(kvs, kv...)
-					if taker.order.Status == et.Completed {
+					if taker.order.order.Status == et.Completed {
 						matcher1.done = true
 						break
 					}
@@ -110,7 +110,7 @@ func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *Spot
 		}
 	}
 
-	kvs = append(kvs, orderdb.repo.GetOrderKvSet(taker.order)...)
+	kvs = append(kvs, orderdb.GetOrderKvSet(taker.order.order)...)
 	receiptlog := &types.ReceiptLog{Ty: et.TyLimitOrderLog, Log: types.Encode(taker.matches)}
 	logs = append(logs, receiptlog)
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}

@@ -11,14 +11,14 @@ import (
 
 func (a *Spot) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
 	matcher1 := newMatcher(a.env.GetStateDB(), a.env.GetLocalDB(), a.env.GetAPI(), a.dbprefix)
-	elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.GetOrderID())
-	receipt1, err := matcher1.MatchLimitOrder(payload, taker, a.order)
+	elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.order.GetOrderID())
+	receipt1, err := matcher1.MatchLimitOrder(payload, taker, a.orderdb)
 	if err != nil {
 		return nil, err
 	}
 
-	if a.order.isActiveOrder(taker.order) {
-		receipt3, err := taker.FrozenForLimitOrder(a.order)
+	if taker.order.isActiveOrder() {
+		receipt3, err := taker.FrozenForLimitOrder(taker.order)
 		if err != nil {
 			return nil, err
 		}

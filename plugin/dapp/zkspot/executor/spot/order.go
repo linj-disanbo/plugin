@@ -10,41 +10,41 @@ import (
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
-type spotOrder struct {
+type spotOrderDB struct {
 	statedb  dbm.KV
 	localdb  dbm.KV
 	dbprefix et.DBprefix
 	repo     *orderSRepo
 }
 
-// type spotOrder et.SpotOrder
+type spotOrder struct {
+	order *et.SpotOrder
 
-func newSpotOrder(statedb dbm.KV, localdb dbm.KV, dbprefix et.DBprefix) *spotOrder {
+	repo *orderSRepo
+	env  int
+}
+
+func newSpotOrder(order *et.SpotOrder, orderdb *orderSRepo) *spotOrder {
 	return &spotOrder{
-		repo:     newOrderSRepo(statedb, dbprefix),
-		statedb:  statedb,
-		localdb:  localdb,
-		dbprefix: dbprefix,
+		repo:  orderdb,
+		order: order,
 	}
 }
 
-func (o *spotOrder) find(id int64) (*et.SpotOrder, error) {
-	return o.repo.findOrderBy(id)
-}
-
-func (o *spotOrder) checkRevoke(fromaddr string, order *et.SpotOrder) error {
-	if order.Addr != fromaddr {
-		elog.Error("RevokeOrder.OrderCheck", "addr", fromaddr, "order.addr", order.Addr, "order.status", order.Status)
+func (o *spotOrder) checkRevoke(fromaddr string) error {
+	if o.order.Addr != fromaddr {
+		elog.Error("RevokeOrder.OrderCheck", "addr", fromaddr, "order.addr", o.order.Addr, "order.status", o.order.Status)
 		return et.ErrAddr
 	}
-	if order.Status == et.Completed || order.Status == et.Revoked {
-		elog.Error("RevokeOrder.OrderCheck", "addr", fromaddr, "order.addr", order.Addr, "order.status", order.Status)
+	if o.order.Status == et.Completed || o.order.Status == et.Revoked {
+		elog.Error("RevokeOrder.OrderCheck", "addr", fromaddr, "order.addr", o.order.Addr, "order.status", o.order.Status)
 		return et.ErrOrderSatus
 	}
 	return nil
 }
 
-func (o *spotOrder) calcFrozenToken(order *et.SpotOrder, precision int64) (uint32, uint64) {
+func (o *spotOrder) calcFrozenToken(precision int64) (uint32, uint64) {
+	order := o.order
 	price := order.GetLimitOrder().GetPrice()
 	balance := order.GetBalance()
 
@@ -59,11 +59,11 @@ func (o *spotOrder) calcFrozenToken(order *et.SpotOrder, precision int64) (uint3
 // buy 按最大量判断余额是否够
 // 因为在吃单时, 价格是变动的, 所以实际锁定的量是会浮动的
 // 实现上, 按最大量判断余额是否够, 在成交时, 按实际需要量扣除. 最后变成挂单时, 进行锁定
-func (o *spotOrder) NeedToken(order *et.SpotOrder, precision int64) (uint32, int64) {
-	or := order.GetLimitOrder()
+func (o *spotOrder) NeedToken(precision int64) (uint32, int64) {
+	or := o.order.GetLimitOrder()
 	if or.GetOp() == et.OpBuy {
 		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
-		fee := calcMtfFee(amount, int32(order.TakerRate))
+		fee := calcMtfFee(amount, int32(o.order.TakerRate))
 		total := SafeAdd(amount, int64(fee))
 		return or.LeftAsset, total
 	}
@@ -72,7 +72,8 @@ func (o *spotOrder) NeedToken(order *et.SpotOrder, precision int64) (uint32, int
 	return or.LeftAsset, or.GetAmount()
 }
 
-func (o *spotOrder) Revoke(order *et.SpotOrder, blockTime int64, txhash []byte, txindex int) (*types.Receipt, error) {
+func (o *spotOrder) Revoke(blockTime int64, txhash []byte, txindex int) (*types.Receipt, error) {
+	order := o.order
 	order.Status = et.Revoked
 	order.UpdateTime = blockTime
 	order.RevokeHash = hex.EncodeToString(txhash)
@@ -86,8 +87,8 @@ func (o *spotOrder) Revoke(order *et.SpotOrder, blockTime int64, txhash []byte, 
 	return &types.Receipt{KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}, nil
 }
 
-func (o *spotOrder) isActiveOrder(order *et.SpotOrder) bool {
-	return order.Status == et.Ordered
+func (o *spotOrder) isActiveOrder() bool {
+	return o.order.Status == et.Ordered
 }
 
 // statedb: order, account
