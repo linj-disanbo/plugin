@@ -18,7 +18,7 @@ func (a *Spot) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*
 	}
 
 	if a.order.isActiveOrder(taker.order) {
-		receipt3, err := taker.FrozenForLimitOrder()
+		receipt3, err := taker.FrozenForLimitOrder(a.order)
 		if err != nil {
 			return nil, err
 		}

@@ -44,25 +44,13 @@ func (s *SpotTrader) CheckTokenAmountForLimitOrder(tid uint32, total int64) erro
 	return nil
 }
 
-func (s *SpotTrader) FrozenForLimitOrder() (*types.Receipt, error) {
-	or := s.order.GetLimitOrder()
-	if or.GetOp() == et.OpSell {
-		receipt, err := s.acc.Frozen(or.LeftAsset, uint64(s.order.Balance))
-		if err != nil {
-			elog.Error("limit frozen left balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", s.order.Balance)
-			return nil, et.ErrAssetBalance
-		}
-		return receipt, err
-	}
-
+func (s *SpotTrader) FrozenForLimitOrder(orderx *spotOrder) (*types.Receipt, error) {
 	precision := s.cfg.GetCoinPrecision()
-	amount := SafeMul(s.order.Balance, or.GetPrice(), precision)
-	fee := calcMtfFee(amount, int32(s.order.Rate))
-	total := SafeAdd(amount, fee)
+	asset, amount := orderx.calcFrozenToken(s.order, precision)
 
-	receipt, err := s.acc.Frozen(or.RightAsset, uint64(total))
+	receipt, err := s.acc.Frozen(asset, uint64(amount))
 	if err != nil {
-		elog.Error("FrozenForLimitOrder", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", total)
+		elog.Error("FrozenForLimitOrder", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
 		return nil, et.ErrAssetBalance
 	}
 	return receipt, nil
