@@ -91,7 +91,7 @@ func (a *zkSpotDex) getFeeAcc() (*spot.DexAccount, error) {
 	if err != nil {
 		return nil, err
 	}
-	acc, err := spot.LoadSpotAccount(leaf.ChainAddr, accountID, a.statedb)
+	acc, err := spot.LoadSpotAccount(leaf.ChainAddr, accountID, a.statedb, &dbprefix{})
 	if err != nil {
 		elog.Error("LoadSpotAccount load taker account", "err", err)
 		return nil, err
@@ -160,7 +160,7 @@ func (a *zkSpotDex) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Rec
 	if err != nil {
 		return nil, err
 	}
-	acc, err := spot.LoadSpotAccount(leaf.ChainAddr, accountID, a.statedb)
+	acc, err := spot.LoadSpotAccount(leaf.ChainAddr, accountID, a.statedb, &dbprefix{})
 	if err != nil {
 		return nil, err
 	}
@@ -169,7 +169,7 @@ func (a *zkSpotDex) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Rec
 }
 
 func (a *zkSpotDex) CalcMaxActive(accountID uint64, token uint32, amount string) (uint64, error) {
-	acc, err := spot.LoadSpotAccount(a.txinfo.From, accountID, a.statedb)
+	acc, err := spot.LoadSpotAccount(a.txinfo.From, accountID, a.statedb, &dbprefix{})
 	if err != nil {
 		return 0, err
 	}
@@ -178,7 +178,7 @@ func (a *zkSpotDex) CalcMaxActive(accountID uint64, token uint32, amount string)
 
 func (a *zkSpotDex) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*types.Receipt, error) {
 	chain33Addr := a.txinfo.From
-	acc, err := spot.LoadSpotAccount(chain33Addr, payload.AccountId, a.statedb)
+	acc, err := spot.LoadSpotAccount(chain33Addr, payload.AccountId, a.statedb, &dbprefix{})
 	if err != nil {
 		return nil, err
 	}

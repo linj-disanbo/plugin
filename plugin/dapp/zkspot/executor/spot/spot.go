@@ -21,8 +21,9 @@ type Spot struct {
 	feeAcc2  *DexAccount
 
 	//
-	orderdb  *orderSRepo
-	matcher1 *matcher
+	accountdb *accountRepo
+	orderdb   *orderSRepo
+	matcher1  *matcher
 	// fee
 }
 
@@ -94,7 +95,7 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 	cfg := a.env.GetAPI().GetConfig()
 	token, amount := order.calcFrozenToken(cfg.GetCoinPrecision())
 
-	accX, err := LoadSpotAccount(order.order.Addr, uint64(token), a.env.GetStateDB())
+	accX, err := a.accountdb.LoadAccount(order.order.Addr, uint64(token))
 	receipt, err := accX.Active(token, uint64(amount))
 	if err != nil {
 		elog.Error("RevokeOrder.ExecActive", "addr", fromaddr, "amount", amount, "err", err.Error())
@@ -201,7 +202,7 @@ func (a *Spot) ExecLocal(tx *types.Transaction, receiptData *types.ReceiptData, 
 }
 
 func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) {
-	acc, err := LoadSpotAccount(fromaddr, accountID, a.env.GetStateDB())
+	acc, err := a.accountdb.LoadSpotAccount(fromaddr, accountID)
 	if err != nil {
 		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
 		return nil, err

@@ -12,75 +12,67 @@ var (
 	// mavl-zkspot-dex-   资金帐号
 	// mavl-zkspot-spot-  现货帐号
 	// 先都用现货帐号
-	spotAccountKey = []byte("mavl-zkspot-spot-")
-	spotDexName    = "spot"
-	dexAccountKey  = []byte("mavl-zkspot-dex-")
-	//spotAccountKey =
-	//spot           = []byte("spot")
+	spotDexName       = "spot"
 	spotFeeAccountKey = []byte("zkspot-spotfeeaccount") // mavl-manager-{here}
 )
 
-type Dex struct {
-	dexName   string
-	keyPrefix []byte
+func LoadSpotAccount(addr string, id uint64, statedb dbm.KV, p et.DBprefix) (*DexAccount, error) {
+	return newAccountRepo(spotDexName, statedb, p).LoadAccount(addr, id)
 }
 
-type SpotDex struct {
-	Dex
-}
-
-func newSpotDex() *SpotDex {
-	return &SpotDex{
-		Dex: Dex{
-			dexName:   spotDexName,
-			keyPrefix: spotAccountKey,
-		},
+func newAccountRepo(dexName string, statedb dbm.KV, p et.DBprefix) *accountRepo {
+	return &accountRepo{
+		statedb:  statedb,
+		dbprefix: p,
+		dexName:  dexName,
 	}
 }
 
-func genAccountKey(dexType []byte, addr string, id uint64) []byte {
-	return []byte(fmt.Sprintf("%s:%d", dexType, id))
+type accountRepo struct {
+	dexName  string
+	statedb  dbm.KV
+	dbprefix et.DBprefix
 }
 
-func LoadSpotAccount(addr string, id uint64, db dbm.KV) (*DexAccount, error) {
-	return newSpotDex().LoadAccount(addr, id, db)
+func (repo *accountRepo) genAccountKey(addr string, id uint64) []byte {
+	return []byte(fmt.Sprintf("%s:%s:%d", repo.dbprefix.GetStatedbPrefix(), repo.dexName, id))
 }
 
-func (dex *Dex) LoadAccount(addr string, id uint64, db dbm.KV) (*DexAccount, error) {
-	key := genAccountKey(dex.keyPrefix, addr, id)
-	v, err := db.Get(key)
+func (repo *accountRepo) LoadSpotAccount(addr string, id uint64) (*DexAccount, error) {
+	return repo.LoadAccount(addr, id)
+}
+
+func (repo *accountRepo) LoadAccount(addr string, id uint64) (*DexAccount, error) {
+	var acc *et.DexAccount
+	key := repo.genAccountKey(addr, id)
+	v, err := repo.statedb.Get(key)
 	if err == types.ErrNotFound {
-		acc := NewDexAccount(dex.dexName, id, addr)
-		acc.db = db
-		return acc, nil
+		acc = emptyAccount(repo.dexName, id, addr)
 	}
-	var acc et.DexAccount
-	err = types.Decode(v, &acc)
+
+	err = types.Decode(v, acc)
 	if err != nil {
 		return nil, err
 	}
 
-	return GetDexAccount(&acc, db), nil
+	return NewDexAccount(acc, repo), nil
 }
 
 type DexAccount struct {
-	ty  string // spot, future, asset
+	ty  string // spot, future, asset ...
 	acc *et.DexAccount
-	db  dbm.KV
+	db  *accountRepo
 }
 
-func NewDexAccount(ty string, id uint64, addr string) *DexAccount {
-	return &DexAccount{
-		ty: ty,
-		acc: &et.DexAccount{
-			Id:      id,
-			Addr:    addr,
-			DexName: ty,
-		},
+func emptyAccount(ty string, id uint64, addr string) *et.DexAccount {
+	return &et.DexAccount{
+		Id:      id,
+		Addr:    addr,
+		DexName: ty,
 	}
 }
 
-func GetDexAccount(acc *et.DexAccount, db dbm.KV) *DexAccount {
+func NewDexAccount(acc *et.DexAccount, db *accountRepo) *DexAccount {
 	return &DexAccount{acc: acc, db: db}
 }
 
@@ -187,8 +179,8 @@ func dupAccount(acc *et.DexAccount) *et.DexAccount {
 // GetKVSet account to statdb kv
 func (acc *DexAccount) GetKVSet() (kvset []*types.KeyValue) {
 	value := types.Encode(acc.acc)
-	key := genAccountKey(spotAccountKey, acc.acc.Addr, acc.acc.Id)
-	acc.db.Set(key, value)
+	key := acc.db.genAccountKey(acc.acc.Addr, acc.acc.Id)
+	acc.db.statedb.Set(key, value)
 
 	kvset = make([]*types.KeyValue, 1)
 	kvset[0] = &types.KeyValue{

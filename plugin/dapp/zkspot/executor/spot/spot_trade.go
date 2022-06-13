@@ -30,6 +30,10 @@ func (s *SpotTrader) GetOrder() *spotOrder {
 	return s.order
 }
 
+func (s *SpotTrader) GetAccout() *DexAccount {
+	return s.acc
+}
+
 type spotMaker struct {
 	SpotTrader
 }
@@ -298,7 +302,7 @@ func (taker *SpotTrader) matchModel(matchorder *et.SpotOrder, statedb dbm.KV) ([
 	elog.Info("try match", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
 		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
 
-	accMatch, err := LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, statedb)
+	accMatch, err := newAccountRepo("", statedb, taker.acc.db.dbprefix).LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID)
 	if err != nil {
 		return nil, nil, err
 	}
