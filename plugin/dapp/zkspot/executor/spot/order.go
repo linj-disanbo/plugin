@@ -60,7 +60,7 @@ func (o *spotOrder) checkRevoke(fromaddr string) error {
 	return nil
 }
 
-func (o *spotOrder) calcFrozenToken(precision int64) (uint32, uint64) {
+func (o *spotOrder) calcFrozenToken(precision int64) (uint64, uint64) {
 	order := o.order
 	price := order.GetLimitOrder().GetPrice()
 	balance := order.GetBalance()
@@ -76,7 +76,7 @@ func (o *spotOrder) calcFrozenToken(precision int64) (uint32, uint64) {
 // buy 按最大量判断余额是否够
 // 因为在吃单时, 价格是变动的, 所以实际锁定的量是会浮动的
 // 实现上, 按最大量判断余额是否够, 在成交时, 按实际需要量扣除. 最后变成挂单时, 进行锁定
-func (o *spotOrder) NeedToken(precision int64) (uint32, int64) {
+func (o *spotOrder) NeedToken(precision int64) (uint64, int64) {
 	or := o.order.GetLimitOrder()
 	if or.GetOp() == et.OpBuy {
 		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)

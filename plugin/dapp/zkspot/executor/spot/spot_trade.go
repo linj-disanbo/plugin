@@ -38,7 +38,7 @@ type spotMaker struct {
 	SpotTrader
 }
 
-func (s *SpotTrader) CheckTokenAmountForLimitOrder(tid uint32, total int64) error {
+func (s *SpotTrader) CheckTokenAmountForLimitOrder(tid uint64, total int64) error {
 	if s.acc.getBalance(tid) < uint64(total) {
 		elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "b", s.acc.getBalance(tid), "need", total)
 		return et.ErrAssetBalance

@@ -94,7 +94,7 @@ func QueryOrderList(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryOrderL
 	return &orderList, nil
 }
 
-func getMarketDepth(marketTable *tab.Table, left, right uint32, op int32, price int64) (*et.SpotMarketDepth, error) {
+func getMarketDepth(marketTable *tab.Table, left, right uint64, op int32, price int64) (*et.SpotMarketDepth, error) {
 	primaryKey := []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
 	row, err := marketTable.GetData(primaryKey)
 	if err != nil {
@@ -294,11 +294,11 @@ func newOrderLRepo(localdb dbm.KV, p et.DBprefix) *orderLRepo {
 	}
 }
 
-func (db *orderLRepo) pricePrefix(left, right uint32, price int64, op int32) []byte {
+func (db *orderLRepo) pricePrefix(left, right uint64, price int64, op int32) []byte {
 	return []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
 }
 
-func (db *orderLRepo) findOrderIDListByPrice(left, right uint32, price int64, op, direction int32, primaryKey string) (*et.SpotOrderList, error) {
+func (db *orderLRepo) findOrderIDListByPrice(left, right uint64, price int64, op, direction int32, primaryKey string) (*et.SpotOrderList, error) {
 	table := db.table
 	prefix := db.pricePrefix(left, right, price, op)
 
@@ -339,7 +339,7 @@ func QueryMarketDepth(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryMark
 	return queryMarketDepthList(marketTable, left, right, op, primaryKey, count)
 }
 
-func queryMarketDepthList(table *tab.Table, left, right uint32, op int32, primaryKey string, count int32) (*et.SpotMarketDepthList, error) {
+func queryMarketDepthList(table *tab.Table, left, right uint64, op int32, primaryKey string, count int32) (*et.SpotMarketDepthList, error) {
 	prefix := []byte(fmt.Sprintf("%08d:%08d:%d", left, right, op))
 	if count == 0 {
 		count = et.Count

@@ -159,7 +159,7 @@ func CheckStatus(status int32) bool {
 }
 
 //CheckExchangeAsset
-func CheckExchangeAsset(coinExec string, left, right uint32) bool {
+func CheckExchangeAsset(coinExec string, left, right uint64) bool {
 	if left == right {
 		return false
 	}

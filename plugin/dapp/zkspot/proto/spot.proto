@@ -153,9 +153,9 @@ message SpotOrder {
 //查询接口
 message SpotQueryMarketDepth {
   //资产1
-  uint32 leftAsset = 1;
+  uint64 leftAsset = 1;
   //资产2
-  uint32 rightAsset = 2;
+  uint64 rightAsset = 2;
   //操作， 1为买，2为卖
   int32 op = 3;
   // 这里用价格作为索引值
@@ -166,9 +166,9 @@ message SpotQueryMarketDepth {
 //市场深度
 message SpotMarketDepth {
   //资产1
-  uint32 leftAsset = 1;
+  uint64 leftAsset = 1;
   //资产2
-  uint32 rightAsset = 2;
+  uint64 rightAsset = 2;
   //价格
   int64 price = 3;
   //总量
@@ -185,9 +185,9 @@ message SpotMarketDepthList {
 //查询最新得成交信息,外部接口
 message SpotQueryHistoryOrderList {
   //资产1
-  uint32 leftAsset = 1;
+  uint64 leftAsset = 1;
   //资产2
-  uint32 rightAsset = 2;
+  uint64 rightAsset = 2;
   // 索引值
   string primaryKey = 3;
   //单页返回多少条记录，默认返回10条,为了系统安全最多单次只能返回20条
@@ -238,7 +238,7 @@ message ReceiptDexBind {
 // 每种代币的数量
 message DexAccountBalance {
   // token id
-  uint32 id = 1; 
+  uint64 id = 1; 
   uint64 balance = 2;
   uint64 frozen = 3;
 }

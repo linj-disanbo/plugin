@@ -27,7 +27,7 @@ func (z *zkspot) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, inde
 
 func (z *zkspot) Exec_Withdraw(payload *zt.ZkWithdraw, tx *types.Transaction, index int) (*types.Receipt, error) {
 	dex1 := NewZkSpotDex(z, tx, index)
-	maxActive, err := dex1.CalcMaxActive(payload.AccountId, uint32(payload.TokenId), payload.Amount)
+	maxActive, err := dex1.CalcMaxActive(payload.AccountId, payload.TokenId, payload.Amount)
 	if err != nil {
 		return nil, err
 	}

@@ -165,10 +165,10 @@ func (a *zkSpotDex) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Rec
 		return nil, err
 	}
 
-	return acc.Mint(uint32(payload.TokenId), amount)
+	return acc.Mint(payload.TokenId, amount)
 }
 
-func (a *zkSpotDex) CalcMaxActive(accountID uint64, token uint32, amount string) (uint64, error) {
+func (a *zkSpotDex) CalcMaxActive(accountID uint64, token uint64, amount string) (uint64, error) {
 	acc, err := spot.LoadSpotAccount(a.txinfo.From, accountID, a.statedb, &dbprefix{})
 	if err != nil {
 		return 0, err
@@ -183,7 +183,7 @@ func (a *zkSpotDex) Withdraw(payload *zt.ZkWithdraw, amountWithFee uint64) (*typ
 		return nil, err
 	}
 
-	return acc.Burn(uint32(payload.TokenId), amountWithFee)
+	return acc.Burn(payload.TokenId, amountWithFee)
 }
 
 func (a *zkSpotDex) newEntrust() *spot.Entrust {

@@ -116,7 +116,7 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 	return receipts, nil
 }
 
-func (a *Spot) getFeeRate(fromaddr string, left, right uint32) (int32, int32, error) {
+func (a *Spot) getFeeRate(fromaddr string, left, right uint64) (int32, int32, error) {
 	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
 	if err != nil {
 		elog.Error("getFeeRate ParseConfig", "err", err)
@@ -128,7 +128,7 @@ func (a *Spot) getFeeRate(fromaddr string, left, right uint32) (int32, int32, er
 	return tradeFee.Taker, tradeFee.Maker, nil
 }
 
-func (a *Spot) GetSpotFee(fromaddr string, left, right uint32) (*spotFee, error) {
+func (a *Spot) GetSpotFee(fromaddr string, left, right uint64) (*spotFee, error) {
 	takerFee, makerFee, err := a.getFeeRate(fromaddr, left, right)
 	if err != nil {
 		return nil, err

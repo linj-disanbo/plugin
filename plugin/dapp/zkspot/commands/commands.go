@@ -1439,8 +1439,8 @@ func markRequired(cmd *cobra.Command, params ...string) {
 
 // ratio: p * 1e8, 1e8
 func limitOrderFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint32P("leftTokenId", "l", 0, "left token id")
-	cmd.Flags().Uint32P("rightTokenId", "r", 0, "right token id")
+	cmd.Flags().Uint64P("leftTokenId", "l", 0, "left token id")
+	cmd.Flags().Uint64P("rightTokenId", "r", 0, "right token id")
 	cmd.Flags().Uint64P("price", "p", 0, "price 1e8 lt = p rt ")
 	cmd.Flags().Uint64P("amount", "a", 0, "to buy/sell amount of left token")
 	cmd.Flags().StringP("op", "o", "1", "1/buy, 2/sell")
@@ -1454,8 +1454,8 @@ func limitOrderFlag(cmd *cobra.Command) {
 
 func limitOrder(cmd *cobra.Command, args []string) {
 
-	lt, _ := cmd.Flags().GetUint32("leftTokenId")
-	rt, _ := cmd.Flags().GetUint32("rightTokenId")
+	lt, _ := cmd.Flags().GetUint64("leftTokenId")
+	rt, _ := cmd.Flags().GetUint64("rightTokenId")
 	price, _ := cmd.Flags().GetUint64("price")
 	amount, _ := cmd.Flags().GetUint64("amount")
 	op, _ := cmd.Flags().GetString("op")
