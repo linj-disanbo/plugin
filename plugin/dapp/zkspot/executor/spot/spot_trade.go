@@ -199,21 +199,24 @@ func (s *SpotTrader) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo
 	copyFeeAcc := dupAccount(s.accFee.acc)
 
 	leftToken, rightToken := s.order.order.GetLimitOrder().LeftAsset, s.order.order.GetLimitOrder().RightAsset
-	err := s.acc.doActive(leftToken, uint64(tradeBalance.LeftBalance))
-	if err != nil {
-		return nil, nil, err
-	}
-	// taker 是buy, takerFee是活动的, makerFee 是活动的
-	// taker 是sell, takerFee是活动的, makerFee 是冻结的
-	rightAmount := tradeBalance.RightBalance
+
+	// taker 是buy,  maker 是sell, Left 是冻结的. takerFee + makerFee 是活动的
+	// taker 是sell, maker 是 buy, Right 是冻结的. makerFee 是冻结的. takerFee是活动的
 	if s.order.order.GetLimitOrder().Op == et.OpSell {
+		rightAmount := tradeBalance.RightBalance
 		rightAmount += tradeBalance.FeeMaker
+		err := s.acc.doActive(rightToken, uint64(rightAmount))
+		if err != nil {
+			return nil, nil, err
+		}
+	} else {
+		err := s.acc.doActive(leftToken, uint64(tradeBalance.LeftBalance))
+		if err != nil {
+			return nil, nil, err
+		}
 	}
-	err = s.acc.doActive(rightToken, uint64(rightAmount))
-	if err != nil {
-		return nil, nil, err
-	}
-	err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker+tradeBalance.FeeMaker))
+
+	err := s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker+tradeBalance.FeeMaker))
 	if err != nil {
 		return nil, nil, err
 	}
