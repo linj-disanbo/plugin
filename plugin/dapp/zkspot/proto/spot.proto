@@ -19,8 +19,8 @@ message ZkOrder {
   uint64 accountID = 1;
   string ethAddress = 2;
   //uint64 nonce = 3;
-  uint32 tokenSell = 4;
-  uint32 tokenBuy = 5;
+  uint64 tokenSell = 4;
+  uint64 tokenBuy = 5;
   string amount = 6;
   uint32 ratio1 = 7;
   uint32 ratio2 = 8;
@@ -32,9 +32,24 @@ message ZkOrder {
 //限价订单
 message SpotLimitOrder {
   //交易对
-  uint32 leftAsset = 1;
+  uint64 leftAsset = 1;
   //交易对
-  uint32 rightAsset = 2;
+  uint64 rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+  ZkOrder order = 6;
+}
+
+// 使用挂单摘单模式, 先挂单
+message SpotNTFLimitOrder {
+  //交易对
+  uint64 leftAsset = 1;
+  //交易对
+  uint64 rightAsset = 2;
   //价格
   int64 price = 3;
   //总量
@@ -66,9 +81,9 @@ message SpotExchangeBind {
 //委托限价订单
 message SpotEntrustOrder {
   //交易对
-  uint32 leftAsset = 1;
+  uint64 leftAsset = 1;
   //交易对
-  uint32 rightAsset = 2;
+  uint64 rightAsset = 2;
   //价格
   int64 price = 3;
   //总量
