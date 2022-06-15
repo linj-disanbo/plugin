@@ -2,6 +2,7 @@
 package commands
 
 import (
+	"fmt"
 	"math/big"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
@@ -19,7 +20,7 @@ import (
 
 func nftOrderCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "zkNFTOrder",
+		Use:   "sell_nft",
 		Short: "create nft sell order transaction",
 		Run:   nftOrder,
 	}
@@ -89,4 +90,102 @@ func nftOrder(cmd *cobra.Command, args []string) {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
+}
+
+func nftTakerOrderCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "buy_nft",
+		Short: "create nft buy order transaction",
+		Run:   nftTakerOrder,
+	}
+	NftTakerOrderFlag(cmd)
+	return cmd
+}
+
+// ratio: p * 1e8, 1e8
+func NftTakerOrderFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("order", "o", 0, "(nft) order id")
+	// zkorder part
+	cmd.Flags().Uint64P("accountId", "", 0, "accountid of self")
+	cmd.Flags().StringP("ethAddress", "", "", "eth address of self")
+
+	markRequired(cmd, "order", "accountId", "ethAddress")
+}
+
+func nftTakerOrder(cmd *cobra.Command, args []string) {
+	orderId, _ := cmd.Flags().GetInt64("order")
+	getNftOrder(cmd, args)
+	var order2 et.SpotOrder
+	if order2.Ty != et.TyNftOrderAction {
+		fmt.Println("%l the order is not nft sell order", orderId)
+		return
+	}
+	// 业务 buy = buy-Left, sell-Right
+	// ratio参数 要求 sell的比较在前   R1:R2 = R:L = price : 1
+	accountid, _ := cmd.Flags().GetUint64("accountId")
+	ethAddress, _ := cmd.Flags().GetString("ethAddress")
+
+	zkorder := et.ZkOrder{
+		AccountID:  accountid,
+		EthAddress: ethAddress,
+		TokenSell:  order2.GetNftOrder().Order.TokenBuy,
+		TokenBuy:   order2.GetNftOrder().Order.TokenSell,
+		Amount:     order2.GetNftOrder().Order.Amount,
+		Ratio1:     order2.GetNftOrder().Order.Ratio2,
+		Ratio2:     order2.GetNftOrder().Order.Ratio1,
+	}
+	// sign
+
+	payload := &et.SpotNftTakerOrder{
+		OrderID: orderId,
+		Order:   &zkorder,
+	}
+	paraName, _ := cmd.Flags().GetString("paraName")
+	params := &rpctypes.CreateTxIn{
+		Execer:     getExecname(paraName),
+		ActionName: "SpotNTFTakerOrder",
+		Payload:    types.MustPBToJSON(payload),
+	}
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+func QueryNftOrderCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "nft_order",
+		Short: "query nft sell order transaction",
+		Run:   queryNftOrder,
+	}
+	queryNftOrderFlag(cmd)
+	return cmd
+}
+
+// ratio: p * 1e8, 1e8
+func queryNftOrderFlag(cmd *cobra.Command) {
+	cmd.Flags().Uint64P("order", "o", 0, "(nft) order id")
+	markRequired(cmd, "order")
+}
+
+func queryNftOrder(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	orderId, _ := cmd.Flags().GetInt64("order")
+
+	var params rpctypes.Query4Jrpc
+
+	params.Execer = getExecname("")
+	req := &et.SpotQueryOrder{
+		OrderID: orderId,
+	}
+
+	params.FuncName = "QueryOrder"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp et.SpotOrder
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.Run()
+}
+
+func getNftOrder(cmd *cobra.Command, args []string) {
+	queryNftOrder(cmd, args)
 }
