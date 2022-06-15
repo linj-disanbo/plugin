@@ -66,6 +66,7 @@ func ZksyncCmd() *cobra.Command {
 		queryCmd(),
 		//NFT
 		nftCmd(),
+		nftOrderCmd(),
 	)
 	return cmd
 }

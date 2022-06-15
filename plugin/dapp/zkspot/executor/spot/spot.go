@@ -256,3 +256,153 @@ func (a *Spot) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
 		return order
 	}
 }
+
+func (a *Spot) LoadNftTrader(fromaddr string, accountID uint64) (*NftTrader, error) {
+	acc, err := a.accountdb.LoadSpotAccount(fromaddr, accountID)
+	if err != nil {
+		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
+		return nil, err
+	}
+
+	return &NftTrader{
+		acc: acc,
+		cfg: a.env.GetAPI().GetConfig(),
+	}, nil
+}
+
+func createNftOrder(payload *et.SpotNftOrder, entrustAddr string, inits []orderInit) *et.SpotOrder {
+	or := &et.SpotOrder{
+		Value:       &et.SpotOrder_NftOrder{NftOrder: payload},
+		Ty:          et.TyLimitOrderAction,
+		EntrustAddr: entrustAddr,
+		Executed:    0,
+		AVGPrice:    0,
+		Balance:     payload.GetAmount(),
+		Status:      et.Ordered,
+	}
+	for _, initFun := range inits {
+		or = initFun(or)
+	}
+	return or
+}
+
+func (a *Spot) CreateNftOrder(fromaddr string, trader *NftTrader, payload *et.SpotNftOrder, entrustAddr string) (*types.Receipt, error) {
+	fees, err := a.GetSpotFee(fromaddr, payload.LeftAsset, payload.RightAsset)
+	if err != nil {
+		elog.Error("executor/exchangedb getFees", "err", err)
+		return nil, err
+	}
+	trader.fee = fees
+
+	order := createNftOrder(payload, entrustAddr,
+		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
+	trader.order = newSpotOrder(order, a.orderdb)
+
+	tid, amount := trader.order.NeedToken(a.env.GetAPI().GetConfig().GetCoinPrecision())
+	err = trader.CheckTokenAmountForLimitOrder(tid, amount)
+	if err != nil {
+		return nil, err
+	}
+	trader.matches = &et.ReceiptSpotMatch{
+		Order: trader.order.order,
+		Index: a.GetIndex(),
+	}
+
+	receipt1, err := a.NftOrderReceipt(trader)
+	if err != nil {
+		return nil, err
+	}
+	receipt3, err := trader.FrozenForNftOrder()
+	if err != nil {
+		return nil, err
+	}
+	receipt1 = et.MergeReceipt(receipt1, receipt3)
+
+	return receipt1, nil
+}
+
+func (a *Spot) NftOrderReceipt(taker *NftTrader) (*types.Receipt, error) {
+	kvs := taker.order.repo.GetOrderKvSet(taker.order.order)
+	receiptlog := &types.ReceiptLog{Ty: et.TyNftOrderLog, Log: types.Encode(taker.matches)}
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}
+	return receipts, nil
+}
+
+func createNftTakerOrder(payload *et.SpotNftTakerOrder, entrustAddr string, order2 *spotOrder, inits []orderInit) *et.SpotOrder {
+	or := &et.SpotOrder{
+		Value:       &et.SpotOrder_NftTakerOrder{NftTakerOrder: payload},
+		Ty:          et.TyLimitOrderAction,
+		EntrustAddr: entrustAddr,
+		Executed:    0,
+		AVGPrice:    0,
+		Balance:     order2.order.Balance,
+		Status:      et.Ordered,
+	}
+	for _, initFun := range inits {
+		or = initFun(or)
+	}
+	return or
+}
+
+func (a *Spot) TradeNft(fromaddr string, taker *NftTrader, payload *et.SpotNftTakerOrder, entrustAddr string) (*types.Receipt, error) {
+	order2, err := a.orderdb.findOrderBy(payload.OrderID)
+	if err != nil {
+		elog.Error("CreateNftTakerOrder findOrderBy", "err", err, "orderid", payload.OrderID)
+		return nil, err
+	}
+
+	spotOrder2 := newSpotOrder(order2, a.orderdb)
+	if spotOrder2.isActiveOrder() {
+		return nil, et.ErrOrderID
+	}
+	maker, err := a.LoadNftTrader(order2.Addr, order2.GetNftOrder().Order.AccountID)
+	if err != nil {
+		return nil, err
+	}
+	maker.order = spotOrder2
+
+	order, err := a.CreateNftTakerOrder(fromaddr, taker, payload, entrustAddr)
+	if err != nil {
+		return nil, err
+	}
+	_ = order
+
+	log, kv, err := taker.matchModel(maker, order2, a.orderdb.statedb)
+	return &types.Receipt{KV: kv, Logs: log}, nil
+}
+
+func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *NftTrader, payload *et.SpotNftTakerOrder, entrustAddr string) (*et.SpotOrder, error) {
+	order2, err := a.orderdb.findOrderBy(payload.OrderID)
+	if err != nil {
+		elog.Error("CreateNftTakerOrder findOrderBy", "err", err, "orderid", payload.OrderID)
+		return nil, err
+	}
+
+	spotOrder2 := newSpotOrder(order2, a.orderdb)
+	if spotOrder2.isActiveOrder() {
+		return nil, et.ErrOrderID
+	}
+
+	fees, err := a.GetSpotFee(fromaddr, order2.GetNftOrder().LeftAsset, order2.GetNftOrder().RightAsset)
+	if err != nil {
+		elog.Error("CreateNftTakerOrder getFees", "err", err)
+		return nil, err
+	}
+	acc.fee = fees
+
+	order1 := createNftTakerOrder(payload, entrustAddr, spotOrder2,
+		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
+	acc.order = newSpotOrder(order1, a.orderdb)
+
+	tid, amount := acc.order.nftTakerOrderNeedToken(spotOrder2, a.env.GetAPI().GetConfig().GetCoinPrecision())
+	err = acc.CheckTokenAmountForLimitOrder(tid, amount)
+	if err != nil {
+		return nil, err
+	}
+	acc.matches = &et.ReceiptSpotMatch{
+		Order: acc.order.order,
+		Index: a.GetIndex(),
+	}
+
+	return order1, nil
+}

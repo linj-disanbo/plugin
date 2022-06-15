@@ -69,7 +69,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64) 
 		return nil, errors.Wrapf(err, "checkParam"), 0
 	}
 
-	if !checkIsNormalToken(payload.TokenId) {
+	if !et.CheckIsNormalToken(payload.TokenId) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId), 0
 	}
 
@@ -641,7 +641,7 @@ func (a *Action) Transfer(payload *zt.ZkTransfer) (*types.Receipt, error) {
 	if err != nil {
 		return nil, errors.Wrapf(err, "checkParam")
 	}
-	if !checkIsNormalToken(payload.TokenId) {
+	if !et.CheckIsNormalToken(payload.TokenId) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId)
 	}
 
@@ -1347,15 +1347,6 @@ func checkParam(amount string) error {
 	return nil
 }
 
-//not NFT token
-func checkIsNormalToken(id uint64) bool {
-	return id < zt.SystemNFTTokenId
-}
-
-func checkIsNFTToken(id uint64) bool {
-	return id > zt.SystemNFTTokenId
-}
-
 func getLastEthPriorityQueueID(db dbm.KV, chainID uint32) (*zt.EthPriorityQueueID, error) {
 	key := getEthPriorityQueueKey(chainID)
 	v, err := db.Get(key)
@@ -1535,18 +1526,18 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, swapSpecialData)
 
 	zklog.Debug("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
-	transfers := a.swapGenTransfer(payload1, trade)
+	transfers := a.swapGenTransfer(payload1.Op, payload1.Order, trade)
 	zklog.Debug("swapGenTransfer", "tokenid0", transfers[0].TokenId, "tokenid1", transfers[1].TokenId)
 	// operationInfo, localKvs 通过 zklog 获得
 	zklog := &zt.ZkReceiptLog{OperationInfo: operationInfo}
 	//for _, transfer1 := range transfers {
-	receipt1, err := a.swapByTransfer(transfers[0], payload1, trade, info, zklog)
+	receipt1, err := a.swapByTransfer(transfers[0], trade, info, zklog)
 	if err != nil {
 		return nil, err
 	}
 	logs = append(logs, receipt1.Logs...)
 	kvs = append(kvs, receipt1.KV...)
-	receipt2, err := a.swapByTransfer(transfers[1], payload1, trade, info, zklog)
+	receipt2, err := a.swapByTransfer(transfers[1], trade, info, zklog)
 	if err != nil {
 		return nil, err
 	}
@@ -1610,7 +1601,7 @@ func genSwapSpecialData(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade)
 }
 
 // 将参加放到 ZkTransfer, 可以方便的修改 Transfer的实现
-func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade, info *TreeUpdateInfo, zklog *zt.ZkReceiptLog) (*types.Receipt, error) {
+func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, trade *et.ReceiptSpotTrade, info *TreeUpdateInfo, zklog *zt.ZkReceiptLog) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
@@ -1737,16 +1728,17 @@ func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, payload1 *et.Spot
 	return receipts, nil
 }
 
-func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) []*et.ZkTransferWithFee {
+func (a *Action) swapGenTransfer(op int32, takerOrder *et.ZkOrder, trade *et.ReceiptSpotTrade) []*et.ZkTransferWithFee {
 	// A 和 A 交易
 	var transfers []*et.ZkTransferWithFee
 	if trade.Current.Maker.Addr == trade.Current.Taker.Addr {
-		return a.selfSwapGenTransfer(payload1, trade)
+		return a.selfSwapGenTransfer(op, takerOrder, trade)
 	}
 
 	// A 和 B 交易
 	// Sell
-	takerTokenID, makerTokenID := payload1.LeftAsset, payload1.RightAsset
+	takerTokenID, makerTokenID := takerOrder.TokenSell, takerOrder.TokenBuy
+	feeTokenId := takerOrder.TokenBuy
 	takerPay, makerRcv := trade.Match.LeftBalance, trade.Match.LeftBalance
 
 	rightBalance := trade.Match.RightBalance
@@ -1754,8 +1746,9 @@ func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptS
 	makerPay := rightBalance + trade.Match.FeeMaker
 	fee := trade.Match.FeeMaker + trade.Match.FeeTaker
 
-	if payload1.Op == et.OpBuy {
+	if op == et.OpBuy {
 		takerTokenID, makerTokenID = makerTokenID, takerTokenID
+		feeTokenId = takerOrder.TokenSell
 		takerRcv, makerPay = trade.Match.LeftBalance, trade.Match.LeftBalance
 
 		takerPay, makerRcv = rightBalance+trade.Match.FeeTaker, rightBalance-trade.Match.FeeMaker
@@ -1764,30 +1757,30 @@ func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptS
 	taker1 := &et.ZkTransferWithFee{
 		TokenId:       uint64(takerTokenID),
 		AmountOut:     et.AmountToZksync(uint64(takerPay)),
-		FromAccountId: payload1.Order.AccountID,
+		FromAccountId: takerOrder.AccountID,
 		ToAccountId:   trade.Current.Maker.Id,
-		Signature:     payload1.Order.Signature,
+		Signature:     takerOrder.Signature,
 		AmountIn:      et.AmountToZksync(uint64(makerRcv)),
 	}
 	maker1 := &et.ZkTransferWithFee{
 		TokenId:       uint64(makerTokenID),
 		AmountOut:     et.AmountToZksync(uint64(makerPay)),
 		FromAccountId: trade.Current.Maker.Id,
-		ToAccountId:   payload1.Order.AccountID,
+		ToAccountId:   takerOrder.AccountID,
 		Signature:     trade.MakerOrder.Signature,
 		AmountIn:      et.AmountToZksync(uint64(takerRcv)),
 	}
 	fee1 := &et.ZkTransferWithFee{
-		TokenId:       uint64(payload1.RightAsset),
+		TokenId:       feeTokenId,
 		AmountOut:     et.AmountToZksync(0),
-		FromAccountId: payload1.Order.AccountID,
+		FromAccountId: takerOrder.AccountID,
 		ToAccountId:   trade.Current.Fee.Id,
-		Signature:     payload1.Order.Signature,
+		Signature:     takerOrder.Signature,
 		AmountIn:      et.AmountToZksync(uint64(fee)),
 	}
 
 	// 对先后顺序有要求: 先处理LeftAsset, 在处理RightAsset
-	if payload1.Op == et.OpSell {
+	if op == et.OpSell {
 		transfers = append(transfers, taker1)
 		transfers = append(transfers, maker1)
 	} else {
@@ -1802,33 +1795,37 @@ func (a *Action) swapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptS
 
 // A 和 A 交易时, 也需要构造4个transfer
 // maker/taker 由于是同一个帐号, 所以takerPay makerPay 为0
-func (a *Action) selfSwapGenTransfer(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) []*et.ZkTransferWithFee {
+func (a *Action) selfSwapGenTransfer(op int32, takerOrder *et.ZkOrder, trade *et.ReceiptSpotTrade) []*et.ZkTransferWithFee {
 	// A 和 A 交易, 构造3个transfer, 使用transfer 实现
 	var transfers []*et.ZkTransferWithFee
 	leftPay, rightPay := int64(0), trade.Match.FeeTaker+trade.Match.FeeMaker
+	feeTokenId := takerOrder.TokenBuy
+	if op == et.OpBuy {
+		feeTokenId = takerOrder.TokenSell
+	}
 
 	left := &et.ZkTransferWithFee{
-		TokenId:       uint64(payload1.LeftAsset),
+		TokenId:       takerOrder.TokenSell,
 		AmountOut:     et.AmountToZksync(uint64(leftPay)),
-		FromAccountId: payload1.Order.AccountID,
+		FromAccountId: takerOrder.AccountID,
 		ToAccountId:   trade.Current.Maker.Id,
-		Signature:     payload1.Order.Signature,
+		Signature:     takerOrder.Signature,
 		AmountIn:      et.AmountToZksync(uint64(leftPay)),
 	}
 	right := &et.ZkTransferWithFee{
-		TokenId:       uint64(payload1.RightAsset),
+		TokenId:       takerOrder.TokenBuy,
 		AmountOut:     et.AmountToZksync(uint64(rightPay)),
 		FromAccountId: trade.Current.Maker.Id,
-		ToAccountId:   payload1.Order.AccountID,
+		ToAccountId:   takerOrder.AccountID,
 		Signature:     trade.MakerOrder.Signature,
 		AmountIn:      et.AmountToZksync(uint64(0)),
 	}
 	fee := &et.ZkTransferWithFee{
-		TokenId:       uint64(payload1.RightAsset),
+		TokenId:       feeTokenId,
 		AmountOut:     et.AmountToZksync(uint64(0)),
-		FromAccountId: payload1.Order.AccountID,
+		FromAccountId: takerOrder.AccountID,
 		ToAccountId:   trade.Current.Fee.Id,
-		Signature:     payload1.Order.Signature,
+		Signature:     takerOrder.Signature,
 		AmountIn:      et.AmountToZksync(uint64(rightPay)),
 	}
 
@@ -2148,7 +2145,7 @@ func (a *Action) withdrawNFT(payload *zt.ZkWithdrawNFT) (*types.Receipt, error) 
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	if !checkIsNFTToken(payload.NFTTokenId) {
+	if !et.CheckIsNFTToken(payload.NFTTokenId) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should big than system NFT base ID=%d", payload.NFTTokenId, zt.SystemNFTTokenId)
 	}
 	if payload.Amount <= 0 {
@@ -2351,7 +2348,7 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
 
-	if !checkIsNFTToken(payload.NFTTokenId) {
+	if !et.CheckIsNFTToken(payload.NFTTokenId) {
 		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should big than system NFT base ID=%d", payload.NFTTokenId, zt.SystemNFTTokenId)
 	}
 	if payload.Amount <= 0 {
@@ -2468,4 +2465,126 @@ func (a *Action) transferNFT(payload *zt.ZkTransferNFT) (*types.Receipt, error) 
 	}
 	receipts = mergeReceipt(receipts, feeReceipt)
 	return receipts, nil
+}
+
+func (a *Action) SpotNftMatch(payload *et.SpotNftTakerOrder, list *types.Receipt) (*types.Receipt, error) {
+	receipt := &types.Receipt{}
+	for _, tradeRaw := range list.Logs {
+		switch tradeRaw.Ty {
+		case et.TySpotTradeLog:
+			var trade et.ReceiptSpotTrade
+			err := types.Decode(tradeRaw.Log, &trade)
+			if err != nil {
+				return nil, err
+			}
+			receipt2, err := a.SwapWithNft(payload, &trade)
+			if err != nil {
+				return nil, err
+			}
+			receipt = mergeReceipt(receipt, receipt2)
+		default:
+			//
+		}
+	}
+	return receipt, nil
+}
+
+// A 和 B 交换 = transfer(A,B) + transfer(B,A) + swapfee()
+// A 和 A 交换 = transfer(A,A) 0 + transfer(A,A) 0 + swapfee()
+func (a *Action) SwapWithNft(payload1 *et.SpotNftTakerOrder, trade *et.ReceiptSpotTrade) (*types.Receipt, error) {
+	var logs []*types.ReceiptLog
+	var kvs []*types.KeyValue
+
+	info, err := getTreeUpdateInfo(a.statedb)
+	if err != nil {
+		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
+	}
+
+	operationInfo := &zt.OperationInfo{
+		BlockHeight: uint64(a.height),
+		TxIndex:     uint32(a.index),
+		TxType:      zt.TySwapAction,
+		TokenID:     trade.MakerOrder.TokenSell,
+		Amount:      trade.MakerOrder.Amount, // nft 不需要乘以 1e18
+		FeeAmount:   "0",
+		SigData:     payload1.GetOrder().Signature,
+		AccountID:   payload1.Order.AccountID,
+		SpecialInfo: new(zt.OperationSpecialInfo),
+	}
+
+	swapSpecialData := genNftSwapSpecialData(payload1, trade)
+	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, swapSpecialData)
+
+	zklog.Debug("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
+	transfers := a.swapGenTransfer(et.OpBuy, payload1.Order, trade)
+	zklog.Debug("swapGenTransfer", "tokenid0", transfers[0].TokenId, "tokenid1", transfers[1].TokenId)
+	// operationInfo, localKvs 通过 zklog 获得
+	zklog := &zt.ZkReceiptLog{OperationInfo: operationInfo}
+	//for _, transfer1 := range transfers {
+	receipt1, err := a.swapByTransfer(transfers[0], trade, info, zklog)
+	if err != nil {
+		return nil, err
+	}
+	logs = append(logs, receipt1.Logs...)
+	kvs = append(kvs, receipt1.KV...)
+	receipt2, err := a.swapByTransfer(transfers[1], trade, info, zklog)
+	if err != nil {
+		return nil, err
+	}
+	logs = append(logs, receipt2.Logs...)
+	kvs = append(kvs, receipt2.KV...)
+
+	receiptLog := &types.ReceiptLog{Ty: zt.TySwapLog, Log: types.Encode(zklog)}
+	logs = append(logs, receiptLog)
+
+	feelog1, err := a.MakeFeeLog(transfers[2].AmountIn, info, transfers[2].TokenId, transfers[2].Signature)
+	if err != nil {
+		return nil, err
+	}
+
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
+	receipts = mergeReceipt(receipts, feelog1)
+	return receipts, nil
+}
+
+func genNftSwapSpecialData(payload1 *et.SpotNftTakerOrder, trade *et.ReceiptSpotTrade) *zt.OperationSpecialData {
+	left, right := payload1.Order.TokenBuy, payload1.Order.TokenSell
+
+	op := et.OpBuy
+	sellRightFee, buyRightFee := trade.Match.FeeMaker, trade.Match.FeeTaker
+	if op == et.OpBuy {
+		sellRightFee, buyRightFee = trade.Match.FeeTaker, trade.Match.FeeMaker
+	}
+
+	// TODO Ratio type to string
+	sellLeft := &zt.OrderPricePair{
+		Sell: toString(int64(payload1.Order.Ratio1)),
+		Buy:  toString(int64(payload1.Order.Ratio2)),
+	}
+	buyLeft := &zt.OrderPricePair{
+		Sell: toString(int64(trade.MakerOrder.Ratio1)),
+		Buy:  toString(int64(trade.MakerOrder.Ratio2)),
+	}
+
+	if op == et.OpBuy {
+		sellLeft, buyLeft = buyLeft, sellLeft
+	}
+
+	specialData := &zt.OperationSpecialData{
+		TokenID: []uint64{uint64(left), uint64(right)},
+		Amount: []string{
+			et.AmountToZksync(uint64(trade.Match.LeftBalance)),
+			et.AmountToZksync(uint64(trade.Match.RightBalance)),
+			et.AmountToZksync(uint64(sellRightFee)),
+			et.AmountToZksync(uint64(buyRightFee)),
+			payload1.Order.Amount,
+			trade.MakerOrder.Amount,
+		},
+		AccountID:   trade.GetCurrent().Taker.Id,
+		RecipientID: trade.GetCurrent().Maker.Id,
+		PricePair:   []*zt.OrderPricePair{sellLeft, buyLeft},
+		SigData:     trade.MakerOrder.Signature,
+	}
+
+	return specialData
 }

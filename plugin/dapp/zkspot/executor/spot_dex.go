@@ -222,3 +222,60 @@ func (a *zkSpotDex) execLocal(tx *types.Transaction, receiptData *types.ReceiptD
 	}
 	return spot.ExecLocal(tx, receiptData, index)
 }
+
+//NftOrder ...
+func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, entrustAddr string) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	err := et.CheckNftOrder(cfg, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkL2Auth(a.statedb, payload.Order.AccountID, payload.Order.Signature.PubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
+	if err != nil {
+		return nil, err
+	}
+	err = spot1.SetFeeAcc(a.getFeeAcc)
+	if err != nil {
+		return nil, err
+	}
+
+	// 下面流程是否要放到 spot1中
+	taker, err := spot1.LoadNftTrader(a.txinfo.From, payload.Order.AccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	return spot1.CreateNftOrder(a.txinfo.From, taker, payload, entrustAddr)
+}
+
+//NftOrder ...
+func (a *zkSpotDex) NftTakerOrder(base *dapp.DriverBase, payload *et.SpotNftTakerOrder, entrustAddr string) (*types.Receipt, error) {
+	//cfg := a.api.GetConfig()
+	err := checkL2Auth(a.statedb, payload.Order.AccountID, payload.Order.Signature.PubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
+	if err != nil {
+		return nil, err
+	}
+	err = spot1.SetFeeAcc(a.getFeeAcc)
+	if err != nil {
+		return nil, err
+	}
+
+	// 下面流程是否要放到 spot1中
+	taker, err := spot1.LoadNftTrader(a.txinfo.From, payload.Order.AccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	return spot1.TradeNft(a.txinfo.From, taker, payload, entrustAddr)
+}

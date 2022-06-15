@@ -93,3 +93,12 @@ const (
 	SystemProxyPubKey = 2
 	SuperProxyPubKey  = 3
 )
+
+//not NFT token
+func CheckIsNormalToken(id uint64) bool {
+	return id < SystemNFTTokenId
+}
+
+func CheckIsNFTToken(id uint64) bool {
+	return id > SystemNFTTokenId
+}

@@ -19,6 +19,8 @@ const (
 	TyExchangeBindAction
 	TyEntrustOrderAction
 	TyEntrustRevokeOrderAction
+	TyNftOrderAction
+	TyNftTakerOrderAction
 
 	NameLimitOrderAction         = "LimitOrder"
 	NameMarketOrderAction        = "MarketOrder"
@@ -26,6 +28,8 @@ const (
 	NameExchangeBindAction       = "ExchangeBind"
 	NameEntrustOrderAction       = "EntrustOrder"
 	NameEntrustRevokeOrderAction = "EntrustRevokeOrder"
+	NameNftOrderAction           = "NftOrderAction"
+	NameNftTakerOrderAction      = "NftTakerOrderAction"
 
 	FuncNameQueryMarketDepth      = "QueryMarketDepth"
 	FuncNameQueryHistoryOrderList = "QueryHistoryOrderList"
@@ -48,6 +52,9 @@ const (
 	TyDexAccountActive
 	TyDexAccountBurn
 	TyDexAccountMint
+
+	TyNftOrderLog = iota + 1100
+	TyNftTakerOrderLog
 )
 
 // OP
@@ -183,6 +190,26 @@ func CheckLimitOrder(cfg *types.Chain33Config, limitOrder *SpotLimitOrder) error
 	}
 	if !CheckOp(op) {
 		return ErrAssetOp
+	}
+	return nil
+}
+
+func CheckNftOrder(cfg *types.Chain33Config, limitOrder *SpotNftOrder) error {
+	left := limitOrder.GetLeftAsset()
+	right := limitOrder.GetRightAsset()
+	price := limitOrder.GetPrice()
+	amount := limitOrder.GetAmount()
+	if !CheckExchangeAsset(cfg.GetCoinExec(), left, right) {
+		return ErrAsset
+	}
+	if !CheckPrice(price) {
+		return ErrAssetPrice
+	}
+	if !CheckAmount(amount, cfg.GetCoinPrecision()) {
+		return ErrAssetAmount
+	}
+	if !(CheckIsNFTToken(left) && CheckIsNFTToken(right)) {
+		return ErrAsset
 	}
 	return nil
 }

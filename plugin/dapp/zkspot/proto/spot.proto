@@ -45,7 +45,7 @@ message SpotLimitOrder {
 }
 
 // 使用挂单摘单模式, 先挂单
-message SpotNTFLimitOrder {
+message SpotNftOrder {
   //交易对
   uint64 leftAsset = 1;
   //交易对
@@ -59,6 +59,12 @@ message SpotNTFLimitOrder {
   ZkOrder order = 6;
 }
 
+// 使用挂单摘单模式, 后摘单
+message SpotNftTakerOrder {
+  //交易对
+  int64 orderID = 1;
+  ZkOrder order = 2;
+}
 //市价委托
 message SpotMarketOrder {
   //资产1
@@ -115,6 +121,8 @@ message SpotOrder {
   oneof value {
     SpotLimitOrder  limitOrder = 2;
     SpotMarketOrder marketOrder = 3;
+    SpotNftOrder nftOrder = 20;
+    SpotNftTakerOrder nftTakerOrder = 21;
   }
   //挂单类型
   int32 ty = 4;
@@ -266,6 +274,7 @@ message MatchInfo {
   // fee use right token
 	int64 feeTaker = 4;
 	int64 feeMaker = 5;
+  int64 price = 6;
 }
 
 message ReceiptSpotTrade {

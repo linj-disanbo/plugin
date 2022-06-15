@@ -82,11 +82,19 @@ func (o *spotOrder) NeedToken(precision int64) (uint64, int64) {
 		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
 		fee := calcMtfFee(amount, int32(o.order.TakerRate), precision)
 		total := SafeAdd(amount, int64(fee))
-		return or.LeftAsset, total
+		return or.RightAsset, total
 	}
 
 	/* if payload.GetOp() == et.OpSell */
 	return or.LeftAsset, or.GetAmount()
+}
+
+func (o *spotOrder) nftTakerOrderNeedToken(o2 *spotOrder, precision int64) (uint64, int64) {
+	or := o2.order
+	amount := SafeMul(or.GetBalance(), or.GetNftOrder().Price, precision)
+	fee := calcMtfFee(amount, int32(o.order.TakerRate), precision)
+	total := SafeAdd(amount, int64(fee))
+	return or.GetNftOrder().RightAsset, total
 }
 
 func (o *spotOrder) Revoke(blockTime int64, txhash []byte, txindex int) (*types.Receipt, error) {

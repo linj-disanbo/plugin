@@ -53,6 +53,9 @@ var (
 		NameExchangeBindAction:       TyExchangeBindAction,
 		NameEntrustOrderAction:       TyEntrustOrderAction,
 		NameEntrustRevokeOrderAction: TyEntrustRevokeOrderAction,
+		// spot nft
+		NameNftOrderAction:      TyNftOrderAction,
+		NameNftTakerOrderAction: TyNftTakerOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
@@ -90,6 +93,9 @@ var (
 		TyDexAccountActive: {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountActive"},
 		TyDexAccountBurn:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountBurn"},
 		TyDexAccountMint:   {Ty: reflect.TypeOf(ReceiptDexAccount{}), Name: "TyDexAccountMint"},
+		// spot nft
+		TyNftOrderLog:      {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyNftOrderLog"},
+		TyNftTakerOrderLog: {Ty: reflect.TypeOf(ReceiptSpotMatch{}), Name: "TyNftTakerOrderLog"},
 	}
 
 	FeeMap = map[int64]string{

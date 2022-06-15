@@ -38,6 +38,9 @@ message ZksyncAction1 {
     SpotExchangeBind exchangeBind = 204;
     SpotEntrustOrder entrustOrder = 205;
     SpotEntrustRevokeOrder entrustRevokeOrder = 207;
+
+    SpotNftOrder nftOrder = 300;
+    SpotNftTakerOrder nftTakerOrder = 301;
   } 
 }
 
