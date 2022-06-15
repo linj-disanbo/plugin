@@ -1569,12 +1569,12 @@ func genSwapSpecialData(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade)
 	}
 
 	sellLeft := &zt.OrderPricePair{
-		Sell: toString(int64(payload1.Order.Ratio1)),
-		Buy:  toString(int64(payload1.Order.Ratio2)),
+		Sell: payload1.Order.Ratio1,
+		Buy:  payload1.Order.Ratio2,
 	}
 	buyLeft := &zt.OrderPricePair{
-		Sell: toString(int64(trade.MakerOrder.Ratio1)),
-		Buy:  toString(int64(trade.MakerOrder.Ratio2)),
+		Sell: trade.MakerOrder.Ratio1,
+		Buy:  trade.MakerOrder.Ratio2,
 	}
 
 	if payload1.Op == et.OpBuy {
@@ -2556,14 +2556,13 @@ func genNftSwapSpecialData(payload1 *et.SpotNftTakerOrder, trade *et.ReceiptSpot
 		sellRightFee, buyRightFee = trade.Match.FeeTaker, trade.Match.FeeMaker
 	}
 
-	// TODO Ratio type to string
 	sellLeft := &zt.OrderPricePair{
-		Sell: toString(int64(payload1.Order.Ratio1)),
-		Buy:  toString(int64(payload1.Order.Ratio2)),
+		Sell: payload1.Order.Ratio1,
+		Buy:  payload1.Order.Ratio2,
 	}
 	buyLeft := &zt.OrderPricePair{
-		Sell: toString(int64(trade.MakerOrder.Ratio1)),
-		Buy:  toString(int64(trade.MakerOrder.Ratio2)),
+		Sell: trade.MakerOrder.Ratio1,
+		Buy:  trade.MakerOrder.Ratio2,
 	}
 
 	if op == et.OpBuy {

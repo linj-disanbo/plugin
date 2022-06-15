@@ -5,6 +5,7 @@ import (
 	"bytes"
 	"encoding/hex"
 	"fmt"
+	"math/big"
 	"os"
 	"strings"
 
@@ -1482,8 +1483,8 @@ func limitOrder(cmd *cobra.Command, args []string) {
 		TokenSell:  sell,
 		TokenBuy:   buy,
 		Amount:     et.AmountToZksync(amount),
-		Ratio1:     uint32(ratio1),
-		Ratio2:     uint32(ratio2),
+		Ratio1:     big.NewInt(ratio1).String(),
+		Ratio2:     big.NewInt(ratio2).String(),
 	}
 	// sign
 

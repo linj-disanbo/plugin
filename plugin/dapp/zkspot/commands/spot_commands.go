@@ -2,6 +2,8 @@
 package commands
 
 import (
+	"math/big"
+
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
 	"github.com/33cn/chain33/types"
@@ -50,13 +52,11 @@ func nftOrder(cmd *cobra.Command, args []string) {
 	// ratio参数 要求 sell的比较在前   R1:R2 = R:L = price : 1
 	buy := lt
 	sell := rt
-	ratio1 := int64(price)
-	ratio2 := int64(1e8)
+	// r1:r2 = 1:price*1e10
 	if op == "2" || op == "sell" {
 		opInt = 2
 		buy = rt
 		sell = lt
-		ratio1, ratio2 = ratio2, ratio1
 	}
 	accountid, _ := cmd.Flags().GetUint64("accountId")
 	ethAddress, _ := cmd.Flags().GetString("ethAddress")
@@ -67,8 +67,8 @@ func nftOrder(cmd *cobra.Command, args []string) {
 		TokenSell:  sell,
 		TokenBuy:   buy,
 		Amount:     et.AmountToZksync(amount),
-		Ratio1:     uint32(ratio1),
-		Ratio2:     uint32(ratio2),
+		Ratio1:     big.NewInt(1).String(),
+		Ratio2:     big.NewInt(0).Mul(big.NewInt(int64(price)), big.NewInt(1e10)).String(),
 	}
 	// sign
 

@@ -367,20 +367,25 @@ func GetFullExitMsg(payload *zt.ZkFullExit) *zt.ZkMsg {
 
 // TODO need Gen all kind of market action
 func GetLimitOrderMsg(payload *zst.SpotLimitOrder) *zt.ZkMsg {
+	return GetSpotSwapMsg(payload.Order)
+}
+func GetSpotSwapMsg(order *zst.ZkOrder) *zt.ZkMsg {
 	var pubData []uint
 
 	binaryData := make([]uint, zt.MsgWidth)
 
 	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(zt.TySwapAction), zt.TxTypeBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(payload.Order.AccountID), zt.AccountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.TokenSell)), zt.TokenBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.TokenBuy)), zt.TokenBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(order.AccountID), zt.AccountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(order.TokenSell)), zt.TokenBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(order.TokenBuy)), zt.TokenBitWidth)...)
 
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio1)), zt.AmountBitWidth)...)
-	pubData = append(pubData, getBigEndBitsWithFixLen(new(big.Int).SetUint64(uint64(payload.Order.Ratio2)), zt.AmountBitWidth)...)
+	ratio1, _ := big.NewInt(0).SetString(order.Ratio1, 10)
+	ratio2, _ := big.NewInt(0).SetString(order.Ratio2, 10)
+	pubData = append(pubData, getBigEndBitsWithFixLen(ratio1, zt.AmountBitWidth)...)
+	pubData = append(pubData, getBigEndBitsWithFixLen(ratio2, zt.AmountBitWidth)...)
 
 	//merkel tree 上的精度都是1e18 和eth保持一致， 这里的amount是1e8精度
-	amount, _ := big.NewInt(0).SetString(payload.Order.Amount, 10)
+	amount, _ := big.NewInt(0).SetString(order.Amount, 10)
 	pubData = append(pubData, getBigEndBitsWithFixLen(amount, zt.AmountBitWidth)...)
 	copy(binaryData, pubData)
 
@@ -466,4 +471,12 @@ func GetMsgHash(msg *zt.ZkMsg) []byte {
 	hash.Write(StringToByte(msg.GetSecond()))
 	hash.Write(StringToByte(msg.GetThird()))
 	return hash.Sum(nil)
+}
+
+func GetNftOrderMsg(payload *zst.SpotNftOrder) *zt.ZkMsg {
+	return GetSpotSwapMsg(payload.Order)
+}
+
+func GetNftTakerOrderMsg(payload *zst.SpotNftTakerOrder) *zt.ZkMsg {
+	return GetSpotSwapMsg(payload.Order)
 }
