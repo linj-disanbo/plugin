@@ -89,9 +89,9 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64) 
 	if !ok {
 		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID())), 0
 	}
-	if lastPriorityId.Int64()+1 != payload.GetEthPriorityQueueId() {
-		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.GetEthPriorityQueueId()), 0
-	}
+	//if lastPriorityId.Int64()+1 != payload.GetEthPriorityQueueId() {
+	//	return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.GetEthPriorityQueueId()), 0
+	//}
 
 	//转换10进制
 	payload.Chain33Addr = zt.HexAddr2Decimal(payload.Chain33Addr)
@@ -1232,9 +1232,9 @@ func (a *Action) FullExit(payload *zt.ZkFullExit) (*types.Receipt, error) {
 		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID()))
 	}
 
-	if lastId.Int64()+1 != payload.GetEthPriorityQueueId() {
-		return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%s,new=%d", lastPriority.ID, payload.GetEthPriorityQueueId())
-	}
+	//if lastId.Int64()+1 != payload.GetEthPriorityQueueId() {
+	//	return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%s,new=%d", lastPriority.ID, payload.GetEthPriorityQueueId())
+	//}
 
 	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
