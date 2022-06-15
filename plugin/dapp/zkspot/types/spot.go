@@ -28,8 +28,8 @@ const (
 	NameExchangeBindAction       = "ExchangeBind"
 	NameEntrustOrderAction       = "EntrustOrder"
 	NameEntrustRevokeOrderAction = "EntrustRevokeOrder"
-	NameNftOrderAction           = "NftOrderAction"
-	NameNftTakerOrderAction      = "NftTakerOrderAction"
+	NameNftOrderAction           = "NftOrder"
+	NameNftTakerOrderAction      = "NftTakerOrder"
 
 	FuncNameQueryMarketDepth      = "QueryMarketDepth"
 	FuncNameQueryHistoryOrderList = "QueryHistoryOrderList"
