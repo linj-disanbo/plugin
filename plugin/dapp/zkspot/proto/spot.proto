@@ -22,8 +22,8 @@ message ZkOrder {
   uint64 tokenSell = 4;
   uint64 tokenBuy = 5;
   string amount = 6;
-  uint32 ratio1 = 7;
-  uint32 ratio2 = 8;
+  string ratio1 = 7;
+  string ratio2 = 8;
   //uint64 validFrom = 9;
   //uint64 validUntil = 10;
   ZkSignature signature = 20;
