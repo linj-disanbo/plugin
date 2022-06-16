@@ -67,7 +67,7 @@ func (o *spotOrder) calcFrozenToken(precision int64) (uint64, uint64) {
 
 	if order.GetLimitOrder().GetOp() == et.OpBuy {
 		amount := CalcActualCost(et.OpBuy, balance, price, precision)
-		amount += SafeMul(balance, int64(order.Rate), precision)
+		amount += SafeMul(amount, int64(order.Rate), precision)
 		return order.GetLimitOrder().RightAsset, uint64(amount)
 	}
 	return order.GetLimitOrder().LeftAsset, uint64(balance)
