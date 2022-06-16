@@ -305,7 +305,7 @@ func (taker *SpotTrader) matchModel(matchorder *et.SpotOrder, statedb dbm.KV) ([
 	elog.Info("try match", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
 		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
 
-	accMatch, err := newAccountRepo("", statedb, taker.acc.db.dbprefix).LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID)
+	accMatch, err := newAccountRepo(spotDexName, statedb, taker.acc.db.dbprefix).LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID)
 	if err != nil {
 		return nil, nil, err
 	}
