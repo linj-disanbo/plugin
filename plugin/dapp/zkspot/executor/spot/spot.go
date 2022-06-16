@@ -31,11 +31,12 @@ type GetFeeAccount func() (*DexAccount, error)
 
 func NewSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Spot, error) {
 	spot := &Spot{
-		env:      e,
-		tx:       tx,
-		dbprefix: dbprefix,
-		orderdb:  newOrderSRepo(e.GetStateDB(), dbprefix),
-		matcher1: newMatcher(e.GetStateDB(), e.GetLocalDB(), e.GetAPI(), dbprefix),
+		env:       e,
+		tx:        tx,
+		dbprefix:  dbprefix,
+		accountdb: newAccountRepo(spotDexName, e.GetStateDB(), dbprefix),
+		orderdb:   newOrderSRepo(e.GetStateDB(), dbprefix),
+		matcher1:  newMatcher(e.GetStateDB(), e.GetLocalDB(), e.GetAPI(), dbprefix),
 	}
 	return spot, nil
 }
