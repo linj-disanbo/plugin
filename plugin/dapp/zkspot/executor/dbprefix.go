@@ -18,3 +18,13 @@ func (d *dbprefix) GetLocaldbPrefix() string {
 func (d *dbprefix) GetStatedbPrefix() string {
 	return KeyPrefixStateDB
 }
+
+type zkHandler struct {
+	info *TreeUpdateInfo
+}
+
+func newZkHandler(info *TreeUpdateInfo) *zkHandler {
+	return &zkHandler{
+		info: info,
+	}
+}

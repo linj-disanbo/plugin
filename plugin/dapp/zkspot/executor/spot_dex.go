@@ -150,17 +150,18 @@ func (a *zkSpotDex) RevokeOrder(payload *et.SpotRevokeOrder, entrustAddr string)
 
 // 现在一个交易所, 资金帐号和现货交易所帐号是同一个
 // 在多个交易所的情况下, 会有一个资金帐号和多个交易所帐号
-func (a *zkSpotDex) Deposit(payload *zt.ZkDeposit, accountID uint64) (*types.Receipt, error) {
+func (a *zkSpotDex) Deposit(payload *zt.ZkDeposit, accountID uint64, info *zkHandler) (*types.Receipt, error) {
 	amount, err := et.AmountFromZksync(payload.GetAmount())
 	if err != nil {
 		return nil, err
 	}
-	var zktree1 zktree
-	leaf, err := zktree1.getAccount(a.statedb, accountID)
-	if err != nil {
-		return nil, err
-	}
-	acc, err := spot.LoadSpotAccount(leaf.ChainAddr, accountID, a.statedb, &dbprefix{})
+	// 在第一次存钱时, 是不知道用户chainAddr
+	//var zktree1 zktree
+	//leaf, err := zktree1.getAccount(a.statedb, accountID)
+	//if err != nil {
+	//	return nil, err
+	//}
+	acc, err := spot.LoadSpotAccount("leaf.ChainAddr", accountID, a.statedb, &dbprefix{})
 	if err != nil {
 		return nil, err
 	}

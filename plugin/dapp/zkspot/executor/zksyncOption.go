@@ -58,7 +58,7 @@ func (a *Action) GetIndex() int64 {
 	return a.height*types.MaxTxsPerBlock + int64(a.index)
 }
 
-func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64) {
+func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64, *zkHandler) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	var localKvs []*types.KeyValue
@@ -66,28 +66,28 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64) 
 
 	err = checkParam(payload.Amount)
 	if err != nil {
-		return nil, errors.Wrapf(err, "checkParam"), 0
+		return nil, errors.Wrapf(err, "checkParam"), 0, nil
 	}
 
 	if !et.CheckIsNormalToken(payload.TokenId) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId), 0
+		return nil, errors.Wrapf(types.ErrNotAllow, "tokenId=%d should less than system NFT base ID=%d", payload.TokenId, zt.SystemNFTTokenId), 0, nil
 	}
 
 	zklog.Info("start zkspot deposit", "eth", payload.EthAddress, "chain33", payload.Chain33Addr)
 	//只有管理员能操作
 	cfg := a.api.GetConfig()
 	if !isSuperManager(cfg, a.fromaddr) && !isVerifier(a.statedb, a.fromaddr) {
-		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager"), 0
+		return nil, errors.Wrapf(types.ErrNotAllow, "from addr is not manager"), 0, nil
 	}
 
 	//TODO set chainID
 	lastPriority, err := getLastEthPriorityQueueID(a.statedb, 0)
 	if err != nil {
-		return nil, errors.Wrapf(err, "get eth last priority queue id"), 0
+		return nil, errors.Wrapf(err, "get eth last priority queue id"), 0, nil
 	}
 	lastPriorityId, ok := big.NewInt(0).SetString(lastPriority.GetID(), 10)
 	if !ok {
-		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID())), 0
+		return nil, errors.Wrapf(types.ErrInvalidParam, fmt.Sprintf("getID =%s", lastPriority.GetID())), 0, nil
 	}
 	//if lastPriorityId.Int64()+1 != payload.GetEthPriorityQueueId() {
 	//	return nil, errors.Wrapf(types.ErrNotAllow, "eth last priority queue id=%d,new=%d", lastPriorityId, payload.GetEthPriorityQueueId()), 0
@@ -100,17 +100,17 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64) 
 	ethFeeAddr, chain33FeeAddr := getCfgFeeAddr(cfg)
 	info, err := generateTreeUpdateInfo(a.statedb, a.localDB, ethFeeAddr, chain33FeeAddr)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo"), 0
+		return nil, errors.Wrapf(err, "db.generateTreeUpdateInfo"), 0, nil
 	}
 
 	leaf, err := GetLeafByChain33AndEthAddress(a.statedb, payload.GetChain33Addr(), payload.GetEthAddress(), info)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.GetLeafByChain33AndEthAddress"), 0
+		return nil, errors.Wrapf(err, "db.GetLeafByChain33AndEthAddress"), 0, nil
 	}
 
 	tree, err := getAccountTree(a.statedb, info)
 	if err != nil {
-		return nil, errors.Wrapf(err, "db.getAccountTree"), 0
+		return nil, errors.Wrapf(err, "db.getAccountTree"), 0, nil
 	}
 	zklog.Info("zkspot deposit", "tree", tree)
 
@@ -130,18 +130,18 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64) 
 		//添加之前先计算证明
 		receipt, err := calProof(a.statedb, info, operationInfo.AccountID, payload.TokenId)
 		if err != nil {
-			return nil, errors.Wrapf(err, "calProof"), 0
+			return nil, errors.Wrapf(err, "calProof"), 0, nil
 		}
 
 		before := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, nil, operationInfo.AccountID, operationInfo.TokenID, "0")
 
 		kvs, localKvs, err = AddNewLeaf(a.statedb, a.localDB, info, payload.GetEthAddress(), payload.GetTokenId(), payload.GetAmount(), payload.GetChain33Addr())
 		if err != nil {
-			return nil, errors.Wrapf(err, "db.AddNewLeaf"), 0
+			return nil, errors.Wrapf(err, "db.AddNewLeaf"), 0, nil
 		}
 		receipt, err = calProof(a.statedb, info, operationInfo.AccountID, payload.TokenId)
 		if err != nil {
-			return nil, errors.Wrapf(err, "calProof"), 0
+			return nil, errors.Wrapf(err, "calProof"), 0, nil
 		}
 
 		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, nil, nil, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
@@ -168,7 +168,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64) 
 
 		receipt, err := calProof(a.statedb, info, leaf.AccountId, payload.TokenId)
 		if err != nil {
-			return nil, errors.Wrapf(err, "calProof"), 0
+			return nil, errors.Wrapf(err, "calProof"), 0, nil
 		}
 
 		var balance string
@@ -181,11 +181,11 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64) 
 
 		kvs, localKvs, err = UpdateLeaf(a.statedb, a.localDB, info, leaf.GetAccountId(), payload.GetTokenId(), payload.GetAmount(), zt.Add)
 		if err != nil {
-			return nil, errors.Wrapf(err, "db.UpdateLeaf"), 0
+			return nil, errors.Wrapf(err, "db.UpdateLeaf"), 0, nil
 		}
 		receipt, err = calProof(a.statedb, info, leaf.AccountId, payload.TokenId)
 		if err != nil {
-			return nil, errors.Wrapf(err, "calProof"), 0
+			return nil, errors.Wrapf(err, "calProof"), 0, nil
 		}
 		after := getBranchByReceipt(receipt, operationInfo, payload.EthAddress, payload.Chain33Addr, leaf.PubKey, leaf.ProxyPubKeys, operationInfo.AccountID, operationInfo.TokenID, receipt.Token.Balance)
 		rootHash := zt.Str2Byte(receipt.TreeProof.RootHash)
@@ -218,7 +218,7 @@ func (a *Action) Deposit(payload *zt.ZkDeposit) (*types.Receipt, error, uint64) 
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	//add priority part
 	r := makeSetEthPriorityIdReceipt(0, lastPriorityId.Int64(), payload.EthPriorityQueueId)
-	return mergeReceipt(receipts, r), nil, operationInfo.AccountID
+	return mergeReceipt(receipts, r), nil, operationInfo.AccountID, newZkHandler(info)
 }
 
 func getBranchByReceipt(receipt *zt.ZkReceiptLeaf, opInfo *zt.OperationInfo, ethAddr string, chain33Addr string,

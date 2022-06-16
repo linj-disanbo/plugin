@@ -11,14 +11,14 @@ import (
 
 func (z *zkspot) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewAction(z, tx, index)
-	r, err, accountID := action.Deposit(payload)
+	r, err, accountID, zkInfo := action.Deposit(payload)
 	if err != nil {
 		return r, err
 	}
 	list := SampleDeposit( /* r *types.Receipt */ )
 	_ = list
 	action2 := NewZkSpotDex(z, tx, index)
-	r2, err := action2.Deposit(payload, accountID) // TODO 增加参数
+	r2, err := action2.Deposit(payload, accountID, zkInfo) // TODO 增加参数
 	if err != nil {
 		return r, err
 	}
