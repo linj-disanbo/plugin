@@ -43,19 +43,20 @@ func (repo *accountRepo) LoadSpotAccount(addr string, id uint64) (*DexAccount, e
 }
 
 func (repo *accountRepo) LoadAccount(addr string, id uint64) (*DexAccount, error) {
-	var acc *et.DexAccount
+	var acc et.DexAccount
 	key := repo.genAccountKey(addr, id)
 	v, err := repo.statedb.Get(key)
 	if err == types.ErrNotFound {
-		acc = emptyAccount(repo.dexName, id, addr)
+		acc2 := emptyAccount(repo.dexName, id, addr)
+		return NewDexAccount(acc2, repo), nil
 	}
 
-	err = types.Decode(v, acc)
+	err = types.Decode(v, &acc)
 	if err != nil {
 		return nil, err
 	}
 
-	return NewDexAccount(acc, repo), nil
+	return NewDexAccount(&acc, repo), nil
 }
 
 type DexAccount struct {
