@@ -210,8 +210,9 @@ func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) 
 	}
 
 	return &SpotTrader{
-		acc: acc,
-		cfg: a.env.GetAPI().GetConfig(),
+		acc:    acc,
+		cfg:    a.env.GetAPI().GetConfig(),
+		accFee: a.feeAcc2,
 	}, nil
 }
 
