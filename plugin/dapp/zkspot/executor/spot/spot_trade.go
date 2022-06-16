@@ -110,7 +110,7 @@ func (s *SpotTrader) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo
 // RightToken: buyer -> seller
 // RightToken: buyer, seller -> fee-bank
 func (s *SpotTrader) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
-	if s.acc.acc.Addr == maker.acc.acc.Addr {
+	if s.acc.acc.Id == maker.acc.acc.Id {
 		return s.selfSettlement(maker, tradeBalance)
 	}
 
@@ -293,7 +293,7 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOr
 	// order matched
 	m.order.order.Executed = matched
 	m.order.order.Balance -= matched
-	kvs := orderx.repo.GetOrderKvSet(m.order.order)
+	kvs := m.order.repo.GetOrderKvSet(m.order.order)
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
