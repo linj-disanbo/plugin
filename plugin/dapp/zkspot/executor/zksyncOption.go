@@ -1509,7 +1509,7 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
 	}
-
+	elog.Info("swap", "match", trade.Match)
 	operationInfo := &zt.OperationInfo{
 		BlockHeight: uint64(a.height),
 		TxIndex:     uint32(a.index),
@@ -1525,9 +1525,9 @@ func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (
 	swapSpecialData := genSwapSpecialData(payload1, trade)
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, swapSpecialData)
 
-	zklog.Debug("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
+	elog.Debug("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
 	transfers := a.swapGenTransfer(payload1.Op, payload1.Order, trade)
-	zklog.Debug("swapGenTransfer", "tokenid0", transfers[0].TokenId, "tokenid1", transfers[1].TokenId)
+	elog.Debug("swapGenTransfer", "tokenid0", transfers[0].TokenId, "tokenid1", transfers[1].TokenId)
 	// operationInfo, localKvs 通过 zklog 获得
 	zklog := &zt.ZkReceiptLog{OperationInfo: operationInfo}
 	//for _, transfer1 := range transfers {
@@ -1731,7 +1731,7 @@ func (a *Action) swapByTransfer(payload *et.ZkTransferWithFee, trade *et.Receipt
 func (a *Action) swapGenTransfer(op int32, takerOrder *et.ZkOrder, trade *et.ReceiptSpotTrade) []*et.ZkTransferWithFee {
 	// A 和 A 交易
 	var transfers []*et.ZkTransferWithFee
-	if trade.Current.Maker.Addr == trade.Current.Taker.Addr {
+	if trade.Current.Maker.Id == trade.Current.Taker.Id {
 		return a.selfSwapGenTransfer(op, takerOrder, trade)
 	}
 
