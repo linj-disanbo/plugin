@@ -21,6 +21,10 @@ const (
 	TyTransferToExecAction
 	TyMintAction
 	TyBurnAction
+	TyMintMapAction
+	TyBurnMapAction
+	TyMintNftAction
+	TyBurnNftAction
 
 	NameTransferAction       = "Transfer"
 	NameWithdrawAction       = "Withdraw"
@@ -29,6 +33,8 @@ const (
 	NameBurnAction           = "Burn"
 	NameMintMapAction        = "MintMap"
 	NameBurnMapAction        = "BurnMap"
+	NameMintNftAction        = "MintNft"
+	NameBurnNftAction        = "BurnNft"
 )
 
 // log类型id值
@@ -103,6 +109,8 @@ func (e *evmxgoType) GetTypeMap() map[string]int32 {
 		"Burn":            EvmxgoActionBurn,
 		NameMintMapAction: EvmxgoActionMintMap,
 		NameBurnMapAction: EvmxgoActionBurnMap,
+		NameMintNftAction: EvmxgoActionMintNft,
+		NameBurnNftAction: EvmxgoActionBurnNft,
 	}
 }
 
@@ -122,6 +130,8 @@ func (e *evmxgoType) GetLogMap() map[int64]*types.LogInfo {
 		TyLogEvmxgoBurn:            {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogBurnToken"},
 		TyLogEvmxgoMintMap:         {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogMintMapToken"},
 		TyLogEvmxgoBurnMap:         {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogBurnMapToken"},
+		TyLogEvmxgoMintNft:         {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogMintNftToken"},
+		TyLogEvmxgoBurnNft:         {Ty: reflect.TypeOf(ReceiptEvmxgoAmount{}), Name: "LogBurnNftToken"},
 	}
 
 }

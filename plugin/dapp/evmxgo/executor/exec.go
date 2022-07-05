@@ -115,3 +115,34 @@ func (e *evmxgo) Exec_BurnMap(payload *evmxgotypes.EvmxgoBurnMap, tx *types.Tran
 	action := newEvmxgoAction(e, tx)
 	return action.burnMap(payload)
 }
+
+func (e *evmxgo) Exec_MintNft(payload *evmxgotypes.EvmxgoMintNft, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newEvmxgoAction(e, tx)
+	var err error
+	tx2lock, err := getLockTxMock(e, index) // TODO
+	if nil != err {
+		return nil, err
+	}
+	return action.mintNft(payload, tx2lock)
+}
+
+func (e *evmxgo) Exec_BurnNft(payload *evmxgotypes.EvmxgoBurnNft, tx *types.Transaction, index int) (*types.Receipt, error) {
+	action := newEvmxgoAction(e, tx)
+	return action.burnNft(payload)
+}
+
+func getLockTx(e *evmxgo, index int) (*types.Transaction, error) {
+	txGroup, err := e.GetTxGroup(index)
+	if nil != err {
+		return nil, err
+	}
+	if len(txGroup) < 2 || index == 0 {
+		return nil, errors.New("Mint tx should be included in lock tx group")
+	}
+	txs := e.GetTxs()
+	return txs[index-1], nil
+}
+
+func getLockTxMock(e *evmxgo, index int) (*types.Transaction, error) {
+	return nil, nil
+}

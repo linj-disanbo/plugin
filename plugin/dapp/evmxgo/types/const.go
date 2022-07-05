@@ -20,6 +20,8 @@ const (
 	// EvmxgoActionMint for evmxgo mint map
 	EvmxgoActionMintMap = 14
 	EvmxgoActionBurnMap = 15
+	EvmxgoActionMintNft = 16
+	EvmxgoActionBurnNft = 17
 )
 
 const (
@@ -49,4 +51,8 @@ const (
 	TyLogEvmxgoMintMap = 325
 	// TyLogEvmxgoBurn log for evmxgo burn
 	TyLogEvmxgoBurnMap = 326
+	// TyLogEvmxgoMintNft log for evmxgo mint
+	TyLogEvmxgoMintNft = 327
+	// TyLogEvmxgoBurnNft log for evmxgo burn
+	TyLogEvmxgoBurnNft = 328
 )

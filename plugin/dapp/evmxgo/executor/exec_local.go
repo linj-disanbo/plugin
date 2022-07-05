@@ -229,6 +229,53 @@ func (e *evmxgo) ExecLocal_BurntMap(payload *evmxgotypes.EvmxgoBurnMap, tx *type
 	return e.ExecLocal_Burn(pay, tx, receiptData, index)
 }
 
+func (e *evmxgo) ExecLocal_MintNft(payload *evmxgotypes.EvmxgoMintNft, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	localToken, err := loadLocalToken(payload.Symbol, e.GetLocalDB())
+
+	if err != nil && err != evmxgotypes.ErrEvmxgoSymbolNotExist {
+		return nil, err
+	}
+	// evmxgo合约，只要配置了就可以铸币
+	if err == evmxgotypes.ErrEvmxgoSymbolNotExist {
+		configSynbol, err := loadEvmxgoMintConfig(e.GetStateDB(), payload.GetSymbol())
+		if err != nil || configSynbol == nil {
+			elog.Error("evmxgo mint ", "not config symbol", payload.GetSymbol(), "error", err)
+			return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
+		}
+
+		mint2 := &evmxgotypes.EvmxgoMint{}
+		_ = copier.Copy(mint2, payload)
+		localToken = newLocalEvmxgo(mint2)
+		localToken.Introduction = configSynbol.Introduction
+		localToken.Precision = configSynbol.Precision
+	}
+
+	localToken = setMint(localToken, e.GetHeight(), e.GetBlockTime(), payload.Amount)
+	var set []*types.KeyValue
+	key := calcEvmxgoStatusKeyLocal(payload.Symbol)
+	set = append(set, &types.KeyValue{Key: key, Value: types.Encode(localToken)})
+
+	table := NewLogsTable(e.GetLocalDB())
+	txIndex := dapp.HeightIndexStr(e.GetHeight(), int64(index))
+	err = table.Add(&evmxgotypes.LocalEvmxgoLogs{Symbol: payload.Symbol, TxIndex: txIndex, ActionType: evmxgotypes.EvmxgoActionMint, TxHash: "0x" + hex.EncodeToString(tx.Hash())})
+	if err != nil {
+		return nil, err
+	}
+	kv, err := table.Save()
+	if err != nil {
+		return nil, err
+	}
+	set = append(set, kv...)
+
+	return &types.LocalDBSet{KV: set}, nil
+}
+
+func (e *evmxgo) ExecLocal_BurnNft(payload *evmxgotypes.EvmxgoBurnNft, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	pay := &evmxgotypes.EvmxgoBurn{}
+	_ = copier.Copy(pay, payload)
+	return e.ExecLocal_Burn(pay, tx, receiptData, index)
+}
+
 //当区块回滚时，框架支持自动回滚localdb kv，需要对exec-local返回的kv进行封装
 func (e *evmxgo) addAutoRollBack(tx *types.Transaction, kv []*types.KeyValue) *types.LocalDBSet {
 
