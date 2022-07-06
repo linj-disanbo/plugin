@@ -2,6 +2,7 @@ package executor
 
 import (
 	"fmt"
+
 	"github.com/33cn/chain33/common/address"
 )
 
@@ -13,7 +14,9 @@ import (
 
 var (
 	//KeyPrefixStateDB state db key必须前缀
-	KeyPrefixStateDB = "mavl-evmxgo-statedb"
+	KeyPrefixStateDB        = "mavl-evmxgo-statedb"
+	KeyPrefixStateNftDB     = "mavl-evmxgo-nft"
+	KeyPrefixStateLastNftDB = "mavl-evmxgo-lastnft"
 	//KeyPrefixLocalDB local db的key必须前缀
 	KeyPrefixLocalDB = "LODB-evmxgo-"
 
@@ -22,6 +25,14 @@ var (
 
 func calcEvmxgoKey(value string) (key []byte) {
 	return []byte(fmt.Sprintf(KeyPrefixStateDB+"-%s", value))
+}
+
+func calcNftKey(value string) (key []byte) {
+	return []byte(fmt.Sprintf(KeyPrefixStateNftDB+"-%s", value))
+}
+
+func lastNftKey(value string) (key []byte) {
+	return []byte(KeyPrefixStateLastNftDB)
 }
 
 func calcEvmxgoKeyLocal() []byte {
