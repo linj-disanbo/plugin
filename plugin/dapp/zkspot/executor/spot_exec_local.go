@@ -30,6 +30,21 @@ func (e *zkspot) ExecLocal_EntrustRevokeOrder(payload *ety.SpotMarketOrder, tx *
 	return e.interExecLocalWithZk(tx, receiptData, index)
 }
 
+func (e *zkspot) ExecLocal_SpotNftOrder(payload *ety.SpotNftOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return e.interExecLocalWithZk(tx, receiptData, index)
+}
+
+func (e *zkspot) ExecLocal_SpotNftTradeOrder(payload *ety.SpotNftTakerOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return e.interExecLocalWithZk(tx, receiptData, index)
+}
+
+func (e *zkspot) ExecLocal_SpotNftTradeOrder2(payload *ety.SpotNftTakerOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return e.interExecLocalWithZk(tx, receiptData, index)
+}
+func (e *zkspot) ExecLocal_SpotNftOrder2(payload *ety.SpotNftOrder, tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
+	return e.interExecLocalWithZk(tx, receiptData, index)
+}
+
 func (e *zkspot) interExecLocalWithZk(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet, err := e.execLocalZksync(tx, receiptData, index)
 	if err != nil {
