@@ -21,6 +21,8 @@ const (
 	TyEntrustRevokeOrderAction
 	TyNftOrderAction
 	TyNftTakerOrderAction
+	TyNftOrderAction2
+	TyNftTakerOrderAction2
 
 	NameLimitOrderAction         = "LimitOrder"
 	NameMarketOrderAction        = "MarketOrder"
@@ -30,6 +32,8 @@ const (
 	NameEntrustRevokeOrderAction = "EntrustRevokeOrder"
 	NameNftOrderAction           = "NftOrder"
 	NameNftTakerOrderAction      = "NftTakerOrder"
+	NameNftOrderAction2          = "NftOrder2"
+	NameNftTakerOrderAction2     = "NftTakerOrder2"
 
 	FuncNameQueryMarketDepth      = "QueryMarketDepth"
 	FuncNameQueryHistoryOrderList = "QueryHistoryOrderList"
@@ -209,6 +213,26 @@ func CheckNftOrder(cfg *types.Chain33Config, limitOrder *SpotNftOrder) error {
 		return ErrAssetAmount
 	}
 	if !(CheckIsNFTToken(left) && CheckIsNFTToken(right)) {
+		return ErrAsset
+	}
+	return nil
+}
+
+func CheckNftOrder2(cfg *types.Chain33Config, limitOrder *SpotNftOrder) error {
+	left := limitOrder.GetLeftAsset()
+	right := limitOrder.GetRightAsset()
+	price := limitOrder.GetPrice()
+	amount := limitOrder.GetAmount()
+	if !CheckExchangeAsset(cfg.GetCoinExec(), left, right) {
+		return ErrAsset
+	}
+	if !CheckPrice(price) {
+		return ErrAssetPrice
+	}
+	if !CheckAmount(amount, cfg.GetCoinPrecision()) {
+		return ErrAssetAmount
+	}
+	if CheckIsNFTToken(right) {
 		return ErrAsset
 	}
 	return nil
