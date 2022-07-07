@@ -272,10 +272,10 @@ func (a *Spot) LoadNftTrader(fromaddr string, accountID uint64) (*NftTrader, err
 	}, nil
 }
 
-func createNftOrder(payload *et.SpotNftOrder, entrustAddr string, inits []orderInit) *et.SpotOrder {
+func createNftOrder(payload *et.SpotNftOrder, ty int32, entrustAddr string, inits []orderInit) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:       &et.SpotOrder_NftOrder{NftOrder: payload},
-		Ty:          et.TyLimitOrderAction,
+		Ty:          ty,
 		EntrustAddr: entrustAddr,
 		Executed:    0,
 		AVGPrice:    0,
@@ -296,7 +296,7 @@ func (a *Spot) CreateNftOrder(fromaddr string, trader *NftTrader, payload *et.Sp
 	}
 	trader.fee = fees
 
-	order := createNftOrder(payload, entrustAddr,
+	order := createNftOrder(payload, et.TyNftOrderAction, entrustAddr,
 		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
 	trader.order = newSpotOrder(order, a.orderdb)
 

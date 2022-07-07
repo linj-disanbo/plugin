@@ -116,6 +116,32 @@ func (o *spotOrder) isActiveOrder() bool {
 	return o.order.Status == et.Ordered
 }
 
+func (o *spotOrder) orderUpdate(matchDetail *et.MatchInfo) {
+	matched := matchDetail.Matched
+
+	// fee and AVGPrice
+	o.order.DigestedFee += matchDetail.FeeTaker
+	o.order.AVGPrice = matchDetail.Price
+
+	// status
+	if matched == o.order.GetBalance() {
+		o.order.Status = et.Completed
+	} else {
+		o.order.Status = et.Ordered
+	}
+
+	// order matched
+	o.order.Executed = matched
+	o.order.Balance -= matched
+}
+
+func (o *spotOrder) Traded(matchDetail *et.MatchInfo, blocktime int64) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+	o.orderUpdate(matchDetail)
+	o.order.UpdateTime = blocktime
+	kvs := o.repo.GetOrderKvSet(o.order)
+	return []*types.ReceiptLog{}, kvs, nil
+}
+
 // statedb: order, account
 // localdb: market-depth, market-orders, history-orders
 
