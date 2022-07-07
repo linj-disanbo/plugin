@@ -74,6 +74,11 @@ message Evmxgo {
     int64  total        = 3;
 }
 
+message EvmxgoNft {
+    uint64  id   = 1;
+    string symbol = 2;
+}
+
 // config mint synbol
 message EvmxgoMintConfig {
     string address      = 1;
