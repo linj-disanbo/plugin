@@ -41,6 +41,8 @@ message ZksyncAction1 {
 
     SpotNftOrder nftOrder = 300;
     SpotNftTakerOrder nftTakerOrder = 301;
+    SpotNftOrder nftOrder2 = 302;
+    SpotNftTakerOrder nftTakerOrder2 = 303;
   } 
 }
 

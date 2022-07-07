@@ -59,12 +59,43 @@ message SpotNftOrder {
   ZkOrder order = 6;
 }
 
+
 // 使用挂单摘单模式, 后摘单
 message SpotNftTakerOrder {
   //交易对
   int64 orderID = 1;
   ZkOrder order = 2;
 }
+
+/*
+message ExNft {
+  string contract = 1;
+  string symbol = 2;
+}
+
+// 使用挂单摘单模式, 先挂单
+message SpotExNftOrder {
+  //交易对
+  ExNft  leftAsset = 1;
+  //交易对
+  uint64 rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+  ZkOrder order = 6;
+}
+
+// 使用挂单摘单模式, 后摘单
+message SpotExNftTakerOrder {
+  //交易对
+  int64 orderID = 1;
+  ZkOrder order = 2;
+}
+*/
+
 //市价委托
 message SpotMarketOrder {
   //资产1
