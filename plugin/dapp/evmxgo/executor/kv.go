@@ -31,7 +31,7 @@ func calcNftKey(value string) (key []byte) {
 	return []byte(fmt.Sprintf(KeyPrefixStateNftDB+"-%s", value))
 }
 
-func lastNftKey(value string) (key []byte) {
+func lastNftKey() (key []byte) {
 	return []byte(KeyPrefixStateLastNftDB)
 }
 

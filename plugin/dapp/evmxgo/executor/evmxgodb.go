@@ -69,7 +69,7 @@ func safeAdd(balance, amount int64) (int64, error) {
 	return balance + amount, nil
 }
 
-func (e *evmxgoDB) mint(amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+func (e *evmxgoDB) mint2(amount int64, mintType int32) ([]*types.KeyValue, []*types.ReceiptLog, error) {
 	newTotal, err := safeAdd(e.evmxgo.Total, amount)
 	if err != nil {
 		return nil, nil, err
@@ -79,72 +79,112 @@ func (e *evmxgoDB) mint(amount int64) ([]*types.KeyValue, []*types.ReceiptLog, e
 	e.evmxgo.Total = newTotal
 
 	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
-	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoMint, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevEvmxgo, Current: &e.evmxgo})}}
+	logs := []*types.ReceiptLog{{Ty: mintType, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevEvmxgo, Current: &e.evmxgo})}}
 	return kvs, logs, nil
+}
+
+func (e *evmxgoDB) mint(amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+	return e.mint2(amount, evmxgotypes.TyLogEvmxgoMint)
 }
 
 func (e *evmxgoDB) mintMap(amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
-	newTotal, err := safeAdd(e.evmxgo.Total, amount)
-	if err != nil {
-		return nil, nil, err
-	}
-
-	prevEvmxgo := e.evmxgo
-	e.evmxgo.Total = newTotal
-
-	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
-	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoMintMap, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevEvmxgo, Current: &e.evmxgo})}}
-	return kvs, logs, nil
+	return e.mint2(amount, evmxgotypes.TyLogEvmxgoMintMap)
 }
 
 func (e *evmxgoDB) mintNft(amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
-	newTotal, err := safeAdd(e.evmxgo.Total, amount)
-	if err != nil {
-		return nil, nil, err
-	}
+	return e.mint2(amount, evmxgotypes.TyLogEvmxgoMintNft)
+}
 
-	prevEvmxgo := e.evmxgo
-	e.evmxgo.Total = newTotal
+func (e *evmxgoDB) burn2(db dbm.KV, amount int64, burnType int32) ([]*types.KeyValue, []*types.ReceiptLog, error) {
+	if e.evmxgo.Total < amount {
+		return nil, nil, types.ErrNoBalance
+	}
+	prevToken := e.evmxgo
+	e.evmxgo.Total -= amount
 
 	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
-	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoMintNft, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevEvmxgo, Current: &e.evmxgo})}}
+	logs := []*types.ReceiptLog{{Ty: burnType, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevToken, Current: &e.evmxgo})}}
 	return kvs, logs, nil
 }
 
 func (e *evmxgoDB) burn(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
-	if e.evmxgo.Total < amount {
-		return nil, nil, types.ErrNoBalance
-	}
-	prevToken := e.evmxgo
-	e.evmxgo.Total -= amount
-
-	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
-	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoBurn, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevToken, Current: &e.evmxgo})}}
-	return kvs, logs, nil
+	return e.burn2(db, amount, evmxgotypes.TyLogEvmxgoBurn)
 }
 
 func (e *evmxgoDB) burnMap(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
-	if e.evmxgo.Total < amount {
-		return nil, nil, types.ErrNoBalance
-	}
-	prevToken := e.evmxgo
-	e.evmxgo.Total -= amount
-
-	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
-	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoBurnMap, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevToken, Current: &e.evmxgo})}}
-	return kvs, logs, nil
+	return e.burn2(db, amount, evmxgotypes.TyLogEvmxgoBurnMap)
 }
 
 func (e *evmxgoDB) burnNft(db dbm.KV, amount int64) ([]*types.KeyValue, []*types.ReceiptLog, error) {
-	if e.evmxgo.Total < amount {
-		return nil, nil, types.ErrNoBalance
-	}
-	prevToken := e.evmxgo
-	e.evmxgo.Total -= amount
+	return e.burn2(db, amount, evmxgotypes.TyLogEvmxgoBurnNft)
+}
 
-	kvs := e.getKVSet(calcEvmxgoKey(e.evmxgo.Symbol))
-	logs := []*types.ReceiptLog{{Ty: evmxgotypes.TyLogEvmxgoBurnNft, Log: types.Encode(&evmxgotypes.ReceiptEvmxgoAmount{Prev: &prevToken, Current: &e.evmxgo})}}
-	return kvs, logs, nil
+// 在dex中需要用一个int 类型的 id 表示nft， 实际需要用  contract-address:nft-id 表示nft
+// 为了更快的实现原型， 作为临时方案， 需要对 nft 进行对应的转换
+// mint/burn 参数使用 contract-address:nft-id， 生成一个数字id， 同时由于 account 中 symbol需要是string， 将数字 id 转化为 string类型，
+// 转账等使用 id 作参数
+type evmxgoNftIdDB struct {
+	nft          evmxgotypes.EvmxgoNft
+	needSaveLast bool
+	lastId       uint64
+	//   loadNftId(symbol string)
+	//  newNftId() uint64
+	//  lastNftId() uint64
+}
+
+func (e *evmxgoNftIdDB) getKVSet() (kvset []*types.KeyValue) {
+	value := types.Encode(&e.nft)
+	key := calcNftKey(e.nft.Symbol)
+	kvset = append(kvset, &types.KeyValue{Key: key, Value: value})
+	if e.needSaveLast {
+		key2 := lastNftKey()
+		value2 := &evmxgotypes.EvmxgoNft{Id: e.lastId}
+		kvset = append(kvset, &types.KeyValue{Key: key2, Value: types.Encode(value2)})
+	}
+	return kvset
+}
+
+func loadNftId(stateDB dbm.KV, symbol string) (*evmxgoNftIdDB, error) {
+	key := calcNftKey(symbol)
+	p, err := stateDB.Get(key)
+	if err != nil {
+		return &evmxgoNftIdDB{}, err
+	}
+	var id evmxgotypes.EvmxgoNft
+	err = types.Decode(p, &id)
+	if err != nil {
+		return &evmxgoNftIdDB{}, err
+	}
+	return &evmxgoNftIdDB{nft: evmxgotypes.EvmxgoNft{Id: id.Id, Symbol: symbol}}, nil
+}
+
+func lastNftId(stateDB dbm.KV) (uint64, error) {
+	key := lastNftKey()
+	p, err := stateDB.Get(key)
+	if err != nil {
+		if err == types.ErrNotFound {
+			return 0, nil
+		}
+		return 0, err
+	}
+	var id evmxgotypes.EvmxgoNft
+	err = types.Decode(p, &id)
+	if err != nil {
+		return 0, err
+	}
+	return id.Id, nil
+}
+
+func newNftId(statedb dbm.KV, symbol string) (*evmxgoNftIdDB, error) {
+	lastid, err := lastNftId(statedb)
+	if err != nil {
+		return nil, err
+	}
+	lastid = lastid + 1
+	newId := &evmxgoNftIdDB{nft: evmxgotypes.EvmxgoNft{Id: lastid, Symbol: symbol}}
+	newId.lastId = lastid
+	newId.needSaveLast = true
+	return newId, nil
 }
 
 type evmxgoAction struct {
@@ -478,20 +518,21 @@ func (action *evmxgoAction) mintNft(mint *evmxgotypes.EvmxgoMintNft, tx2lock *ty
 		if err := checkMintPara(mint2, tx2lock, action.stateDB); nil != err {
 			return nil, err
 		}
+
+		// evmxgo合约，配置symbol对应的实际地址，检验地址正确才能发币
+		configSymbol, err := loadEvmxgoMintConfig(action.stateDB, mint.GetSymbol())
+		if err != nil || configSymbol == nil {
+			elog.Error("evmxgo mint ", "not config symbol", mint.GetSymbol(), "error", err)
+			return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
+		}
+
+		if mint.BridgeToken != configSymbol.Address {
+			elog.Error("evmxgo mint ", "NotCorrectBridgeTokenAddress with address by manager", configSymbol.Address, "mint.BridgeToken", mint.BridgeToken)
+			return nil, evmxgotypes.ErrNotCorrectBridgeTokenAddress
+		}
 	}
 
-	// evmxgo合约，配置symbol对应的实际地址，检验地址正确才能发币
-	configSymbol, err := loadEvmxgoMintConfig(action.stateDB, mint.GetSymbol())
-	if err != nil || configSymbol == nil {
-		elog.Error("evmxgo mint ", "not config symbol", mint.GetSymbol(), "error", err)
-		return nil, evmxgotypes.ErrEvmxgoSymbolNotAllowedMint
-	}
-
-	if mint.BridgeToken != configSymbol.Address {
-		elog.Error("evmxgo mint ", "NotCorrectBridgeTokenAddress with address by manager", configSymbol.Address, "mint.BridgeToken", mint.BridgeToken)
-		return nil, evmxgotypes.ErrNotCorrectBridgeTokenAddress
-	}
-
+	var nftid *evmxgoNftIdDB
 	evmxgodb, err := loadEvmxgoDB(action.stateDB, mint.GetSymbol())
 	if err != nil {
 		if err != evmxgotypes.ErrEvmxgoSymbolNotExist {
@@ -499,6 +540,15 @@ func (action *evmxgoAction) mintNft(mint *evmxgotypes.EvmxgoMintNft, tx2lock *ty
 		}
 
 		evmxgodb = newEvmxgoDB(mint2)
+		nftid, err = newNftId(action.stateDB, mint.Symbol)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		nftid, err = loadNftId(action.stateDB, mint.Symbol)
+		if err != nil {
+			return nil, err
+		}
 	}
 
 	kvs, logs, err := evmxgodb.mintNft(mint.Amount)
@@ -506,7 +556,9 @@ func (action *evmxgoAction) mintNft(mint *evmxgotypes.EvmxgoMintNft, tx2lock *ty
 		elog.Error("evmxgo mint ", "symbol", mint.GetSymbol(), "error", err, "from", action.fromaddr)
 		return nil, err
 	}
-	evmxgoAccount, err := account.NewAccountDB(cfg, "evmxgo", mint.GetSymbol(), action.stateDB)
+
+	nftidStr := fmt.Sprintf("%d", nftid.nft.Id)
+	evmxgoAccount, err := account.NewAccountDB(cfg, "evmxgo", nftidStr, action.stateDB)
 	if err != nil {
 		return nil, err
 	}
@@ -515,9 +567,12 @@ func (action *evmxgoAction) mintNft(mint *evmxgotypes.EvmxgoMintNft, tx2lock *ty
 	if err != nil {
 		return nil, err
 	}
-
 	logs = append(logs, receipt.Logs...)
 	kvs = append(kvs, receipt.KV...)
+
+	kvs2 := nftid.getKVSet()
+	kvs = append(kvs, kvs2...)
+	elog.Debug("mint", "evmxgo.Symbol", mint.Symbol, "evmxgo.NftId", nftid.nft.Id)
 
 	return &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}, nil
 }
@@ -534,6 +589,11 @@ func (action *evmxgoAction) burnNft(burn *evmxgotypes.EvmxgoBurnNft) (*types.Rec
 	if err != nil {
 		return nil, err
 	}
+	nftid, err := loadNftId(action.stateDB, burn.Symbol)
+	if err != nil {
+		return nil, err
+	}
+	nftidStr := fmt.Sprintf("%d", nftid.nft.Id)
 
 	kvs, logs, err := evmxgodb.burnNft(action.stateDB, burn.Amount)
 	if err != nil {
@@ -541,7 +601,7 @@ func (action *evmxgoAction) burnNft(burn *evmxgotypes.EvmxgoBurnNft) (*types.Rec
 		return nil, err
 	}
 	chain33cfg := action.api.GetConfig()
-	evmxgoAccount, err := account.NewAccountDB(chain33cfg, "evmxgo", burn.GetSymbol(), action.stateDB)
+	evmxgoAccount, err := account.NewAccountDB(chain33cfg, "evmxgo", nftidStr, action.stateDB)
 	if err != nil {
 		return nil, err
 	}
