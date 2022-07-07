@@ -21,19 +21,6 @@ type NftTrader struct {
 	accFee  *DexAccount
 }
 
-// nft match detail
-type NftMatchInfo1 struct {
-	// trade match balance
-	Matched     int64
-	Price       *big.Int
-	LeftBalance int64
-	// = matched * price
-	RightBalance *big.Int
-	// fee use right token
-	FeeTaker *big.Int
-	FeeMaker *big.Int
-}
-
 func (s *NftTrader) GetOrder() *spotOrder {
 	return s.order
 }
@@ -235,23 +222,7 @@ func (s *NftTrader) selfSettlement(maker *NftTrader, tradeBalance *et.MatchInfo)
 }
 
 func (s *NftTrader) orderUpdate(matchDetail *et.MatchInfo) {
-	matched := matchDetail.Matched
-
-	// fee and AVGPrice
-	s.order.order.DigestedFee += matchDetail.FeeTaker
-	s.order.order.AVGPrice = matchDetail.Price
-
-	// status
-	if matched == s.order.order.GetBalance() {
-		s.order.order.Status = et.Completed
-	} else {
-		s.order.order.Status = et.Ordered
-	}
-
-	// order matched
-	s.order.order.Executed = matched
-	s.order.order.Balance -= matched
-
+	s.order.orderUpdate(matchDetail)
 }
 
 func (s *NftTrader) takerOrderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
