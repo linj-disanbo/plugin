@@ -44,6 +44,8 @@ func Cmd() *cobra.Command {
 		GetTokenLogsCmd(),
 		GetTokenCmd(),
 		QueryTxCmd(),
+		CreateRawNftMintTxCmd(),
+		CreateRawNftBurnTxCmd(),
 	)
 	return cmd
 }
@@ -539,7 +541,7 @@ func nftMint(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	params := &rpctypes.CreateTxIn{
 		Execer:     getExecname(paraName),
-		ActionName: "NTFOrder2",
+		ActionName: "MintNft",
 		Payload:    types.MustPBToJSON(payload),
 	}
 
@@ -581,7 +583,7 @@ func nftBurn(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	params := &rpctypes.CreateTxIn{
 		Execer:     getExecname(paraName),
-		ActionName: "NTFTradeOrder2",
+		ActionName: "BurnNft",
 		Payload:    types.MustPBToJSON(payload),
 	}
 
