@@ -196,7 +196,7 @@ func (a *NftSpot) CreateNftOrder(fromaddr string, payload *et.SpotNftOrder, entr
 		return nil, err
 	}
 
-	order := createNftOrder(payload, et.TyNftOrderAction2, entrustAddr,
+	order := createNftOrder(payload, et.TyNftOrder2Action, entrustAddr,
 		[]orderInit{a.initOrder(), fees.initLimitOrder()})
 
 	order2 := newSpotOrder(order, a.orderdb)
@@ -294,7 +294,7 @@ func (a *NftSpot) CreateNftTakerOrder(fromaddr string, acc *NftSpotTraderHelper,
 func createNftTakerOrder2(payload *et.SpotNftTakerOrder, entrustAddr string, order2 *spotOrder, inits []orderInit) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:       &et.SpotOrder_NftTakerOrder{NftTakerOrder: payload},
-		Ty:          et.TyNftOrderAction2,
+		Ty:          et.TyNftOrder2Action,
 		EntrustAddr: entrustAddr,
 		Executed:    0,
 		AVGPrice:    0,

@@ -21,8 +21,8 @@ const (
 	TyEntrustRevokeOrderAction
 	TyNftOrderAction
 	TyNftTakerOrderAction
-	TyNftOrderAction2
-	TyNftTakerOrderAction2
+	TyNftOrder2Action
+	TyNftTaker2OrderAction
 
 	NameLimitOrderAction         = "LimitOrder"
 	NameMarketOrderAction        = "MarketOrder"
