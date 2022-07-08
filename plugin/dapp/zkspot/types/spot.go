@@ -22,7 +22,7 @@ const (
 	TyNftOrderAction
 	TyNftTakerOrderAction
 	TyNftOrder2Action
-	TyNftTaker2OrderAction
+	TyNftTakerOrder2Action
 
 	NameLimitOrderAction         = "LimitOrder"
 	NameMarketOrderAction        = "MarketOrder"
