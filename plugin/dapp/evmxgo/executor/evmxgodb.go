@@ -563,7 +563,11 @@ func (action *evmxgoAction) mintNft(mint *evmxgotypes.EvmxgoMintNft, tx2lock *ty
 		return nil, err
 	}
 	elog.Debug("mint", "evmxgo.Symbol", mint.Symbol, "evmxgo.Amount", mint.Amount)
-	receipt, err := evmxgoAccount.Mint(mint.Recipient, mint.Amount)
+	recipient := mint.Recipient
+	if mint.Recipient == "" {
+		recipient = action.fromaddr
+	}
+	receipt, err := evmxgoAccount.Mint(recipient, mint.Amount)
 	if err != nil {
 		return nil, err
 	}
