@@ -274,6 +274,24 @@ func (policy *zkspotPolicy) SignTransaction(key crypto.PrivKey, req *types.ReqSi
 			return
 		}
 		nftTakerOrder.Order.Signature = signInfo
+	case et.TyNftOrder2Action:
+		nftOrder := action.GetNftOrder2()
+		msg = GetNftOrder2Msg(nftOrder)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		nftOrder.Order.Signature = signInfo
+	case et.TyNftTakerOrder2Action:
+		nftTakerOrder := action.GetNftTakerOrder2()
+		msg = GetNftTakerOrder2Msg(nftTakerOrder)
+		signInfo, err = SignTx(msg, privateKey)
+		if err != nil {
+			bizlog.Error("SignTransaction", "eddsa.signTx error", err)
+			return
+		}
+		nftTakerOrder.Order.Signature = signInfo
 	}
 
 	tx.Payload = types.Encode(action)

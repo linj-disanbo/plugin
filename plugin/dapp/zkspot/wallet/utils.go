@@ -480,3 +480,11 @@ func GetNftOrderMsg(payload *zst.SpotNftOrder) *zt.ZkMsg {
 func GetNftTakerOrderMsg(payload *zst.SpotNftTakerOrder) *zt.ZkMsg {
 	return GetSpotSwapMsg(payload.Order)
 }
+
+func GetNftOrder2Msg(payload *zst.SpotNftOrder) *zt.ZkMsg {
+	return GetSpotSwapMsg(payload.Order)
+}
+
+func GetNftTakerOrder2Msg(payload *zst.SpotNftTakerOrder) *zt.ZkMsg {
+	return GetSpotSwapMsg(payload.Order)
+}

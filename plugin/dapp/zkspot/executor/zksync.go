@@ -131,6 +131,22 @@ func (z *zkspot) CheckTx(tx *types.Transaction, index int) error {
 		}
 		signature = action.GetNftTakerOrder().GetOrder().GetSignature()
 		msg = wallet.GetNftTakerOrderMsg(action.GetNftTakerOrder())
+	case et.TyNftOrder2Action:
+		cfg := z.GetAPI().GetConfig()
+		err := SpotCheckTx(cfg, tx, index)
+		if err != nil {
+			return err
+		}
+		signature = action.GetNftOrder2().GetOrder().GetSignature()
+		msg = wallet.GetNftOrder2Msg(action.GetNftOrder2())
+	case et.TyNftTakerOrder2Action:
+		cfg := z.GetAPI().GetConfig()
+		err := SpotCheckTx(cfg, tx, index)
+		if err != nil {
+			return err
+		}
+		signature = action.GetNftTakerOrder2().GetOrder().GetSignature()
+		msg = wallet.GetNftTakerOrder2Msg(action.GetNftTakerOrder2())
 	default:
 		cfg := z.GetAPI().GetConfig()
 		return SpotCheckTx(cfg, tx, index)
