@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/33cn/chain33/rpc/jsonclient"
 	rpctypes "github.com/33cn/chain33/rpc/types"
@@ -482,4 +483,108 @@ func queryTx(cmd *cobra.Command, args []string) {
 	var res types.ReplyTxInfos
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &res)
 	ctx.Run()
+}
+
+// CreateRawNftMintTxCmd create raw nft  mintage transaction
+func CreateRawNftMintTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "mint_nft",
+		Short: "Create a mint_nft evmxgo transaction",
+		Run:   nftMint,
+	}
+	addNftMintFlags(cmd)
+	return cmd
+}
+
+func addNftMintFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().Int64P("amount", "a", 0, "amount of mintage")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("recipient", "r", "", "recipient")
+	cmd.Flags().StringP("extra", "e", "", "extra info")
+
+	cmd.Flags().Float64P("fee", "f", 0, "token transaction fee")
+}
+
+const (
+	ParaPrefix = "user.p."
+	ExecName   = "evmxgo"
+)
+
+func getExecname(paraName string) string {
+	exec := ExecName
+	if strings.HasPrefix(paraName, ParaPrefix) {
+		exec = paraName + ExecName
+	}
+	return exec
+}
+
+func nftMint(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	amount, _ := cmd.Flags().GetInt64("amount")
+	recipient, _ := cmd.Flags().GetString("recipient")
+	extra, _ := cmd.Flags().GetString("extra")
+
+	payload := &evmxgotypes.EvmxgoMintNft{
+		Symbol:    symbol,
+		Amount:    amount,
+		Recipient: recipient,
+		Extra:     []byte(extra),
+	}
+
+	paraName, _ := cmd.Flags().GetString("paraName")
+	params := &rpctypes.CreateTxIn{
+		Execer:     getExecname(paraName),
+		ActionName: "NTFOrder2",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
+}
+
+// CreateRawNftBurnTxCmd  create raw nft burn transaction
+func CreateRawNftBurnTxCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "burn_nft",
+		Short: "Create a burn nft transaction",
+		Run:   nftBurn,
+	}
+	addNftBurnFlags(cmd)
+	return cmd
+}
+
+func addNftBurnFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("symbol", "s", "", "nft symbol")
+	cmd.MarkFlagRequired("symbol")
+
+	cmd.Flags().Int64P("amount", "a", 0, "amount of burn")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().Float64P("fee", "f", 0, "token transaction fee")
+}
+
+func nftBurn(cmd *cobra.Command, args []string) {
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	symbol, _ := cmd.Flags().GetString("symbol")
+	amount, _ := cmd.Flags().GetInt64("amount")
+
+	payload := &evmxgotypes.EvmxgoBurnNft{
+		Symbol: symbol,
+		Amount: amount,
+	}
+
+	paraName, _ := cmd.Flags().GetString("paraName")
+	params := &rpctypes.CreateTxIn{
+		Execer:     getExecname(paraName),
+		ActionName: "NTFTradeOrder2",
+		Payload:    types.MustPBToJSON(payload),
+	}
+
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
+	ctx.RunWithoutMarshal()
 }
