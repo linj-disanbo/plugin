@@ -117,7 +117,7 @@ func nftTakerOrder(cmd *cobra.Command, args []string) {
 	getNftOrder(cmd, args)
 	var order2 et.SpotOrder
 	if order2.Ty != et.TyNftOrderAction {
-		fmt.Println("%l the order is not nft sell order", orderId)
+		fmt.Printf("%022d the order is not nft sell order", orderId)
 		return
 	}
 	// 业务 buy = buy-Left, sell-Right
@@ -167,7 +167,7 @@ func queryNftOrderFlag(cmd *cobra.Command) {
 	markRequired(cmd, "order")
 }
 
-func queryNftOrder(cmd *cobra.Command, args []string) {
+func queryNftOrder(cmd *cobra.Command, args []string) *et.SpotOrder {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	orderId, _ := cmd.Flags().GetInt64("order")
 
@@ -185,10 +185,11 @@ func queryNftOrder(cmd *cobra.Command, args []string) {
 	var resp et.SpotOrder
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
 	ctx.Run()
+	return &resp
 }
 
-func getNftOrder(cmd *cobra.Command, args []string) {
-	queryNftOrder(cmd, args)
+func getNftOrder(cmd *cobra.Command, args []string) *et.SpotOrder {
+	return queryNftOrder(cmd, args)
 }
 
 func nftOrder2Cmd() *cobra.Command {
@@ -287,8 +288,10 @@ func NftTakerOrder2Flag(cmd *cobra.Command) {
 
 func nftTakerOrder2(cmd *cobra.Command, args []string) {
 	orderId, _ := cmd.Flags().GetInt64("order")
-	getNftOrder(cmd, args)
-	var order2 et.SpotOrder
+	order2 := getNftOrder(cmd, args)
+	if order2 == nil {
+		fmt.Println("get nft order failed")
+	}
 	if order2.Ty != et.TyNftOrder2Action {
 		fmt.Printf("%022d the order is not nft sell order", orderId)
 		return

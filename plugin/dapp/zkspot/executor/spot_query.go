@@ -65,8 +65,13 @@ func (e *zkspot) Query_QueryOrderList(in *et.SpotQueryOrderList) (types.Message,
 
 //根据orderID查询订单信息
 func (e *zkspot) Query_QueryNftOrder(in *et.SpotQueryOrder) (types.Message, error) {
+	defer func() {
+		if err := recover(); err != nil {
+			elog.Error("Query_QueryNftOrder", "err", err, "stack", et.GetStack())
+		}
+	}()
 	if in.OrderID == 0 {
 		return nil, et.ErrOrderID
 	}
-	return spot.FindOrderByOrderID(e.GetStateDB(), e.GetLocalDB(), &dbprefix{}, in.OrderID)
+	return spot.FindOrderByOrderNftID(e.GetStateDB(), e.GetLocalDB(), &dbprefix{}, in.OrderID)
 }
