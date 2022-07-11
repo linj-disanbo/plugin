@@ -263,7 +263,7 @@ func (a *NftSpot) TradeNft(fromaddr string, taker *NftSpotTraderHelper, payload 
 		elog.Error("TradeNft Trade", "err", err, "orderid", payload.OrderID)
 		return nil, err
 	}
-	return &types.Receipt{KV: kv, Logs: log}, nil
+	return &types.Receipt{Ty: types.ExecOk, KV: kv, Logs: log}, nil
 }
 
 func (a *NftSpot) CreateNftTakerOrder(fromaddr string, acc *NftSpotTraderHelper, payload *et.SpotNftTakerOrder, entrustAddr string) (*et.SpotOrder, error) {
