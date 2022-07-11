@@ -167,7 +167,7 @@ func queryNftOrderFlag(cmd *cobra.Command) {
 	markRequired(cmd, "order")
 }
 
-func queryNftOrder(cmd *cobra.Command, args []string) *et.SpotOrder {
+func queryNftOrder1(cmd *cobra.Command, args []string) *et.SpotOrder {
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
 	orderId, _ := cmd.Flags().GetInt64("order")
 
@@ -188,8 +188,29 @@ func queryNftOrder(cmd *cobra.Command, args []string) *et.SpotOrder {
 	return &resp
 }
 
+func queryNftOrder(cmd *cobra.Command, args []string) {
+	queryNftOrder1(cmd, args)
+}
+
 func getNftOrder(cmd *cobra.Command, args []string) *et.SpotOrder {
-	return queryNftOrder(cmd, args)
+	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
+	orderId, _ := cmd.Flags().GetInt64("order")
+
+	var params rpctypes.Query4Jrpc
+
+	paraName, _ := cmd.Flags().GetString("paraName")
+	params.Execer = getExecname(paraName)
+	req := &et.SpotQueryOrder{
+		OrderID: orderId,
+	}
+
+	params.FuncName = "QueryNftOrder"
+	params.Payload = types.MustPBToJSON(req)
+
+	var resp et.SpotOrder
+	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.Query", params, &resp)
+	ctx.RunResult()
+	return &resp
 }
 
 func nftOrder2Cmd() *cobra.Command {
