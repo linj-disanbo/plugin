@@ -12,8 +12,9 @@ type NftSpotTraderHelper struct {
 	order *spotOrder
 	fee   *spotFee
 
-	matches *et.ReceiptSpotMatch
-	accFee  *DexAccount
+	matches  *et.ReceiptSpotMatch
+	accFee   *DexAccount
+	execAddr string
 }
 
 func (s *NftSpotTraderHelper) Trade(spot *NftSpot, makerOrder *spotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
@@ -101,7 +102,7 @@ func (s *NftSpotTraderHelper) settlement(takerNft, makerNft *NftAccount, makerAc
 		elog.Error("settlement", "buy.doTranfer1", err)
 		return nil, nil, err
 	}
-	receiptN, err := makerNft.accdb.accdb.ExecTransferFrozen(makerNft.address, takerNft.address, "mxxx", tradeBalance.LeftBalance)
+	receiptN, err := makerNft.accdb.accdb.ExecTransferFrozen(makerNft.address, takerNft.address, s.execAddr, tradeBalance.LeftBalance)
 	if err != nil {
 		elog.Error("settlement", "buy.doFrozenTranfer2", err)
 		return nil, nil, err

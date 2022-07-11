@@ -184,9 +184,10 @@ func (a *NftSpot) LoadNftTrader(fromaddr string, accountID uint64) (*NftSpotTrad
 	}
 
 	return &NftSpotTraderHelper{
-		acc:    acc,
-		cfg:    a.env.GetAPI().GetConfig(),
-		accFee: a.feeAcc2,
+		acc:      acc,
+		cfg:      a.env.GetAPI().GetConfig(),
+		accFee:   a.feeAcc2,
+		execAddr: a.ExecAddr,
 	}, nil
 }
 
