@@ -153,6 +153,10 @@ func FindOrderByOrderID(statedb dbm.KV, localdb dbm.KV, dbprefix et.DBprefix, or
 	return newOrderSRepo(statedb, dbprefix).findOrderBy(orderID)
 }
 
+func FindOrderByOrderNftID(statedb dbm.KV, localdb dbm.KV, dbprefix et.DBprefix, orderID int64) (*et.SpotOrder, error) {
+	return newOrderSRepo(statedb, dbprefix).findNftOrderBy(orderID)
+}
+
 // orderSRepo statedb repo
 type orderSRepo struct {
 	statedb  dbm.KV
@@ -184,6 +188,23 @@ func (repo *orderSRepo) findOrderBy(orderID int64) (*et.SpotOrder, error) {
 		return nil, err
 	}
 	order.Executed = order.GetLimitOrder().Amount - order.Balance
+	return &order, nil
+}
+
+func (repo *orderSRepo) findNftOrderBy(orderID int64) (*et.SpotOrder, error) {
+	key := repo.orderKey(orderID)
+	data, err := repo.statedb.Get(key)
+	if err != nil {
+		elog.Error("findNftOrderBy.Get", "orderID", orderID, "err", err.Error())
+		return nil, err
+	}
+	var order et.SpotOrder
+	err = types.Decode(data, &order)
+	if err != nil {
+		elog.Error("findNftOrderBy.Decode", "orderID", orderID, "err", err.Error())
+		return nil, err
+	}
+	order.Executed = order.GetNftOrder().Amount - order.Balance
 	return &order, nil
 }
 
