@@ -173,7 +173,8 @@ func queryNftOrder(cmd *cobra.Command, args []string) {
 
 	var params rpctypes.Query4Jrpc
 
-	params.Execer = getExecname("")
+	paraName, _ := cmd.Flags().GetString("paraName")
+	params.Execer = getExecname(paraName)
 	req := &et.SpotQueryOrder{
 		OrderID: orderId,
 	}
@@ -239,7 +240,7 @@ func nftOrder2(cmd *cobra.Command, args []string) {
 		EthAddress: ethAddress,
 		TokenSell:  sell,
 		TokenBuy:   buy,
-		Amount:     et.AmountToZksync(amount),
+		Amount:     et.NftAmountToZksync(amount),
 		Ratio1:     big.NewInt(1).String(),
 		Ratio2:     big.NewInt(0).Mul(big.NewInt(int64(price)), big.NewInt(1e10)).String(),
 	}
@@ -289,7 +290,7 @@ func nftTakerOrder2(cmd *cobra.Command, args []string) {
 	getNftOrder(cmd, args)
 	var order2 et.SpotOrder
 	if order2.Ty != et.TyNftOrder2Action {
-		fmt.Println("%l the order is not nft sell order", orderId)
+		fmt.Printf("%022d the order is not nft sell order", orderId)
 		return
 	}
 	// 业务 buy = buy-Left, sell-Right

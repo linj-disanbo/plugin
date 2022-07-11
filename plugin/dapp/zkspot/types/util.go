@@ -96,6 +96,18 @@ func AmountToZksync(a uint64) string {
 	return amount.String()
 }
 
+func NftAmountToZksync(a uint64) string {
+	return new(big.Int).SetUint64(a).String()
+}
+
+func NftAmountFromZksync(s string) (uint64, error) {
+	zkAmount, ok := new(big.Int).SetString(s, 10)
+	if !ok {
+		return 0, ErrAssetAmount
+	}
+	return zkAmount.Uint64(), nil
+}
+
 func MergeReceipt(receipt1, receipt2 *types.Receipt) *types.Receipt {
 	if receipt2 != nil {
 		receipt1.KV = append(receipt1.KV, receipt2.KV...)
