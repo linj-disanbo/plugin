@@ -3,6 +3,7 @@ package types
 import (
 	"encoding/hex"
 	"math/big"
+	"runtime"
 	"strings"
 
 	"github.com/33cn/chain33/types"
@@ -102,4 +103,10 @@ func MergeReceipt(receipt1, receipt2 *types.Receipt) *types.Receipt {
 	}
 
 	return receipt1
+}
+
+func GetStack() string {
+	buf := make([]byte, 1<<12)
+	runtime.Stack(buf, false)
+	return string(buf)
 }
