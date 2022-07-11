@@ -256,7 +256,7 @@ func nftOrder2(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	params := &rpctypes.CreateTxIn{
 		Execer:     getExecname(paraName),
-		ActionName: "NTFOrder2",
+		ActionName: "NftOrder2",
 		Payload:    types.MustPBToJSON(payload),
 	}
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
@@ -315,7 +315,7 @@ func nftTakerOrder2(cmd *cobra.Command, args []string) {
 	paraName, _ := cmd.Flags().GetString("paraName")
 	params := &rpctypes.CreateTxIn{
 		Execer:     getExecname(paraName),
-		ActionName: "NTFTakerOrder2",
+		ActionName: "NftTakerOrder2",
 		Payload:    types.MustPBToJSON(payload),
 	}
 	rpcLaddr, _ := cmd.Flags().GetString("rpc_laddr")
