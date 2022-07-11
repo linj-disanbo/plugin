@@ -159,6 +159,7 @@ func (e *zkspot) Exec_NftTakerOrder2(payload *exchangetypes.SpotNftTakerOrder, t
 	action2 := NewAction(e, tx, index)
 	r2, err := action2.SpotNftMatch(payload, list)
 	if err != nil {
+		elog.Error("zkspot Exec_NftTakerOrder.SpotNftMatch", "err", err)
 		return r, err
 	}
 	end2 := time.Now()

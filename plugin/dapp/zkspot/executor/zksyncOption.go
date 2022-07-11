@@ -2516,9 +2516,9 @@ func (a *Action) SwapWithNft(payload1 *et.SpotNftTakerOrder, trade *et.ReceiptSp
 	swapSpecialData := genNftSwapSpecialData(payload1, trade)
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, swapSpecialData)
 
-	zklog.Debug("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
+	zklog.Info("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
 	transfers := a.nftSwapGenTransfer(et.OpBuy, payload1.Order, trade)
-	zklog.Debug("swapGenTransfer", "tokenid0", transfers[0].TokenId, "tokenid1", transfers[1].TokenId)
+	zklog.Info("swapGenTransfer", "tokenid0", transfers[0].TokenId, "tokenid1", transfers[1].TokenId)
 	// operationInfo, localKvs 通过 zklog 获得
 	zklog := &zt.ZkReceiptLog{OperationInfo: operationInfo}
 	// left asset 不在树上， 所以不用处理
@@ -2532,6 +2532,7 @@ func (a *Action) SwapWithNft(payload1 *et.SpotNftTakerOrder, trade *et.ReceiptSp
 	*/
 	receipt2, err := a.swapByTransfer(transfers[1], trade, info, zklog)
 	if err != nil {
+		elog.Error("swapByTransfer", "err", err)
 		return nil, err
 	}
 	logs = append(logs, receipt2.Logs...)
@@ -2542,6 +2543,7 @@ func (a *Action) SwapWithNft(payload1 *et.SpotNftTakerOrder, trade *et.ReceiptSp
 
 	feelog1, err := a.MakeFeeLog(transfers[2].AmountIn, info, transfers[2].TokenId, transfers[2].Signature)
 	if err != nil {
+		elog.Error("MakeFeeLog", "err", err)
 		return nil, err
 	}
 
