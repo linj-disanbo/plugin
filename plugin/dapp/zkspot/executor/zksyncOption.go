@@ -2495,6 +2495,7 @@ func (a *Action) SwapWithNft(payload1 *et.SpotNftTakerOrder, trade *et.ReceiptSp
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
+	zklog.Info("SwapWithNft", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell, "detail", trade.Match)
 	info, err := getTreeUpdateInfo(a.statedb)
 	if err != nil {
 		return nil, errors.Wrapf(err, "db.getTreeUpdateInfo")
@@ -2516,17 +2517,19 @@ func (a *Action) SwapWithNft(payload1 *et.SpotNftTakerOrder, trade *et.ReceiptSp
 	operationInfo.SpecialInfo.SpecialDatas = append(operationInfo.SpecialInfo.SpecialDatas, swapSpecialData)
 
 	zklog.Debug("swapGenTransfer", "trade-buy", trade.MakerOrder.TokenBuy, "trade-sell", trade.MakerOrder.TokenSell)
-	transfers := a.swapGenTransfer(et.OpBuy, payload1.Order, trade)
+	transfers := a.nftSwapGenTransfer(et.OpBuy, payload1.Order, trade)
 	zklog.Debug("swapGenTransfer", "tokenid0", transfers[0].TokenId, "tokenid1", transfers[1].TokenId)
 	// operationInfo, localKvs 通过 zklog 获得
 	zklog := &zt.ZkReceiptLog{OperationInfo: operationInfo}
-	//for _, transfer1 := range transfers {
-	receipt1, err := a.swapByTransfer(transfers[0], trade, info, zklog)
-	if err != nil {
-		return nil, err
-	}
-	logs = append(logs, receipt1.Logs...)
-	kvs = append(kvs, receipt1.KV...)
+	// left asset 不在树上， 所以不用处理
+	/*
+		receipt1, err := a.swapByTransfer(transfers[0], trade, info, zklog)
+		if err != nil {
+			return nil, err
+		}
+		logs = append(logs, receipt1.Logs...)
+		kvs = append(kvs, receipt1.KV...)
+	*/
 	receipt2, err := a.swapByTransfer(transfers[1], trade, info, zklog)
 	if err != nil {
 		return nil, err
@@ -2586,4 +2589,69 @@ func genNftSwapSpecialData(payload1 *et.SpotNftTakerOrder, trade *et.ReceiptSpot
 	}
 
 	return specialData
+}
+
+func (a *Action) nftSwapGenTransfer(op int32, takerOrder *et.ZkOrder, trade *et.ReceiptSpotTrade) []*et.ZkTransferWithFee {
+	// 挂单/摘单模式， 不会和自己交易
+	var transfers []*et.ZkTransferWithFee
+	if false && trade.Current.Maker.Id == trade.Current.Taker.Id {
+		return a.selfSwapGenTransfer(op, takerOrder, trade)
+	}
+
+	// A 和 B 交易
+	// Sell
+	takerTokenID, makerTokenID := takerOrder.TokenSell, takerOrder.TokenBuy
+	feeTokenId := takerOrder.TokenBuy
+	takerPay, makerRcv := trade.Match.LeftBalance, trade.Match.LeftBalance
+
+	rightBalance := trade.Match.RightBalance
+	takerRcv := rightBalance - trade.Match.FeeTaker
+	makerPay := rightBalance + trade.Match.FeeMaker
+	fee := trade.Match.FeeMaker + trade.Match.FeeTaker
+
+	if op == et.OpBuy {
+		takerTokenID, makerTokenID = makerTokenID, takerTokenID
+		feeTokenId = takerOrder.TokenSell
+		takerRcv, makerPay = trade.Match.LeftBalance, trade.Match.LeftBalance
+
+		takerPay, makerRcv = rightBalance+trade.Match.FeeTaker, rightBalance-trade.Match.FeeMaker
+	}
+
+	taker1 := &et.ZkTransferWithFee{
+		TokenId:       uint64(takerTokenID),
+		AmountOut:     et.AmountToZksync(uint64(takerPay)),
+		FromAccountId: takerOrder.AccountID,
+		ToAccountId:   trade.Current.Maker.Id,
+		Signature:     takerOrder.Signature,
+		AmountIn:      et.AmountToZksync(uint64(makerRcv)),
+	}
+	maker1 := &et.ZkTransferWithFee{
+		TokenId:       uint64(makerTokenID),
+		AmountOut:     et.AmountToZksync(uint64(makerPay)),
+		FromAccountId: trade.Current.Maker.Id,
+		ToAccountId:   takerOrder.AccountID,
+		Signature:     trade.MakerOrder.Signature,
+		AmountIn:      et.AmountToZksync(uint64(takerRcv)),
+	}
+	fee1 := &et.ZkTransferWithFee{
+		TokenId:       feeTokenId,
+		AmountOut:     et.AmountToZksync(0),
+		FromAccountId: takerOrder.AccountID,
+		ToAccountId:   trade.Current.Fee.Id,
+		Signature:     takerOrder.Signature,
+		AmountIn:      et.AmountToZksync(uint64(fee)),
+	}
+
+	// 对先后顺序有要求: 先处理LeftAsset, 在处理RightAsset
+	if op == et.OpSell {
+		transfers = append(transfers, taker1)
+		transfers = append(transfers, maker1)
+	} else {
+		transfers = append(transfers, maker1)
+		transfers = append(transfers, taker1)
+	}
+	transfers = append(transfers, fee1)
+	elog.Error("swapGenTransfer", "takerPay", takerPay, "takerRcv", takerRcv,
+		"makerPay", makerPay, "makerRcv", makerRcv)
+	return transfers
 }
