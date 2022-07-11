@@ -54,8 +54,10 @@ var (
 		NameEntrustOrderAction:       TyEntrustOrderAction,
 		NameEntrustRevokeOrderAction: TyEntrustRevokeOrderAction,
 		// spot nft
-		NameNftOrderAction:      TyNftOrderAction,
-		NameNftTakerOrderAction: TyNftTakerOrderAction,
+		NameNftOrderAction:       TyNftOrderAction,
+		NameNftTakerOrderAction:  TyNftTakerOrderAction,
+		NameNftOrder2Action:      TyNftOrder2Action,
+		NameNftTakerOrder2Action: TyNftTakerOrder2Action,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{

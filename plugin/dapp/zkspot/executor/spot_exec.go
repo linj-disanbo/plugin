@@ -128,7 +128,7 @@ func (e *zkspot) Exec_NftTakerOrder(payload *exchangetypes.SpotNftTakerOrder, tx
 
 // 限价交易
 func (e *zkspot) Exec_NftOrder2(payload *exchangetypes.SpotNftOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	action := NewZkSpotDex(e, tx, index)
+	action := NewZkNftDex(e, tx, index)
 	return action.NftOrder(&e.DriverBase, payload, "")
 }
 
@@ -136,7 +136,7 @@ func (e *zkspot) Exec_NftOrder2(payload *exchangetypes.SpotNftOrder, tx *types.T
 func (e *zkspot) Exec_NftTakerOrder2(payload *exchangetypes.SpotNftTakerOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	// checkTx will check payload and zk Signature
 	start := time.Now()
-	action := NewZkSpotDex(e, tx, index)
+	action := NewZkNftDex(e, tx, index)
 	r, err := action.NftTakerOrder(&e.DriverBase, payload, "")
 	if err != nil {
 		return r, err

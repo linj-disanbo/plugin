@@ -32,8 +32,8 @@ const (
 	NameEntrustRevokeOrderAction = "EntrustRevokeOrder"
 	NameNftOrderAction           = "NftOrder"
 	NameNftTakerOrderAction      = "NftTakerOrder"
-	NameNftOrderAction2          = "NftOrder2"
-	NameNftTakerOrderAction2     = "NftTakerOrder2"
+	NameNftOrder2Action          = "NftOrder2"
+	NameNftTakerOrder2Action     = "NftTakerOrder2"
 
 	FuncNameQueryMarketDepth      = "QueryMarketDepth"
 	FuncNameQueryHistoryOrderList = "QueryHistoryOrderList"

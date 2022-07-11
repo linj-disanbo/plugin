@@ -220,7 +220,7 @@ func nftOrder2(cmd *cobra.Command, args []string) {
 	price, _ := cmd.Flags().GetUint64("price")
 	amount, _ := cmd.Flags().GetUint64("amount")
 	op := "sell"
-	opInt := 1
+	opInt := 2
 	// 业务 buy = buy-Left, sell-Right
 	// ratio参数 要求 sell的比较在前   R1:R2 = R:L = price : 1
 	buy := lt
