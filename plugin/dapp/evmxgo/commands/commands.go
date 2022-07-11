@@ -622,7 +622,7 @@ func createNftTransfer(cmd *cobra.Command, args []string) {
 // CreateNftTransferExecCmd create raw transfer tx
 func CreateNftTransferExecCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "send_exec_nftg",
+		Use:   "send_exec_nft",
 		Short: "Create a evmxgo send to executor transaction",
 		Run:   createNftSendToExec,
 	}
