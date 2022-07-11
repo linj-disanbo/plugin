@@ -192,7 +192,7 @@ func getNftOrder(cmd *cobra.Command, args []string) {
 
 func nftOrder2Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "sell_nft",
+		Use:   "sell_nft2",
 		Short: "create nft sell order transaction",
 		Run:   nftOrder2,
 	}
@@ -266,7 +266,7 @@ func nftOrder2(cmd *cobra.Command, args []string) {
 
 func nftTakerOrder2Cmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "buy_nft",
+		Use:   "buy_nft2",
 		Short: "create nft buy order transaction",
 		Run:   nftTakerOrder2,
 	}
