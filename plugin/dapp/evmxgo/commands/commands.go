@@ -46,6 +46,9 @@ func Cmd() *cobra.Command {
 		QueryTxCmd(),
 		CreateRawNftMintTxCmd(),
 		CreateRawNftBurnTxCmd(),
+		CreateNftWithdrawCmd(),
+		CreateNftTransferExecCmd(),
+		CreateNftTransferCmd(),
 	)
 	return cmd
 }
@@ -589,4 +592,85 @@ func nftBurn(cmd *cobra.Command, args []string) {
 
 	ctx := jsonclient.NewRPCCtx(rpcLaddr, "Chain33.CreateTransaction", params, nil)
 	ctx.RunWithoutMarshal()
+}
+
+// CreateNftTransferCmd  create raw transfer tx
+func CreateNftTransferCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "transfer_nft",
+		Short: "Create a evmxgo transfer transaction",
+		Run:   createNftTransfer,
+	}
+	addCreateNftTransferFlags(cmd)
+	return cmd
+}
+
+func addCreateNftTransferFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("to", "t", "", "receiver account address")
+	cmd.MarkFlagRequired("to")
+	cmd.Flags().Int64P("amount", "a", 0, "transaction amount")
+	cmd.MarkFlagRequired("amount")
+	cmd.Flags().StringP("note", "n", "", "transaction note info")
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+}
+
+func createNftTransfer(cmd *cobra.Command, args []string) {
+	CreateAssetTransfer(cmd, args, evmxgotypes.EvmxgoX)
+}
+
+// CreateNftTransferExecCmd create raw transfer tx
+func CreateNftTransferExecCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "send_exec_nftg",
+		Short: "Create a evmxgo send to executor transaction",
+		Run:   createNftSendToExec,
+	}
+	addCreateNftSendToExecFlags(cmd)
+	return cmd
+}
+
+func addCreateNftSendToExecFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("exec", "e", "", "receiver executor address")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().Int64P("amount", "a", 0, "transaction amount")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("note", "n", "", "transaction note info")
+
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+}
+
+func createNftSendToExec(cmd *cobra.Command, args []string) {
+	CreateAssetSendToExec(cmd, args, evmxgotypes.EvmxgoX)
+}
+
+// CreateNftWithdrawCmd create raw withdraw tx
+func CreateNftWithdrawCmd() *cobra.Command {
+	cmd := &cobra.Command{
+		Use:   "withdraw_nft",
+		Short: "Create a evmxgo withdraw transaction",
+		Run:   createNftWithdraw,
+	}
+	addCreateNftWithdrawFlags(cmd)
+	return cmd
+}
+
+func addCreateNftWithdrawFlags(cmd *cobra.Command) {
+	cmd.Flags().StringP("exec", "e", "", "execer withdrawn from")
+	cmd.MarkFlagRequired("exec")
+
+	cmd.Flags().Int64P("amount", "a", 0, "withdraw amount")
+	cmd.MarkFlagRequired("amount")
+
+	cmd.Flags().StringP("note", "n", "", "transaction note info")
+
+	cmd.Flags().StringP("symbol", "s", "", "token symbol")
+	cmd.MarkFlagRequired("symbol")
+}
+
+func createNftWithdraw(cmd *cobra.Command, args []string) {
+	CreateAssetWithdraw(cmd, args, evmxgotypes.EvmxgoX)
 }
