@@ -19,7 +19,6 @@ type NftSpot struct {
 	env      *drivers.DriverBase
 	tx       *et.TxInfo
 	dbprefix et.DBprefix
-	feeAcc   *SpotTrader
 	feeAcc2  *DexAccount
 
 	//
@@ -185,8 +184,9 @@ func (a *NftSpot) LoadNftTrader(fromaddr string, accountID uint64) (*NftSpotTrad
 	}
 
 	return &NftSpotTraderHelper{
-		acc: acc,
-		cfg: a.env.GetAPI().GetConfig(),
+		acc:    acc,
+		cfg:    a.env.GetAPI().GetConfig(),
+		accFee: a.feeAcc2,
 	}, nil
 }
 
