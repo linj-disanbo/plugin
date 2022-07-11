@@ -245,7 +245,7 @@ func (a *NftSpot) TradeNft(fromaddr string, taker *NftSpotTraderHelper, payload 
 	}
 
 	spotOrder2 := newSpotOrder(order2, a.orderdb)
-	if spotOrder2.isActiveOrder() {
+	if !spotOrder2.isActiveOrder() {
 		elog.Error("TradeNft findNftOrderBy", "err", et.ErrOrderID, "orderid", payload.OrderID)
 		return nil, et.ErrOrderID
 	}
@@ -266,14 +266,14 @@ func (a *NftSpot) TradeNft(fromaddr string, taker *NftSpotTraderHelper, payload 
 }
 
 func (a *NftSpot) CreateNftTakerOrder(fromaddr string, acc *NftSpotTraderHelper, payload *et.SpotNftTakerOrder, entrustAddr string) (*et.SpotOrder, error) {
-	order2, err := a.orderdb.findOrderBy(payload.OrderID)
+	order2, err := a.orderdb.findNftOrderBy(payload.OrderID)
 	if err != nil {
 		elog.Error("CreateNftTakerOrder findOrderBy", "err", err, "orderid", payload.OrderID)
 		return nil, err
 	}
 
 	spotOrder2 := newSpotOrder(order2, a.orderdb)
-	if spotOrder2.isActiveOrder() {
+	if !spotOrder2.isActiveOrder() {
 		return nil, et.ErrOrderID
 	}
 
