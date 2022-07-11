@@ -219,13 +219,13 @@ func CheckNftOrder(cfg *types.Chain33Config, limitOrder *SpotNftOrder) error {
 }
 
 func CheckNftOrder2(cfg *types.Chain33Config, limitOrder *SpotNftOrder) error {
-	left := limitOrder.GetLeftAsset()
+	//left := limitOrder.GetLeftAsset()
 	right := limitOrder.GetRightAsset()
 	price := limitOrder.GetPrice()
 	amount := limitOrder.GetAmount()
-	if !CheckExchangeAsset(cfg.GetCoinExec(), left, right) {
-		return ErrAsset
-	}
+	//if !CheckExchangeAsset(cfg.GetCoinExec(), left, right) {
+	//	return ErrAsset
+	//}
 	if !CheckPrice(price) {
 		return ErrAssetPrice
 	}

@@ -63,7 +63,7 @@ func (a *zkNftDex) getFeeAcc() (*spot.DexAccount, error) {
 //NftOrder ...
 func (a *zkNftDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, entrustAddr string) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
-	err := et.CheckNftOrder(cfg, payload)
+	err := et.CheckNftOrder2(cfg, payload)
 	if err != nil {
 		return nil, err
 	}
