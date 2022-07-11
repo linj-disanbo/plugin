@@ -163,7 +163,7 @@ func QueryNftOrderCmd() *cobra.Command {
 
 // ratio: p * 1e8, 1e8
 func queryNftOrderFlag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("order", "o", 0, "(nft) order id")
+	cmd.Flags().Int64P("order", "o", 0, "(nft) order id")
 	markRequired(cmd, "order")
 }
 
@@ -179,7 +179,7 @@ func queryNftOrder(cmd *cobra.Command, args []string) {
 		OrderID: orderId,
 	}
 
-	params.FuncName = "QueryOrder"
+	params.FuncName = "QueryNftOrder"
 	params.Payload = types.MustPBToJSON(req)
 
 	var resp et.SpotOrder
@@ -277,7 +277,7 @@ func nftTakerOrder2Cmd() *cobra.Command {
 
 // ratio: p * 1e8, 1e8
 func NftTakerOrder2Flag(cmd *cobra.Command) {
-	cmd.Flags().Uint64P("order", "o", 0, "(nft) order id")
+	cmd.Flags().Int64P("order", "o", 0, "(nft) order id")
 	// zkorder part
 	cmd.Flags().Uint64P("accountId", "", 0, "accountid of self")
 	cmd.Flags().StringP("ethAddress", "", "", "eth address of self")
