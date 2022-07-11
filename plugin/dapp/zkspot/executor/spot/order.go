@@ -204,6 +204,10 @@ func (repo *orderSRepo) findNftOrderBy(orderID int64) (*et.SpotOrder, error) {
 		elog.Error("findNftOrderBy.Decode", "orderID", orderID, "err", err.Error())
 		return nil, err
 	}
+	if order.GetNftOrder() == nil {
+		elog.Error("findNftOrderBy", "order", "nil")
+		return nil, err
+	}
 	order.Executed = order.GetNftOrder().Amount - order.Balance
 	return &order, nil
 }
