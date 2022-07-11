@@ -192,7 +192,7 @@ func (a *NftSpot) LoadNftTrader(fromaddr string, accountID uint64) (*NftSpotTrad
 func (a *NftSpot) CreateNftOrder(fromaddr string, payload *et.SpotNftOrder, entrustAddr string) (*types.Receipt, error) {
 	fees, err := a.GetSpotFee(fromaddr, payload.LeftAsset, payload.RightAsset)
 	if err != nil {
-		elog.Error("executor/exchangedb getFees", "err", err)
+		elog.Error("CreateNftOrder getFees", "err", err)
 		return nil, err
 	}
 
@@ -200,15 +200,17 @@ func (a *NftSpot) CreateNftOrder(fromaddr string, payload *et.SpotNftOrder, entr
 		[]orderInit{a.initOrder(), fees.initLimitOrder()})
 
 	order2 := newSpotOrder(order, a.orderdb)
-	_, amount := order2.NeedToken(1)
 
 	trader, err := a.leftAccDb.NewAccount(fromaddr, payload.Order.AccountID, payload.LeftAsset)
 	if err != nil {
+		elog.Error("CreateNftOrder NewAccount", "err", err)
 		return nil, err
 	}
 
+	amount := payload.Amount
 	receipt3, err := trader.accdb.accdb.ExecFrozen(trader.address, a.ExecAddr, amount)
 	if err != nil {
+		elog.Error("CreateNftOrder ExecFrozen", "err", err)
 		return nil, err
 	}
 
@@ -219,6 +221,7 @@ func (a *NftSpot) CreateNftOrder(fromaddr string, payload *et.SpotNftOrder, entr
 
 	receipt1, err := a.NftOrderReceipt(order2, matches)
 	if err != nil {
+		elog.Error("CreateNftOrder NftOrderReceipt", "err", err)
 		return nil, err
 	}
 	receipt1 = et.MergeReceipt(receipt1, receipt3)
@@ -242,16 +245,22 @@ func (a *NftSpot) TradeNft(fromaddr string, taker *NftSpotTraderHelper, payload 
 
 	spotOrder2 := newSpotOrder(order2, a.orderdb)
 	if spotOrder2.isActiveOrder() {
+		elog.Error("TradeNft findOrderBy", "err", et.ErrOrderID, "orderid", payload.OrderID)
 		return nil, et.ErrOrderID
 	}
 
 	order, err := a.CreateNftTakerOrder(fromaddr, taker, payload, entrustAddr)
 	if err != nil {
+		elog.Error("TradeNft CreateNftTakerOrder", "err", et.ErrOrderID, "orderid", payload.OrderID)
 		return nil, err
 	}
 	_ = order
 
 	log, kv, err := taker.Trade(a, spotOrder2)
+	if err != nil {
+		elog.Error("TradeNft Trade", "err", err, "orderid", payload.OrderID)
+		return nil, err
+	}
 	return &types.Receipt{KV: kv, Logs: log}, nil
 }
 
