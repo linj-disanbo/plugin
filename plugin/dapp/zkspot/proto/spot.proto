@@ -15,6 +15,31 @@ message SpotAction {
   int32 ty = 6;
 }
 
+// Asset may come from L1 ERC20,  other contract Token, zkspot gened NFT, evm-solidity-NFT
+enum AssetType {
+  Unknow = 0;
+ L1Erc20 = 1;
+  Token = 2;
+  ZkNft = 3;
+  EvmNft = 4;
+}
+
+message TokenAsset {
+    string execer = 1;
+    string symbol = 2;
+  }
+
+message Asset {
+  AssetType ty = 1;
+  oneof value {
+    // L1Erc20
+    uint64 zkAssetid = 2;
+    // Token
+    TokenAsset tokenAsset = 3;
+    // TODO for nft kind
+  }
+}
+
 message ZkOrder {
   uint64 accountID = 1;
   string ethAddress = 2;
@@ -26,6 +51,8 @@ message ZkOrder {
   string ratio2 = 8;
   //uint64 validFrom = 9;
   //uint64 validUntil = 10;
+  AssetType sellAssetType = 11;
+  AssetType buyAssetType = 12;
   ZkSignature signature = 20;
 }
 
@@ -43,6 +70,22 @@ message SpotLimitOrder {
   int32 op = 5;
   ZkOrder order = 6;
 }
+
+//限价订单
+message AssetLimitOrder {
+  //交易对
+  Asset leftAsset = 1;
+  //交易对
+  Asset rightAsset = 2;
+  //价格
+  int64 price = 3;
+  //总量
+  int64 amount = 4;
+  //操作， 1为买，2为卖
+  int32 op = 5;
+  ZkOrder order = 6;
+}
+
 
 // 使用挂单摘单模式, 先挂单
 message SpotNftOrder {
@@ -154,6 +197,7 @@ message SpotOrder {
     SpotMarketOrder marketOrder = 3;
     SpotNftOrder nftOrder = 20;
     SpotNftTakerOrder nftTakerOrder = 21;
+    AssetLimitOrder assetLimitOrder = 22;
   }
   //挂单类型
   int32 ty = 4;
