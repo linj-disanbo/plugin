@@ -23,6 +23,7 @@ const (
 	TyNftTakerOrderAction
 	TyNftOrder2Action
 	TyNftTakerOrder2Action
+	TyAssetLimitOrderAction
 
 	NameLimitOrderAction         = "LimitOrder"
 	NameMarketOrderAction        = "MarketOrder"
@@ -34,6 +35,7 @@ const (
 	NameNftTakerOrderAction      = "NftTakerOrder"
 	NameNftOrder2Action          = "NftOrder2"
 	NameNftTakerOrder2Action     = "NftTakerOrder2"
+	NameAssetLimitOrderAction    = "AssetLimitOrder"
 
 	FuncNameQueryMarketDepth      = "QueryMarketDepth"
 	FuncNameQueryHistoryOrderList = "QueryHistoryOrderList"
@@ -186,6 +188,27 @@ func CheckLimitOrder(cfg *types.Chain33Config, limitOrder *SpotLimitOrder) error
 	if !CheckExchangeAsset(cfg.GetCoinExec(), left, right) {
 		return ErrAsset
 	}
+	if !CheckPrice(price) {
+		return ErrAssetPrice
+	}
+	if !CheckAmount(amount, cfg.GetCoinPrecision()) {
+		return ErrAssetAmount
+	}
+	if !CheckOp(op) {
+		return ErrAssetOp
+	}
+	return nil
+}
+
+func CheckAssetLimitOrder(cfg *types.Chain33Config, order *AssetLimitOrder) error {
+	//left := order.GetLeftAsset()
+	//right := order.GetRightAsset()
+	price := order.GetPrice()
+	amount := order.GetAmount()
+	op := order.GetOp()
+	//if !CheckExchangeAsset(cfg.GetCoinExec(), left, right) {
+	//	return ErrAsset
+	//}
 	if !CheckPrice(price) {
 		return ErrAssetPrice
 	}

@@ -58,6 +58,8 @@ var (
 		NameNftTakerOrderAction:  TyNftTakerOrderAction,
 		NameNftOrder2Action:      TyNftOrder2Action,
 		NameNftTakerOrder2Action: TyNftTakerOrder2Action,
+		// asset
+		NameAssetLimitOrderAction: TyAssetLimitOrderAction,
 	}
 	//定义log的id和具体log类型及名称，填入具体自定义log类型
 	logMap = map[int64]*types.LogInfo{
