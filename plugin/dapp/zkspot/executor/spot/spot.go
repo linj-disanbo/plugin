@@ -20,7 +20,6 @@ type Spot struct {
 	feeAcc   *SpotTrader
 	feeAcc2  *DexAccount
 
-	//
 	accountdb *accountRepo
 	orderdb   *orderSRepo
 	matcher1  *matcher
@@ -238,11 +237,11 @@ func (a *Spot) LoadNewUser(fromaddr string, payload *et.AssetLimitOrder) (*SpotT
 	case et.AssetType_L1Erc20:
 		return a.LoadUser(fromaddr, payload.Order.AccountID)
 	case et.AssetType_Token:
-		repo, err := newNftAccountRepo(a.accountdb.statedb, a.env.GetAPI().GetConfig())
+		repo, err := newTokenAccountRepo(a.accountdb.statedb, a.env.GetAPI().GetConfig(), a.tx.ExecAddr)
 		if err != nil {
 			return nil, err
 		}
-		acc, err := repo.NewTokenAccount(fromaddr, 1, asset)
+		acc, err := repo.NewAccount(fromaddr, 1, asset)
 		if err != nil {
 			return nil, err
 		}
@@ -464,7 +463,7 @@ func (a *Spot) CreateAssetLimitOrder(fromaddr string, acc *SpotTrader, payload *
 		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
 	acc.order = newSpotOrder(order, a.orderdb)
 
-	tid, amount := acc.order.NeedToken(a.env.GetAPI().GetConfig().GetCoinPrecision())
+	tid, amount := acc.order.NeedToken(acc.tokenAcc.GetCoinPrecision())
 	err = acc.CheckTokenAmountForLimitOrder(tid, amount)
 	if err != nil {
 		return nil, err

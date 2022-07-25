@@ -2,10 +2,7 @@ package spot
 
 import (
 	"encoding/hex"
-	"fmt"
 
-	"github.com/33cn/chain33/account"
-	dbm "github.com/33cn/chain33/common/db"
 	drivers "github.com/33cn/chain33/system/dapp"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
@@ -28,51 +25,6 @@ type NftSpot struct {
 	matcher1  *matcher
 	// fee
 	ExecAddr string
-}
-
-type EvmxgoNftAccountRepo struct {
-	cfg     *types.Chain33Config
-	statedb dbm.KV
-	symbol  string
-
-	accdb *account.DB
-}
-
-func newNftAccountRepo(db dbm.KV, cfg *types.Chain33Config) (*EvmxgoNftAccountRepo, error) {
-	return &EvmxgoNftAccountRepo{
-		statedb: db,
-		cfg:     cfg}, nil
-}
-
-func (accdb *EvmxgoNftAccountRepo) NewAccount(addr string, accid uint64, nftid uint64) (*NftAccount, error) {
-	var err error
-	symbol := fmt.Sprintf("%d", nftid)
-	if accdb.accdb == nil {
-		accdb.accdb, err = account.NewAccountDB(accdb.cfg, "evmxgo", symbol, accdb.statedb)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &NftAccount{accdb: accdb, address: addr, accid: accid, nftid: nftid, symbol: symbol}, nil
-}
-
-func (accdb *EvmxgoNftAccountRepo) NewTokenAccount(addr string, accid uint64, asset *et.Asset) (*NftAccount, error) {
-	var err error
-	if accdb.accdb == nil {
-		accdb.accdb, err = account.NewAccountDB(accdb.cfg, asset.GetTokenAsset().Execer, asset.GetTokenAsset().Symbol, accdb.statedb)
-		if err != nil {
-			return nil, err
-		}
-	}
-	return &NftAccount{accdb: accdb, address: addr, accid: accid, nftid: 1, symbol: asset.GetTokenAsset().Symbol}, nil
-}
-
-type NftAccount struct {
-	accdb   *EvmxgoNftAccountRepo
-	address string
-	accid   uint64
-	nftid   uint64
-	symbol  string
 }
 
 func NewNftSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*NftSpot, error) {

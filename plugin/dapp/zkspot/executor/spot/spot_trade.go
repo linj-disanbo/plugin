@@ -26,7 +26,7 @@ type SpotTrader struct {
 	accFee  *DexAccount
 
 	// TODO add
-	tokenAcc *NftAccount
+	tokenAcc AssetAccount
 }
 
 func (s *SpotTrader) GetOrder() *spotOrder {
