@@ -27,6 +27,22 @@ func createLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, inits []or
 	return or
 }
 
+func createAssetLimitOrder(payload *et.AssetLimitOrder, entrustAddr string, inits []orderInit) *et.SpotOrder {
+	or := &et.SpotOrder{
+		Value:       &et.SpotOrder_AssetLimitOrder{AssetLimitOrder: payload},
+		Ty:          et.TyLimitOrderAction,
+		EntrustAddr: entrustAddr,
+		Executed:    0,
+		AVGPrice:    0,
+		Balance:     payload.GetAmount(),
+		Status:      et.Ordered,
+	}
+	for _, initFun := range inits {
+		or = initFun(or)
+	}
+	return or
+}
+
 type spotOrderDB struct {
 	statedb  dbm.KV
 	localdb  dbm.KV

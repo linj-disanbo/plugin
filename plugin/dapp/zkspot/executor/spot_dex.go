@@ -280,3 +280,45 @@ func (a *zkSpotDex) NftTakerOrder(base *dapp.DriverBase, payload *et.SpotNftTake
 
 	return spot1.TradeNft(a.txinfo.From, taker, payload, entrustAddr)
 }
+
+//AssetLimitOrder ...
+// TODO create new account for L1
+func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimitOrder, entrustAddr string) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	err := et.CheckAssetLimitOrder(cfg, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	err = checkL2Auth(a.statedb, payload.Order.AccountID, payload.Order.Signature.PubKey)
+	if err != nil {
+		return nil, err
+	}
+
+	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
+	if err != nil {
+		return nil, err
+	}
+	err = spot1.SetFeeAcc(a.getFeeAcc)
+	if err != nil {
+		return nil, err
+	}
+
+	// 下面流程是否要放到 spot1中
+	taker, err := spot1.LoadUser(a.txinfo.From, payload.Order.AccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	order, err := spot1.CreateAssetLimitOrder(a.txinfo.From, taker, payload, entrustAddr)
+	if err != nil {
+		return nil, err
+	}
+	_ = order // set to order trader
+
+	receipt1, err := spot1.MatchLimitOrder(nil /* TODO payload */, taker)
+	if err != nil {
+		return nil, err
+	}
+	return receipt1, nil
+}

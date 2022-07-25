@@ -167,3 +167,28 @@ func (e *zkspot) Exec_NftTakerOrder2(payload *exchangetypes.SpotNftTakerOrder, t
 
 	return mergeReceipt(r, r2), nil
 }
+
+// 限价交易
+func (e *zkspot) Exec_AssetLimitOrder(payload *exchangetypes.AssetLimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	// checkTx will check payload and zk Signature
+	start := time.Now()
+	action := NewZkSpotDex(e, tx, index)
+	r, err := action.AssetLimitOrder(&e.DriverBase, payload, "")
+	if err != nil {
+		return r, err
+	}
+	// 构造 LimitOrder 的结算清单
+	list := GetSpotMatch(r)
+	end := time.Now()
+	elog.Error("zkspot Exec_AssetLimitOrder.LimitOrder", "cost", end.Sub(start))
+
+	action2 := NewAction(e, tx, index)
+	r2, err := action2.AssetMatch(payload, list)
+	if err != nil {
+		return r, err
+	}
+	end2 := time.Now()
+	elog.Error("zkspot Exec_AssetLimitOrder.SpotMatch", "cost", end2.Sub(start))
+
+	return mergeReceipt(r, r2), nil
+}

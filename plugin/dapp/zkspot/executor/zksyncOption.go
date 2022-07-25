@@ -1499,6 +1499,28 @@ func (a *Action) SpotMatch(payload *et.SpotLimitOrder, list *types.Receipt) (*ty
 	return receipt, nil
 }
 
+func (a *Action) AssetMatch(payload *et.AssetLimitOrder, list *types.Receipt) (*types.Receipt, error) {
+	receipt := &types.Receipt{}
+	for _, tradeRaw := range list.Logs {
+		switch tradeRaw.Ty {
+		case et.TySpotTradeLog:
+			var trade et.ReceiptSpotTrade
+			err := types.Decode(tradeRaw.Log, &trade)
+			if err != nil {
+				return nil, err
+			}
+			receipt2, err := a.Swap(nil /* payload */, &trade)
+			if err != nil {
+				return nil, err
+			}
+			receipt = mergeReceipt(receipt, receipt2)
+		default:
+			//
+		}
+	}
+	return receipt, nil
+}
+
 // A 和 B 交换 = transfer(A,B) + transfer(B,A) + swapfee()
 // A 和 A 交换 = transfer(A,A) 0 + transfer(A,A) 0 + swapfee()
 func (a *Action) Swap(payload1 *et.SpotLimitOrder, trade *et.ReceiptSpotTrade) (*types.Receipt, error) {

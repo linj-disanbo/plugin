@@ -24,6 +24,9 @@ type SpotTrader struct {
 	//
 	matches *et.ReceiptSpotMatch
 	accFee  *DexAccount
+
+	// TODO add
+	tokenAcc *NftAccount
 }
 
 func (s *SpotTrader) GetOrder() *spotOrder {

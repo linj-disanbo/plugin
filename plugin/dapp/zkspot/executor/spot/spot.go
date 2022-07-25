@@ -142,6 +142,19 @@ func (a *Spot) GetSpotFee(fromaddr string, left, right uint64) (*spotFee, error)
 	}, nil
 }
 
+func (a *Spot) GetAssetFee(fromaddr string, left, right *et.Asset) (*spotFee, error) {
+	takerFee, makerFee, err := a.getFeeRate(fromaddr, 0, 0) // TODO
+	if err != nil {
+		return nil, err
+	}
+	return &spotFee{
+		addr:  a.feeAcc2.acc.Addr,
+		id:    a.feeAcc2.acc.Id,
+		taker: takerFee,
+		maker: makerFee,
+	}, nil
+}
+
 type spotFee struct {
 	addr  string
 	id    uint64
@@ -214,6 +227,36 @@ func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) 
 		cfg:    a.env.GetAPI().GetConfig(),
 		accFee: a.feeAcc2,
 	}, nil
+}
+
+func (a *Spot) LoadNewUser(fromaddr string, payload *et.AssetLimitOrder) (*SpotTrader, error) {
+	asset := payload.LeftAsset
+	if payload.Op == et.OpBuy {
+		asset = payload.RightAsset
+	}
+	switch asset.Ty {
+	case et.AssetType_L1Erc20:
+		return a.LoadUser(fromaddr, payload.Order.AccountID)
+	case et.AssetType_Token:
+		repo, err := newNftAccountRepo(a.accountdb.statedb, a.env.GetAPI().GetConfig())
+		if err != nil {
+			return nil, err
+		}
+		acc, err := repo.NewTokenAccount(fromaddr, 1, asset)
+		if err != nil {
+			return nil, err
+		}
+
+		return &SpotTrader{
+			//acc:    acc,
+			cfg:      a.env.GetAPI().GetConfig(),
+			accFee:   a.feeAcc2,
+			tokenAcc: acc,
+		}, nil
+	}
+	err := types.ErrNotSupport
+	elog.Error("Asset type", "err", err)
+	return nil, err
 }
 
 func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
@@ -407,4 +450,29 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *NftTrader, payload *et.
 	}
 
 	return order1, nil
+}
+
+func (a *Spot) CreateAssetLimitOrder(fromaddr string, acc *SpotTrader, payload *et.AssetLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
+	fees, err := a.GetAssetFee(fromaddr, payload.LeftAsset, payload.RightAsset)
+	if err != nil {
+		elog.Error("executor/exchangedb getFees", "err", err)
+		return nil, err
+	}
+	acc.fee = fees
+
+	order := createAssetLimitOrder(payload, entrustAddr,
+		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
+	acc.order = newSpotOrder(order, a.orderdb)
+
+	tid, amount := acc.order.NeedToken(a.env.GetAPI().GetConfig().GetCoinPrecision())
+	err = acc.CheckTokenAmountForLimitOrder(tid, amount)
+	if err != nil {
+		return nil, err
+	}
+	acc.matches = &et.ReceiptSpotMatch{
+		Order: acc.order.order,
+		Index: a.GetIndex(),
+	}
+
+	return order, nil
 }

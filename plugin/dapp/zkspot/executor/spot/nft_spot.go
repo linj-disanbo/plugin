@@ -56,6 +56,17 @@ func (accdb *EvmxgoNftAccountRepo) NewAccount(addr string, accid uint64, nftid u
 	return &NftAccount{accdb: accdb, address: addr, accid: accid, nftid: nftid, symbol: symbol}, nil
 }
 
+func (accdb *EvmxgoNftAccountRepo) NewTokenAccount(addr string, accid uint64, asset *et.Asset) (*NftAccount, error) {
+	var err error
+	if accdb.accdb == nil {
+		accdb.accdb, err = account.NewAccountDB(accdb.cfg, asset.GetTokenAsset().Execer, asset.GetTokenAsset().Symbol, accdb.statedb)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return &NftAccount{accdb: accdb, address: addr, accid: accid, nftid: 1, symbol: asset.GetTokenAsset().Symbol}, nil
+}
+
 type NftAccount struct {
 	accdb   *EvmxgoNftAccountRepo
 	address string
