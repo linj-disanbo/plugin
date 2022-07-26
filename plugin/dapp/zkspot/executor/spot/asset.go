@@ -16,6 +16,8 @@ type AssetAccount interface {
 	Frozen(amount int64) (*types.Receipt, error)
 	Transfer(to string, amountt int64) (*types.Receipt, error)
 	UnFrozen(amount int64) (*types.Receipt, error)
+
+	CheckBalance(amount int64) error
 }
 
 // support nft asset from evm contract
@@ -78,6 +80,15 @@ func (acc *TokenAccount) Transfer(to string, amount int64) (*types.Receipt, erro
 }
 func (acc *TokenAccount) UnFrozen(amount int64) (*types.Receipt, error) {
 	return acc.acc.ExecActive(acc.address, acc.accdb.execAddr, amount)
+}
+
+func (acc *TokenAccount) CheckBalance(amount int64) error {
+	balance := acc.acc.LoadExecAccount(acc.address, acc.accdb.execAddr)
+	if balance.Balance < amount {
+		elog.Error("TokenAccount balance", "balance", balance.Balance, "need", amount)
+		return et.ErrAssetBalance
+	}
+	return nil
 }
 
 type TokenAccountRepo struct {

@@ -78,6 +78,26 @@ func (a *Spot) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*
 	return receipt1, nil
 }
 
+func (a *Spot) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
+	//matcher1 := newMatcher(a.env.GetStateDB(), a.env.GetLocalDB(), a.env.GetAPI(), a.dbprefix)
+	//elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.order.GetOrderID())
+	//receipt1, err := matcher1.MatchAssetLimitOrder(payload, taker, a.orderdb)
+	//if err != nil {
+	//	return nil, err
+	//}
+
+	if taker.order.isActiveOrder() {
+		receipt3, err := taker.FrozenForLimitOrder(taker.order)
+		if err != nil {
+			return nil, err
+		}
+		return receipt3, nil
+		//receipt1 = et.MergeReceipt(receipt1, receipt3)
+	}
+
+	return nil /*receipt1*/, nil
+}
+
 func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -463,8 +483,8 @@ func (a *Spot) CreateAssetLimitOrder(fromaddr string, acc *SpotTrader, payload *
 		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
 	acc.order = newSpotOrder(order, a.orderdb)
 
-	tid, amount := acc.order.NeedToken(acc.tokenAcc.GetCoinPrecision())
-	err = acc.CheckTokenAmountForLimitOrder(tid, amount)
+	_, amount := acc.order.NeedToken(acc.tokenAcc.GetCoinPrecision())
+	err = acc.tokenAcc.CheckBalance(amount)
 	if err != nil {
 		return nil, err
 	}

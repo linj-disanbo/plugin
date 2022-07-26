@@ -10,12 +10,66 @@ import (
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
+type assetPair struct {
+	left  *et.Asset
+	right *et.Asset
+}
+
+func newAssetPair1(left, right uint64) *assetPair {
+	//ZkAssetidL := et.ZkAssetid{}
+	return &assetPair{
+		left: &et.Asset{
+			Ty:    et.AssetType_L1Erc20,
+			Value: &et.Asset_ZkAssetid{ZkAssetid: left},
+		},
+
+		right: &et.Asset{
+			Ty: et.AssetType_L1Erc20,
+			Value: &et.Asset_ZkAssetid{
+				ZkAssetid: right,
+			},
+		},
+	}
+}
+
+func (pair *assetPair) l1historyPrefix() []byte {
+	return []byte(fmt.Sprintf("%08d:%08d", pair.left.GetZkAssetid(), pair.right.GetZkAssetid()))
+}
+
+func (pair *assetPair) l1MarketDepthPrefix(op int32, price int64) []byte {
+	left := pair.left.GetZkAssetid()
+	right := pair.right.GetZkAssetid()
+	return []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
+}
+
+func newAsset1(left uint64) *et.Asset {
+	return &et.Asset{
+		Ty:    et.AssetType_L1Erc20,
+		Value: &et.Asset_ZkAssetid{ZkAssetid: left},
+	}
+}
+
+//type assetWrap struct {
+//	a *et.Asset
+//}
+
+func SymbolStr(a *et.Asset) string {
+	switch a.Ty {
+	case et.AssetType_L1Erc20:
+		return fmt.Sprintf("%08d", a.GetZkAssetid())
+	case et.AssetType_Token:
+		return a.GetTokenAsset().Symbol
+	}
+	return "unknow"
+}
+
 //QueryHistoryOrderList Only the order information is returned
 func QueryHistoryOrderList(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryHistoryOrderList) (types.Message, error) {
 	left, right, primaryKey, count, direction := in.LeftAsset, in.RightAsset, in.PrimaryKey, in.Count, in.Direction
 
+	pair := newAssetPair1(left, right)
 	table := NewHistoryOrderTable(localdb, dbprefix)
-	prefix := []byte(fmt.Sprintf("%08d:%08d", left, right))
+	prefix := pair.l1historyPrefix()
 	indexName := "name"
 	if count == 0 {
 		count = et.Count
@@ -95,7 +149,8 @@ func QueryOrderList(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryOrderL
 }
 
 func getMarketDepth(marketTable *tab.Table, left, right uint64, op int32, price int64) (*et.SpotMarketDepth, error) {
-	primaryKey := []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
+	pair := newAssetPair1(left, right)
+	primaryKey := pair.l1MarketDepthPrefix(op, price)
 	row, err := marketTable.GetData(primaryKey)
 	if err != nil {
 		// In localDB, delete is set to nil first and deleted last
@@ -329,6 +384,10 @@ func (db *orderLRepo) findOrderIDListByPrice(left, right uint64, price int64, op
 	return &orderList, nil
 }
 
+func SymbolStrL1(i uint64) string {
+	return fmt.Sprintf("%08d", i)
+}
+
 //QueryMarketDepth 这里primaryKey当作主键索引来用，
 //The first query does not need to fill in the value, pay according to the price from high to low, selling orders according to the price from low to high query
 func QueryMarketDepth(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryMarketDepth) (*et.SpotMarketDepthList, error) {
@@ -336,11 +395,11 @@ func QueryMarketDepth(localdb dbm.KV, dbprefix et.DBprefix, in *et.SpotQueryMark
 	count, primaryKey := in.Count, in.PrimaryKey
 	marketTable := NewMarketDepthTable(localdb, dbprefix)
 
-	return queryMarketDepthList(marketTable, left, right, op, primaryKey, count)
+	return queryMarketDepthList(marketTable, SymbolStrL1(left), SymbolStrL1(right), op, primaryKey, count)
 }
 
-func queryMarketDepthList(table *tab.Table, left, right uint64, op int32, primaryKey string, count int32) (*et.SpotMarketDepthList, error) {
-	prefix := []byte(fmt.Sprintf("%08d:%08d:%d", left, right, op))
+func queryMarketDepthList(table *tab.Table, left, right string, op int32, primaryKey string, count int32) (*et.SpotMarketDepthList, error) {
+	prefix := []byte(fmt.Sprintf("%s:%s:%d", left, right, op))
 	if count == 0 {
 		count = et.Count
 	}
