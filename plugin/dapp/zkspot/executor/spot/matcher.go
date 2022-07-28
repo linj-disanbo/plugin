@@ -200,26 +200,27 @@ func (m *matcher) isEndOrderList(price int64) bool {
 	return price == m.lastOrderPrice && m.endOrderList
 }
 
-func (matcher1 *matcher) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker *SpotTrader, orderdb *orderSRepo) (*types.Receipt, error) {
+func (matcher1 *matcher) MatchAssetLimitOrder(payload1 *et.AssetLimitOrder, taker *SpotTrader, orderdb *orderSRepo) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
 	op := taker.order.GetOp()
+	price := taker.order.GetPrice()
+	left, right := taker.order.GetAsset()
 	for {
 		if matcher1.isDone() {
 			break
 		}
 
 		//Obtain price information of existing market listing
-		left := payload.LeftAsset
-		right := payload.RightAsset
-		marketDepthList, _ := matcher1.QueryMarketDepth(left, right, payload.Op)
+
+		marketDepthList, _ := matcher1.QueryMarketDepth(left, right, op)
 		if marketDepthList == nil || len(marketDepthList.List) == 0 {
 			break
 		}
 		for _, marketDepth := range marketDepthList.List {
-			elog.Info("LimitOrder debug find depth", "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.order.GetOrderID())
-			if matcher1.isDone() || matcher1.priceDone(op, payload.Price, marketDepth) {
+			elog.Info("LimitOrder debug find depth", "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", price, "op", OpSwap(op), "index", taker.order.order.GetOrderID())
+			if matcher1.isDone() || matcher1.priceDone(op, price, marketDepth) {
 				break
 			}
 
@@ -228,7 +229,7 @@ func (matcher1 *matcher) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker
 					break
 				}
 
-				orderList, err := matcher1.findOrderIDListByPrice(left, right, payload.Op, marketDepth)
+				orderList, err := matcher1.findOrderIDListByPrice(left, right, op, marketDepth)
 				if err != nil || orderList == nil || len(orderList.List) == 0 {
 					break
 				}

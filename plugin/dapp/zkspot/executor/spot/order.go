@@ -167,7 +167,31 @@ func (o *spotOrder) GetOp() int32 {
 	case et.TyNftOrderAction:
 		return o.order.GetNftOrder().GetOp()
 	}
-	return -1
+	panic("Not support op")
+}
+
+func (o *spotOrder) GetPrice() int64 {
+	switch o.order.Ty {
+	case et.TyLimitOrderAction:
+		return o.order.GetLimitOrder().GetPrice()
+	case et.TyAssetLimitOrderAction:
+		return o.order.GetAssetLimitOrder().GetPrice()
+	case et.TyNftOrderAction:
+		return o.order.GetNftOrder().GetPrice()
+	}
+	panic("Not support price")
+}
+
+func (o *spotOrder) GetAsset() (*et.Asset, *et.Asset) {
+	switch o.order.Ty {
+	case et.TyLimitOrderAction:
+		return newAsset1(o.order.GetLimitOrder().LeftAsset), newAsset1(o.order.GetLimitOrder().RightAsset)
+	case et.TyAssetLimitOrderAction:
+		return o.order.GetAssetLimitOrder().LeftAsset, o.order.GetAssetLimitOrder().RightAsset
+	case et.TyNftOrderAction:
+		return newNftAsset1(o.order.GetNftOrder().LeftAsset), newAsset1(o.order.GetNftOrder().RightAsset)
+	}
+	panic("Not support GetAsset")
 }
 
 // statedb: order, account

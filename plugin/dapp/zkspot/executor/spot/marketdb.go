@@ -49,6 +49,13 @@ func newAsset1(left uint64) *et.Asset {
 	}
 }
 
+func newNftAsset1(left uint64) *et.Asset {
+	return &et.Asset{
+		Ty:    et.AssetType_EvmNft,
+		Value: &et.Asset_EvmNftID{EvmNftID: left},
+	}
+}
+
 //type assetWrap struct {
 //	a *et.Asset
 //}
