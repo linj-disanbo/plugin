@@ -30,7 +30,7 @@ func createLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, inits []or
 func createAssetLimitOrder(payload *et.AssetLimitOrder, entrustAddr string, inits []orderInit) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:       &et.SpotOrder_AssetLimitOrder{AssetLimitOrder: payload},
-		Ty:          et.TyLimitOrderAction,
+		Ty:          et.TyAssetLimitOrderAction,
 		EntrustAddr: entrustAddr,
 		Executed:    0,
 		AVGPrice:    0,
@@ -156,6 +156,18 @@ func (o *spotOrder) Traded(matchDetail *et.MatchInfo, blocktime int64) ([]*types
 	o.order.UpdateTime = blocktime
 	kvs := o.repo.GetOrderKvSet(o.order)
 	return []*types.ReceiptLog{}, kvs, nil
+}
+
+func (o *spotOrder) GetOp() int32 {
+	switch o.order.Ty {
+	case et.TyLimitOrderAction:
+		return o.order.GetLimitOrder().GetOp()
+	case et.TyAssetLimitOrderAction:
+		return o.order.GetAssetLimitOrder().GetOp()
+	case et.TyNftOrderAction:
+		return o.order.GetNftOrder().GetOp()
+	}
+	return -1
 }
 
 // statedb: order, account

@@ -79,12 +79,12 @@ func (a *Spot) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*
 }
 
 func (a *Spot) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
-	//matcher1 := newMatcher(a.env.GetStateDB(), a.env.GetLocalDB(), a.env.GetAPI(), a.dbprefix)
-	//elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.order.GetOrderID())
-	//receipt1, err := matcher1.MatchAssetLimitOrder(payload, taker, a.orderdb)
-	//if err != nil {
-	//	return nil, err
-	//}
+	matcher1 := newMatcher(a.env.GetStateDB(), a.env.GetLocalDB(), a.env.GetAPI(), a.dbprefix)
+	elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.order.GetOrderID())
+	receipt1, err := matcher1.MatchAssetLimitOrder(payload, taker, a.orderdb)
+	if err != nil {
+		return nil, err
+	}
 
 	if taker.order.isActiveOrder() {
 		receipt3, err := taker.FrozenForLimitOrder(taker.order)
@@ -92,10 +92,10 @@ func (a *Spot) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker *SpotTrad
 			return nil, err
 		}
 		return receipt3, nil
-		//receipt1 = et.MergeReceipt(receipt1, receipt3)
+		receipt1 = et.MergeReceipt(receipt1, receipt3)
 	}
 
-	return nil /*receipt1*/, nil
+	return receipt1, nil
 }
 
 func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types.Receipt, error) {

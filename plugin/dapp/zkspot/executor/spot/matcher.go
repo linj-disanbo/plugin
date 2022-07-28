@@ -77,7 +77,7 @@ func (matcher1 *matcher) MatchLimitOrder(payload *et.SpotLimitOrder, taker *Spot
 					break
 				}
 
-				orderList, err := matcher1.findOrderIDListByPrice(payload, marketDepth)
+				orderList, err := matcher1.findOrderIDListByPrice(left, right, payload.Op, marketDepth)
 				if err != nil || orderList == nil || len(orderList.List) == 0 {
 					break
 				}
@@ -169,7 +169,7 @@ func (m *matcher) QueryMarketDepth(left, right *et.Asset, op int32) (*et.SpotMar
 	return marketDepthList, nil
 }
 
-func (m *matcher) findOrderIDListByPrice(payload *et.SpotLimitOrder, marketDepth *et.SpotMarketDepth) (*et.SpotOrderList, error) {
+func (m *matcher) findOrderIDListByPrice(left, right *et.Asset, op int32, marketDepth *et.SpotMarketDepth) (*et.SpotOrderList, error) {
 	direction := et.ListASC // 撮合按时间先后顺序
 	price := marketDepth.Price
 	if price != m.lastOrderPrice {
@@ -178,12 +178,12 @@ func (m *matcher) findOrderIDListByPrice(payload *et.SpotLimitOrder, marketDepth
 	}
 
 	orderLdb := newOrderLRepo(m.localdb, m.dbprefix)
-	orderList, err := orderLdb.findOrderIDListByPrice(payload.GetLeftAsset(), payload.GetRightAsset(), price, OpSwap(payload.Op), direction, m.orderKey)
+	orderList, err := orderLdb.findOrderIDListByPrice(SymbolStr(left), SymbolStr(right), price, OpSwap(op), direction, m.orderKey)
 	if err != nil {
 		if err == types.ErrNotFound {
 			return &et.SpotOrderList{List: []*et.SpotOrder{}, PrimaryKey: ""}, nil
 		}
-		elog.Error("findOrderIDListByPrice error" /*"height", a.height, */, "symbol", payload.GetLeftAsset(), "price", marketDepth.Price, "op", OpSwap(payload.Op), "error", err)
+		elog.Error("findOrderIDListByPrice error" /*"height", a.height, */, "symbol", SymbolStr(left), "price", marketDepth.Price, "op", OpSwap(op), "error", err)
 		return nil, err
 	}
 	// reatch the last order list for price
@@ -200,11 +200,11 @@ func (m *matcher) isEndOrderList(price int64) bool {
 	return price == m.lastOrderPrice && m.endOrderList
 }
 
-/*
 func (matcher1 *matcher) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker *SpotTrader, orderdb *orderSRepo) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
+	op := taker.order.GetOp()
 	for {
 		if matcher1.isDone() {
 			break
@@ -219,7 +219,7 @@ func (matcher1 *matcher) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker
 		}
 		for _, marketDepth := range marketDepthList.List {
 			elog.Info("LimitOrder debug find depth", "amount", marketDepth.Amount, "price", marketDepth.Price, "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.order.GetOrderID())
-			if matcher1.isDone() || matcher1.priceDone(payload.Op, payload.Price, marketDepth) {
+			if matcher1.isDone() || matcher1.priceDone(op, payload.Price, marketDepth) {
 				break
 			}
 
@@ -228,7 +228,7 @@ func (matcher1 *matcher) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker
 					break
 				}
 
-				orderList, err := matcher1.findOrderIDListByPrice(payload, marketDepth)
+				orderList, err := matcher1.findOrderIDListByPrice(left, right, payload.Op, marketDepth)
 				if err != nil || orderList == nil || len(orderList.List) == 0 {
 					break
 				}
@@ -269,4 +269,3 @@ func (matcher1 *matcher) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: logs}
 	return receipts, nil
 }
-*/

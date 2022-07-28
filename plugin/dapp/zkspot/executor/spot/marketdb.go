@@ -353,9 +353,14 @@ func (db *orderLRepo) pricePrefix(left, right uint64, price int64, op int32) []b
 	return []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
 }
 
-func (db *orderLRepo) findOrderIDListByPrice(left, right uint64, price int64, op, direction int32, primaryKey string) (*et.SpotOrderList, error) {
+func (db *orderLRepo) pricePrefix2(left, right string, price int64, op int32) []byte {
+	return []byte(fmt.Sprintf("%s:%s:%d:%016d", left, right, op, price))
+}
+
+// asset to string as part of key
+func (db *orderLRepo) findOrderIDListByPrice(leftStr, rightSrt string, price int64, op, direction int32, primaryKey string) (*et.SpotOrderList, error) {
 	table := db.table
-	prefix := db.pricePrefix(left, right, price, op)
+	prefix := db.pricePrefix2(leftStr, rightSrt, price, op)
 
 	var rows []*tab.Row
 	var err error
@@ -366,7 +371,7 @@ func (db *orderLRepo) findOrderIDListByPrice(left, right uint64, price int64, op
 	}
 	if err != nil {
 		if primaryKey == "" {
-			elog.Error("findOrderIDListByPrice.", "left", left, "right", right, "price", price, "err", err.Error())
+			elog.Error("findOrderIDListByPrice.", "left", leftStr, "right", rightSrt, "price", price, "err", err.Error())
 		}
 		return nil, err
 	}
