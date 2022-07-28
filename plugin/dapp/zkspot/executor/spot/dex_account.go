@@ -42,12 +42,12 @@ func (repo *accountRepo) LoadSpotAccount(addr string, id uint64) (*DexAccount, e
 	return repo.LoadAccount(addr, id)
 }
 
-func (repo *accountRepo) LoadAccount(addr string, id uint64) (*DexAccount, error) {
+func (repo *accountRepo) LoadAccount(addr string, accID uint64) (*DexAccount, error) {
 	var acc et.DexAccount
-	key := repo.genAccountKey(addr, id)
+	key := repo.genAccountKey(addr, accID)
 	v, err := repo.statedb.Get(key)
 	if err == types.ErrNotFound {
-		acc2 := emptyAccount(repo.dexName, id, addr)
+		acc2 := emptyAccount(repo.dexName, accID, addr)
 		return NewDexAccount(acc2, repo), nil
 	}
 

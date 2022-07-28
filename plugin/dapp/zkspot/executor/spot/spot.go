@@ -20,7 +20,7 @@ type Spot struct {
 	feeAcc   *SpotTrader
 	feeAcc2  *DexAccount
 
-	accountdb *accountRepo
+	accountdb *accountRepos
 	orderdb   *orderSRepo
 	matcher1  *matcher
 	// fee
@@ -29,11 +29,15 @@ type Spot struct {
 type GetFeeAccount func() (*DexAccount, error)
 
 func NewSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Spot, error) {
+	accRepos, err := newAccountRepo11(spotDexName, e.GetStateDB(), dbprefix, e.GetAPI().GetConfig(), "TODO")
+	if err != nil {
+		return nil, err
+	}
 	spot := &Spot{
 		env:       e,
 		tx:        tx,
 		dbprefix:  dbprefix,
-		accountdb: newAccountRepo(spotDexName, e.GetStateDB(), dbprefix),
+		accountdb: accRepos,
 		orderdb:   newOrderSRepo(e.GetStateDB(), dbprefix),
 		matcher1:  newMatcher(e.GetStateDB(), e.GetLocalDB(), e.GetAPI(), dbprefix),
 	}
@@ -78,10 +82,10 @@ func (a *Spot) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*
 	return receipt1, nil
 }
 
-func (a *Spot) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
+func (a *Spot) MatchAssetLimitOrder(payload1 *et.AssetLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
 	matcher1 := newMatcher(a.env.GetStateDB(), a.env.GetLocalDB(), a.env.GetAPI(), a.dbprefix)
-	elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.order.GetOrderID())
-	receipt1, err := matcher1.MatchAssetLimitOrder(payload, taker, a.orderdb)
+	elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", taker.order.GetPrice(), "op", OpSwap(taker.order.GetOp()), "index", taker.order.order.GetOrderID())
+	receipt1, err := matcher1.MatchOrder(taker.order, taker, a.orderdb)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +95,6 @@ func (a *Spot) MatchAssetLimitOrder(payload *et.AssetLimitOrder, taker *SpotTrad
 		if err != nil {
 			return nil, err
 		}
-		return receipt3, nil
 		receipt1 = et.MergeReceipt(receipt1, receipt3)
 	}
 
@@ -112,11 +115,14 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 		return nil, err
 	}
 
-	cfg := a.env.GetAPI().GetConfig()
-	token, amount := order.calcFrozenToken(cfg.GetCoinPrecision())
+	_, right := order.GetAsset()
 
-	accX, err := a.accountdb.LoadAccount(order.order.Addr, uint64(token))
-	receipt, err := accX.Active(token, uint64(amount))
+	// cfg := a.env.GetAPI().GetConfig()
+	// cfg.GetCoinPrecision()
+	token, amount := order.calcFrozenToken(GetCoinPrecision(int32(right.Ty)))
+
+	accX, err := a.accountdb.LoadAccount(order.order.Addr, 1, token) // TODO
+	receipt, err := accX.UnFrozen(int64(amount))
 	if err != nil {
 		elog.Error("RevokeOrder.ExecActive", "addr", fromaddr, "amount", amount, "err", err.Error())
 		return nil, err
@@ -235,29 +241,30 @@ func (a *Spot) ExecLocal(tx *types.Transaction, receiptData *types.ReceiptData, 
 }
 
 func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) {
-	acc, err := a.accountdb.LoadSpotAccount(fromaddr, accountID)
+	acc, err := a.accountdb.LoadAccount(fromaddr, accountID, nil) // TODO
 	if err != nil {
 		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
 		return nil, err
 	}
+	_ = acc
 
 	return &SpotTrader{
-		acc:    acc,
+		//acc:    acc,
 		cfg:    a.env.GetAPI().GetConfig(),
 		accFee: a.feeAcc2,
 	}, nil
 }
 
-func (a *Spot) LoadNewUser(fromaddr string, payload *et.AssetLimitOrder) (*SpotTrader, error) {
+func (a *Spot) LoadNewUser(fromaddr string, zkAccID uint64, payload *et.AssetLimitOrder) (*SpotTrader, error) {
 	asset := payload.LeftAsset
 	if payload.Op == et.OpBuy {
 		asset = payload.RightAsset
 	}
 	switch asset.Ty {
 	case et.AssetType_L1Erc20:
-		return a.LoadUser(fromaddr, payload.Order.AccountID)
+		return a.LoadUser(fromaddr, zkAccID)
 	case et.AssetType_Token:
-		repo, err := newTokenAccountRepo(a.accountdb.statedb, a.env.GetAPI().GetConfig(), a.tx.ExecAddr)
+		repo, err := newTokenAccountRepo(a.env.GetStateDB(), a.env.GetAPI().GetConfig(), a.tx.ExecAddr)
 		if err != nil {
 			return nil, err
 		}
@@ -322,14 +329,15 @@ func (a *Spot) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
 }
 
 func (a *Spot) LoadNftTrader(fromaddr string, accountID uint64) (*NftTrader, error) {
-	acc, err := a.accountdb.LoadSpotAccount(fromaddr, accountID)
+	acc, err := a.accountdb.LoadAccount(fromaddr, accountID, nil)
 	if err != nil {
 		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
 		return nil, err
 	}
+	_ = acc
 
 	return &NftTrader{
-		acc: acc,
+		//acc: acc,
 		cfg: a.env.GetAPI().GetConfig(),
 	}, nil
 }

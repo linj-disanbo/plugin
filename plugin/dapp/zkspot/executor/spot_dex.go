@@ -315,7 +315,7 @@ func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimi
 	}
 
 	// 下面流程是否要放到 spot1中
-	taker, err := spot1.LoadNewUser(a.txinfo.From, payload)
+	taker, err := spot1.LoadNewUser(a.txinfo.From, payload.Order.AccountID, payload)
 	if err != nil {
 		return nil, err
 	}

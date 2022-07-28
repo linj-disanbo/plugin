@@ -200,13 +200,13 @@ func (m *matcher) isEndOrderList(price int64) bool {
 	return price == m.lastOrderPrice && m.endOrderList
 }
 
-func (matcher1 *matcher) MatchAssetLimitOrder(payload1 *et.AssetLimitOrder, taker *SpotTrader, orderdb *orderSRepo) (*types.Receipt, error) {
+func (matcher1 *matcher) MatchOrder(order *spotOrder, taker *SpotTrader, orderdb *orderSRepo) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
-	op := taker.order.GetOp()
-	price := taker.order.GetPrice()
-	left, right := taker.order.GetAsset()
+	op := order.GetOp()
+	price := order.GetPrice()
+	left, right := order.GetAsset()
 	for {
 		if matcher1.isDone() {
 			break

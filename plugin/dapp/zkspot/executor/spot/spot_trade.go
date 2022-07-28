@@ -53,7 +53,7 @@ func (s *SpotTrader) FrozenForLimitOrder(orderx *spotOrder) (*types.Receipt, err
 	precision := s.cfg.GetCoinPrecision()
 	asset, amount := orderx.calcFrozenToken(precision)
 
-	receipt, err := s.acc.Frozen(asset, uint64(amount))
+	receipt, err := s.acc.Frozen(asset.GetZkAssetid(), uint64(amount))
 	if err != nil {
 		elog.Error("FrozenForLimitOrder", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
 		return nil, et.ErrAssetBalance

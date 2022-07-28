@@ -76,17 +76,18 @@ func (o *spotOrder) checkRevoke(fromaddr string) error {
 	return nil
 }
 
-func (o *spotOrder) calcFrozenToken(precision int64) (uint64, uint64) {
+func (o *spotOrder) calcFrozenToken(rightPrecision int64) (*et.Asset, uint64) {
 	order := o.order
-	price := order.GetLimitOrder().GetPrice()
+	price := o.GetPrice()
 	balance := order.GetBalance()
 
-	if order.GetLimitOrder().GetOp() == et.OpBuy {
-		amount := CalcActualCost(et.OpBuy, balance, price, precision)
-		amount += SafeMul(amount, int64(order.Rate), precision)
-		return order.GetLimitOrder().RightAsset, uint64(amount)
+	left, right := o.GetAsset()
+	if o.GetOp() == et.OpBuy {
+		amount := CalcActualCost(et.OpBuy, balance, price, rightPrecision)
+		amount += SafeMul(amount, int64(order.Rate), rightPrecision)
+		return right, uint64(amount)
 	}
-	return order.GetLimitOrder().LeftAsset, uint64(balance)
+	return left, uint64(balance)
 }
 
 // buy 按最大量判断余额是否够

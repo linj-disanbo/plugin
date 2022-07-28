@@ -65,6 +65,13 @@ type TokenAccount struct {
 	acc *account.DB
 }
 
+func GetCoinPrecision(ty int32) int64 {
+	if ty == int32(et.AssetType_EvmNft) || ty == int32(et.AssetType_ZkNft) {
+		return 1
+	}
+	// TODO
+	return 1e8
+}
 func (acc *TokenAccount) GetCoinPrecision() int64 {
 	return 1e8
 }
@@ -113,4 +120,38 @@ func (accdb *TokenAccountRepo) NewAccount(addr string, accid uint64, asset *et.A
 	}
 
 	return acc, nil
+}
+
+// TODO fix, account hold mutil assets
+type ZkAccount struct {
+	acc   *DexAccount
+	asset *et.Asset
+}
+
+func (acc *ZkAccount) GetCoinPrecision() int64 {
+	return 1e8
+}
+
+func (acc *ZkAccount) TransferFrozen(to string, amount int64) (*types.Receipt, error) {
+	panic("not support")
+	//return acc.acc.ExecTransferFrozen(acc.address, to, acc.accdb.execAddr, amount)
+}
+func (acc *ZkAccount) Frozen(amount int64) (*types.Receipt, error) {
+	return acc.acc.Frozen(acc.asset.GetZkAssetid(), uint64(amount))
+}
+func (acc *ZkAccount) Transfer(to string, amount int64) (*types.Receipt, error) {
+	panic("not support")
+	//return acc.acc.ExecTransfer(acc.address, to, acc.accdb.execAddr, amount)
+}
+func (acc *ZkAccount) UnFrozen(amount int64) (*types.Receipt, error) {
+	return acc.acc.Active(acc.asset.GetZkAssetid(), uint64(amount))
+}
+
+func (acc *ZkAccount) CheckBalance(amount int64) error {
+	balance := acc.acc.GetBalance(acc.asset.GetZkAssetid())
+	if balance < uint64(amount) {
+		elog.Error("ZkAccount balance", "balance", balance, "need", amount)
+		return et.ErrAssetBalance
+	}
+	return nil
 }
