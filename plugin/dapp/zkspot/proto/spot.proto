@@ -36,7 +36,8 @@ message Asset {
     uint64 zkAssetid = 2;
     // Token
     TokenAsset tokenAsset = 3;
-    // TODO for nft kind
+    // nft kind
+    uint64 evmNftID = 4;
   }
 }
 
