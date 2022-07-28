@@ -66,7 +66,7 @@ func (a *Spot) loadOrder(id int64) (*spotOrder, error) {
 func (a *Spot) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
 	matcher1 := newMatcher(a.env.GetStateDB(), a.env.GetLocalDB(), a.env.GetAPI(), a.dbprefix)
 	elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.order.GetOrderID())
-	receipt1, err := matcher1.MatchLimitOrder(payload, taker, a.orderdb)
+	receipt1, err := matcher1.MatchOrder(taker.order, taker, a.orderdb)
 	if err != nil {
 		return nil, err
 	}
