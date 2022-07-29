@@ -21,9 +21,7 @@ type SpotTrader struct {
 	fee   *spotFee
 	//takerFee int32
 	//makerFee int32
-	AccID      uint64 // TODO
-	receiveAcc AssetAccount
-	sameAcc    bool
+	AccID uint64 // TODO
 
 	//
 	matches *et.ReceiptSpotMatch
