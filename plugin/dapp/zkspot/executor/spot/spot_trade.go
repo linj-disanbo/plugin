@@ -15,6 +15,7 @@ type spotTaker struct {
 
 type SpotTrader struct {
 	cfg   *types.Chain33Config
+	accX  AssetAccounts
 	acc   AssetAccount
 	order *spotOrder
 	fee   *spotFee
@@ -27,6 +28,7 @@ type SpotTrader struct {
 	//
 	matches *et.ReceiptSpotMatch
 	accFee  *DexAccount
+	accFeeX AssetAccount
 
 	// TODO add
 	tokenAcc AssetAccount
@@ -118,6 +120,8 @@ func (s *SpotTrader) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo
 	return info
 }
 
+// account 是一个对象代表一个人的一个资产
+// dexAccount 是一个对象代表一个人的所有资产
 // settlement
 // LeftToken: seller -> buyer
 // RightToken: buyer -> seller
@@ -126,127 +130,123 @@ func (s *SpotTrader) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([
 	//if s.acc.acc.Id == maker.acc.acc.Id {
 	//	return s.selfSettlement(maker, tradeBalance)
 	//}
-
-	leftToken, rightToken := s.order.order.GetLimitOrder().LeftAsset, s.order.order.GetLimitOrder().RightAsset
 	var err error
-	var receipt *types.Receipt
+	var receipt, receipt2 *types.Receipt
 	if s.order.GetOp() == et.OpSell {
-		receipt, err = s.acc.Transfer("maker.acc" /*leftToken,*/, int64(tradeBalance.LeftBalance))
+		receipt, err = s.accX.sellAcc.Transfer(maker.accX.buyAcc, tradeBalance.LeftBalance)
 		if err != nil {
 			elog.Error("settlement", "sell.doTranfer1", err)
 			return nil, nil, err
 		}
-		receipt, err = maker.acc.FrozenTranfer("s.acc" /* rightToken ,*/, int64(tradeBalance.RightBalance))
+		receipt2, err = maker.accX.sellAcc.TransferFrozen(s.accX.buyAcc, tradeBalance.RightBalance)
 		if err != nil {
 			elog.Error("settlement", "sell.doFrozenTranfer2", err)
 			return nil, nil, err
 		}
-		err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker))
+		receipt = et.MergeReceipt(receipt, receipt2)
+		receipt2, err = s.accX.sellAcc.Transfer(s.accFeeX, tradeBalance.FeeTaker)
 		if err != nil {
 			elog.Error("settlement", "sell-fee.doTranfer", err)
 			return nil, nil, err
 		}
-		err = maker.acc.doFrozenTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMaker))
+		receipt = et.MergeReceipt(receipt, receipt2)
+		receipt2, err = maker.accX.buyAcc.TransferFrozen(s.accFeeX, tradeBalance.FeeMaker)
 		if err != nil {
 			elog.Error("settlement", "sell-fee.doFrozenTranfer3", err)
 			return nil, nil, err
 		}
+		receipt = et.MergeReceipt(receipt, receipt2)
 	} else {
-		err = s.acc.doTranfer(maker.acc, rightToken, uint64(tradeBalance.RightBalance))
+		receipt, err = s.accX.sellAcc.Transfer(maker.accX.buyAcc, tradeBalance.RightBalance)
 		if err != nil {
 			elog.Error("settlement", "buy.doTranfer1", err)
 			return nil, nil, err
 		}
-		err = maker.acc.doFrozenTranfer(s.acc, leftToken, uint64(tradeBalance.LeftBalance))
+		receipt2, err = maker.accX.sellAcc.TransferFrozen(s.acc, tradeBalance.LeftBalance)
 		if err != nil {
 			elog.Error("settlement", "buy.doFrozenTranfer2", err)
 			return nil, nil, err
 		}
-		err = s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker))
+		receipt = et.MergeReceipt(receipt, receipt2)
+		receipt2, err = s.accX.sellAcc.Transfer(s.accFeeX, tradeBalance.FeeTaker)
 		if err != nil {
 			elog.Error("settlement", "buy-fee.doTranfer1", err)
 			return nil, nil, err
 		}
-		err = maker.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeMaker))
+		receipt = et.MergeReceipt(receipt, receipt2)
+		receipt2, err = maker.accX.buyAcc.Transfer(s.accFeeX, tradeBalance.FeeMaker)
 		if err != nil {
 			elog.Error("settlement", "buy-fee.doTranfer2", err)
 			return nil, nil, err
 		}
+		receipt = et.MergeReceipt(receipt, receipt2)
 	}
-
-	kvs1 := s.acc.GetKVSet()
-	kvs2 := maker.acc.GetKVSet()
-	kvs3 := s.accFee.GetKVSet()
-
-	kvs1 = append(kvs1, kvs2...)
-	kvs1 = append(kvs1, kvs3...)
 
 	re := et.ReceiptSpotTrade{
 		Match: tradeBalance,
-		Prev: &et.TradeAccounts{
-			Taker: copyAcc,
-			Maker: copyAccMaker,
-			Fee:   copyFeeAcc,
-		},
-		Current: &et.TradeAccounts{
-			Taker: s.acc.acc,
-			Maker: maker.acc.acc,
-			Fee:   s.accFee.acc,
-		},
-		MakerOrder: maker.order.order.GetLimitOrder().Order,
+		//Prev: &et.TradeAccounts{
+		//	Taker: copyAcc,
+		//	Maker: copyAccMaker,
+		//	Fee:   copyFeeAcc,
+		//},
+		//Current: &et.TradeAccounts{
+		//	Taker: s.acc.acc,
+		//	Maker: maker.acc.acc,
+		//	Fee:   s.accFee.acc,
+		//},
+		MakerOrder: maker.order.order.GetLimitOrder().Order, // TODO
 	}
 
 	log1 := types.ReceiptLog{
 		Ty:  et.TySpotTradeLog,
 		Log: types.Encode(&re),
 	}
-	return []*types.ReceiptLog{&log1}, kvs1, nil
+	receipt.Logs = append(receipt.Logs, &log1)
+	return receipt.Logs, receipt.KV, nil
 }
 
 // taker/maker the same user
 func (s *SpotTrader) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
-	copyAcc := dupAccount(s.acc.acc)
-	copyFeeAcc := dupAccount(s.accFee.acc)
-
-	leftToken, rightToken := s.order.order.GetLimitOrder().LeftAsset, s.order.order.GetLimitOrder().RightAsset
+	var err error
+	var receipt, receipt2 *types.Receipt
 
 	// taker 是buy,  maker 是sell, Left 是冻结的. takerFee + makerFee 是活动的
 	// taker 是sell, maker 是 buy, Right 是冻结的. makerFee 是冻结的. takerFee是活动的
-	if s.order.order.GetLimitOrder().Op == et.OpSell {
+	if s.order.GetOp() == et.OpSell {
 		rightAmount := tradeBalance.RightBalance
 		rightAmount += tradeBalance.FeeMaker
-		err := s.acc.doActive(rightToken, uint64(rightAmount))
+		receipt, err = s.accX.buyAcc.UnFrozen(int64(rightAmount))
+		if err != nil {
+			return nil, nil, err
+		}
+		receipt2, err = s.accX.buyAcc.Transfer(s.accFeeX, int64(tradeBalance.FeeTaker+tradeBalance.FeeMaker))
 		if err != nil {
 			return nil, nil, err
 		}
 	} else {
-		err := s.acc.doActive(leftToken, uint64(tradeBalance.LeftBalance))
+		receipt, err = s.accX.sellAcc.UnFrozen(int64(tradeBalance.LeftBalance))
+		if err != nil {
+			return nil, nil, err
+		}
+		receipt2, err = s.accX.sellAcc.Transfer(s.accFeeX, int64(tradeBalance.FeeTaker+tradeBalance.FeeMaker))
 		if err != nil {
 			return nil, nil, err
 		}
 	}
-
-	err := s.acc.doTranfer(s.accFee, rightToken, uint64(tradeBalance.FeeTaker+tradeBalance.FeeMaker))
-	if err != nil {
-		return nil, nil, err
-	}
-
-	kvs1 := s.acc.GetKVSet()
-	kvs3 := s.accFee.GetKVSet()
-	kvs1 = append(kvs1, kvs3...)
+	receipt = et.MergeReceipt(receipt, receipt2)
 
 	re := et.ReceiptSpotTrade{
 		Match: tradeBalance,
-		Prev: &et.TradeAccounts{
-			Taker: copyAcc,
-			Maker: copyAcc,
-			Fee:   copyFeeAcc,
-		},
-		Current: &et.TradeAccounts{
-			Taker: s.acc.acc,
-			Maker: s.acc.acc,
-			Fee:   s.accFee.acc,
-		},
+		//Prev: &et.TradeAccounts{
+		//	Taker: copyAcc,
+		//	Maker: copyAcc,
+		//	Fee:   copyFeeAcc,
+		//},
+		//Current: &et.TradeAccounts{
+		//	Taker: s.acc.acc,
+		//	Maker: s.acc.acc,
+		//	Fee:   s.accFee.acc,
+		//},
 		MakerOrder: maker.order.order.GetLimitOrder().Order,
 	}
 
@@ -254,7 +254,8 @@ func (s *SpotTrader) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo
 		Ty:  et.TySpotTradeLog,
 		Log: types.Encode(&re),
 	}
-	return []*types.ReceiptLog{&log1}, kvs1, nil
+	receipt.Logs = append(receipt.Logs, &log1)
+	return receipt.Logs, receipt.KV, nil
 }
 
 func (s *SpotTrader) orderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
