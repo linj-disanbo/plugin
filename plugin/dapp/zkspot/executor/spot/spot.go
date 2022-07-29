@@ -17,7 +17,6 @@ type Spot struct {
 	env      *drivers.DriverBase
 	tx       *et.TxInfo
 	dbprefix et.DBprefix
-	feeAcc   *SpotTrader
 	feeAcc2  *DexAccount
 
 	accountdb *accountRepos
@@ -122,6 +121,10 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 	token, amount := order.calcFrozenToken(GetCoinPrecision(int32(right.Ty)))
 
 	accX, err := a.accountdb.LoadAccount(order.order.Addr, 1, token) // TODO
+	if err != nil {
+		elog.Error("RevokeOrder.LoadAccount", "addr", fromaddr, "amount", amount, "err", err.Error())
+		return nil, err
+	}
 	receipt, err := accX.UnFrozen(int64(amount))
 	if err != nil {
 		elog.Error("RevokeOrder.ExecActive", "addr", fromaddr, "amount", amount, "err", err.Error())
@@ -427,6 +430,9 @@ func (a *Spot) TradeNft(fromaddr string, taker *NftTrader, payload *et.SpotNftTa
 	_ = order
 
 	log, kv, err := taker.matchModel(maker, order2, a.orderdb.statedb)
+	if err != nil {
+		return nil, err
+	}
 	return &types.Receipt{KV: kv, Logs: log}, nil
 }
 
