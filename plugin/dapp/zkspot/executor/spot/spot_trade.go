@@ -16,7 +16,6 @@ type spotTaker struct {
 type SpotTrader struct {
 	cfg   *types.Chain33Config
 	accX  *AssetAccounts
-	acc   AssetAccount
 	order *spotOrder
 	fee   *spotFee
 	//takerFee int32
@@ -33,8 +32,8 @@ func (s *SpotTrader) GetOrder() *spotOrder {
 	return s.order
 }
 
-func (s *SpotTrader) GetAccout() AssetAccount {
-	return s.acc
+func (s *SpotTrader) GetAccout() *AssetAccounts {
+	return s.accX
 }
 
 type spotMaker struct {
@@ -42,7 +41,7 @@ type spotMaker struct {
 }
 
 func (s *SpotTrader) CheckTokenAmountForLimitOrder(tid uint64, total int64) error {
-	err := s.acc.CheckBalance(total)
+	err := s.accX.sellAcc.CheckBalance(total)
 	if err != nil {
 		elog.Error("check balance", "total", total, "err", err)
 		return et.ErrAssetBalance
@@ -54,7 +53,7 @@ func (s *SpotTrader) FrozenForLimitOrder(orderx *spotOrder) (*types.Receipt, err
 	precision := s.cfg.GetCoinPrecision()
 	asset, amount := orderx.calcFrozenToken(precision)
 
-	receipt, err := s.acc.Frozen(int64(amount))
+	receipt, err := s.accX.sellAcc.Frozen(int64(amount))
 	if err != nil {
 		elog.Error("FrozenForLimitOrder", "asset.Ty", asset.Ty, "err", err, "need", amount)
 		return nil, et.ErrAssetBalance
@@ -157,7 +156,7 @@ func (s *SpotTrader) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([
 			elog.Error("settlement", "buy.doTranfer1", err)
 			return nil, nil, err
 		}
-		receipt2, err = maker.accX.sellAcc.TransferFrozen(s.acc, tradeBalance.LeftBalance)
+		receipt2, err = maker.accX.sellAcc.TransferFrozen(s.accX.buyAcc, tradeBalance.LeftBalance)
 		if err != nil {
 			elog.Error("settlement", "buy.doFrozenTranfer2", err)
 			return nil, nil, err
@@ -311,13 +310,13 @@ func (taker *SpotTrader) matchModel(matchorder *et.SpotOrder, statedb dbm.KV, s 
 	elog.Info("try match", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
 		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
 
-	accMatch, err := s.accountdb.LoadAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, nil)
+	accMatch, err := s.accountdb.LoadAccounts(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, taker.accX.sell, taker.accX.buy)
 	if err != nil {
 		return nil, nil, err
 	}
 	maker := spotMaker{
 		SpotTrader: SpotTrader{
-			acc:   accMatch,
+			accX:  accMatch,
 			order: newSpotOrder(matchorder, taker.order.repo),
 			cfg:   taker.cfg,
 		},
