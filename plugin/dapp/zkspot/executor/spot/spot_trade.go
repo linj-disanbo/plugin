@@ -71,13 +71,13 @@ func (s *SpotTrader) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyV
 	balance := s.calcTradeBalance(maker.order.order)
 	matchDetail := s.calcTradeInfo(maker, balance)
 
-	receipt3, kvs3, err := maker.orderTraded(&matchDetail, s.order.order, nil) // TODO
+	receipt3, kvs3, err := maker.orderTraded(matchDetail, s.order.order, nil) // TODO
 	if err != nil {
 		elog.Error("maker.orderTraded", "err", err)
 		return receipt3, kvs3, err
 	}
 
-	receipt2, kvs2, err := s.orderTraded(&matchDetail, maker.order.order)
+	receipt2, kvs2, err := s.orderTraded(matchDetail, maker.order.order)
 	if err != nil {
 		elog.Error("taker.orderTraded", "err", err)
 		return receipt2, kvs2, err
@@ -86,9 +86,9 @@ func (s *SpotTrader) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyV
 	var receipt []*types.ReceiptLog
 	var kvs []*types.KeyValue
 	if s.AccID == maker.AccID {
-		receipt, kvs, err = s.selfSettlement(maker, &matchDetail)
+		receipt, kvs, err = s.selfSettlement(maker, matchDetail)
 	} else {
-		receipt, kvs, err = s.settlement(maker, &matchDetail)
+		receipt, kvs, err = s.settlement(maker, matchDetail)
 	}
 	if err != nil {
 		elog.Error("settlement", "err", err)
@@ -110,14 +110,14 @@ func (s *SpotTrader) calcTradeBalance(order *et.SpotOrder) int64 {
 	return order.GetBalance()
 }
 
-func (s *SpotTrader) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo {
+func (s *SpotTrader) calcTradeInfo(maker *spotMaker, balance int64) *et.MatchInfo {
 	var info et.MatchInfo
 	info.Matched = balance
 	info.LeftBalance = balance
 	info.RightBalance = SafeMul(balance, maker.order.order.GetLimitOrder().Price, s.cfg.GetCoinPrecision())
 	info.FeeTaker = SafeMul(info.RightBalance, int64(s.order.order.TakerRate), s.cfg.GetCoinPrecision())
 	info.FeeMaker = SafeMul(info.RightBalance, int64(maker.order.order.Rate), s.cfg.GetCoinPrecision())
-	return info
+	return &info
 }
 
 // account 是一个对象代表一个人的一个资产
