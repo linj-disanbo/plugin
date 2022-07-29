@@ -11,13 +11,15 @@ import (
 
 //  support kinds of asset
 type AssetAccount interface {
-	GetCoinPrecision() int64
-	TransferFrozen(to string, amountt int64) (*types.Receipt, error)
-	Frozen(amount int64) (*types.Receipt, error)
-	Transfer(to string, amountt int64) (*types.Receipt, error)
-	UnFrozen(amount int64) (*types.Receipt, error)
+	Transfer(to AssetAccount, amountt int64) (*types.Receipt, error)
+	TransferFrozen(to AssetAccount, amountt int64) (*types.Receipt, error)
 
+	Frozen(amount int64) (*types.Receipt, error)
+	UnFrozen(amount int64) (*types.Receipt, error)
 	CheckBalance(amount int64) error
+
+	GetCoinPrecision() int64
+	GetAccountInfo() AccountInfo
 }
 
 type AccountInfo struct {
@@ -68,11 +70,10 @@ func (accdb *EvmxgoNftAccountRepo) NewAccount(addr string, accid uint64, nftid u
 
 // support go token from go contract
 type TokenAccount struct {
-	accdb   *TokenAccountRepo
-	address string
-	accid   uint64
-	execer  string
-	symbol  string
+	accdb *TokenAccountRepo
+	AccountInfo
+	execer string
+	symbol string
 
 	acc *account.DB
 }
@@ -88,14 +89,16 @@ func (acc *TokenAccount) GetCoinPrecision() int64 {
 	return 1e8
 }
 
-func (acc *TokenAccount) TransferFrozen(to string, amountt int64) (*types.Receipt, error) {
-	return acc.acc.ExecTransferFrozen(acc.address, to, acc.accdb.execAddr, amountt)
+func (acc *TokenAccount) TransferFrozen(to AssetAccount, amountt int64) (*types.Receipt, error) {
+	toAddr := to.GetAccountInfo().address
+	return acc.acc.ExecTransferFrozen(acc.address, toAddr, acc.accdb.execAddr, amountt)
 }
 func (acc *TokenAccount) Frozen(amount int64) (*types.Receipt, error) {
 	return acc.acc.ExecFrozen(acc.address, acc.accdb.execAddr, amount)
 }
-func (acc *TokenAccount) Transfer(to string, amount int64) (*types.Receipt, error) {
-	return acc.acc.ExecTransfer(acc.address, to, acc.accdb.execAddr, amount)
+func (acc *TokenAccount) Transfer(to AssetAccount, amount int64) (*types.Receipt, error) {
+	toAddr := to.GetAccountInfo().address
+	return acc.acc.ExecTransfer(acc.address, toAddr, acc.accdb.execAddr, amount)
 }
 func (acc *TokenAccount) UnFrozen(amount int64) (*types.Receipt, error) {
 	return acc.acc.ExecActive(acc.address, acc.accdb.execAddr, amount)
@@ -108,6 +111,10 @@ func (acc *TokenAccount) CheckBalance(amount int64) error {
 		return et.ErrAssetBalance
 	}
 	return nil
+}
+
+func (acc *TokenAccount) GetAccountInfo() AccountInfo {
+	return acc.AccountInfo
 }
 
 type TokenAccountRepo struct {
@@ -124,7 +131,11 @@ func newTokenAccountRepo(db dbm.KV, cfg *types.Chain33Config, execAddr string) (
 }
 
 func (accdb *TokenAccountRepo) NewAccount(addr string, accid uint64, asset *et.Asset) (*TokenAccount, error) {
-	acc := &TokenAccount{accdb: accdb, address: addr, accid: accid, execer: asset.GetTokenAsset().Execer, symbol: asset.GetTokenAsset().Symbol}
+	accInfo := AccountInfo{
+		address: addr,
+		accid:   accid,
+	}
+	acc := &TokenAccount{accdb: accdb, AccountInfo: accInfo, execer: asset.GetTokenAsset().Execer, symbol: asset.GetTokenAsset().Symbol}
 	var err error
 	acc.acc, err = account.NewAccountDB(accdb.cfg, asset.GetTokenAsset().Execer, asset.GetTokenAsset().Symbol, accdb.statedb)
 	if err != nil {
@@ -134,24 +145,24 @@ func (accdb *TokenAccountRepo) NewAccount(addr string, accid uint64, asset *et.A
 	return acc, nil
 }
 
-// TODO fix, account hold mutil assets
 type ZkAccount struct {
 	acc   *DexAccount
 	asset *et.Asset
+	AccountInfo
 }
 
 func (acc *ZkAccount) GetCoinPrecision() int64 {
 	return 1e8
 }
 
-func (acc *ZkAccount) TransferFrozen(to string, amount int64) (*types.Receipt, error) {
+func (acc *ZkAccount) TransferFrozen(to AssetAccount, amount int64) (*types.Receipt, error) {
 	panic("not support")
 	//return acc.acc.ExecTransferFrozen(acc.address, to, acc.accdb.execAddr, amount)
 }
 func (acc *ZkAccount) Frozen(amount int64) (*types.Receipt, error) {
 	return acc.acc.Frozen(acc.asset.GetZkAssetid(), uint64(amount))
 }
-func (acc *ZkAccount) Transfer(to string, amount int64) (*types.Receipt, error) {
+func (acc *ZkAccount) Transfer(to AssetAccount, amount int64) (*types.Receipt, error) {
 	panic("not support")
 	//return acc.acc.ExecTransfer(acc.address, to, acc.accdb.execAddr, amount)
 }
@@ -166,4 +177,8 @@ func (acc *ZkAccount) CheckBalance(amount int64) error {
 		return et.ErrAssetBalance
 	}
 	return nil
+}
+
+func (acc *ZkAccount) GetAccountInfo() AccountInfo {
+	return acc.AccountInfo
 }
