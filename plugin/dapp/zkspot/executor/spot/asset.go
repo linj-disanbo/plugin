@@ -20,13 +20,20 @@ type AssetAccount interface {
 	CheckBalance(amount int64) error
 }
 
+type AccountInfo struct {
+	address   string
+	accid     uint64
+	buyAsset  *et.Asset
+	sellAsset *et.Asset
+}
+
 // support nft asset from evm contract
 type NftAccount struct {
-	accdb   *EvmxgoNftAccountRepo
-	address string
-	accid   uint64
-	nftid   uint64
-	symbol  string
+	accdb *EvmxgoNftAccountRepo
+	AccountInfo
+
+	nftid  uint64
+	symbol string
 }
 
 type EvmxgoNftAccountRepo struct {
@@ -51,7 +58,12 @@ func (accdb *EvmxgoNftAccountRepo) NewAccount(addr string, accid uint64, nftid u
 			return nil, err
 		}
 	}
-	return &NftAccount{accdb: accdb, address: addr, accid: accid, nftid: nftid, symbol: symbol}, nil
+	accInfo := AccountInfo{
+		address: addr,
+		accid:   accid,
+	}
+
+	return &NftAccount{accdb: accdb, AccountInfo: accInfo, nftid: nftid, symbol: symbol}, nil
 }
 
 // support go token from go contract

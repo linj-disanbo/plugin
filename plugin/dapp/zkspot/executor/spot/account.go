@@ -14,8 +14,6 @@ type accountRepos struct {
 }
 
 func newAccountRepo11(dexName string, statedb dbm.KV, p et.DBprefix, cfg *types.Chain33Config, execAddr string) (*accountRepos, error) {
-	//zkAccID uint64, from string, asset *et.Asset) {
-
 	var repos accountRepos
 	var err error
 	repos.zkRepo = newAccountRepo(dexName, statedb, p)
@@ -25,6 +23,14 @@ func newAccountRepo11(dexName string, statedb dbm.KV, p et.DBprefix, cfg *types.
 	}
 
 	return &repos, nil
+}
+
+type AssetAccounts struct {
+	buyAcc  AssetAccount
+	sellAcc AssetAccount
+	buy     *et.Asset
+	sell    *et.Asset
+	same    bool
 }
 
 func (repos *accountRepos) LoadAccount(addr string, zkAccID uint64, asset *et.Asset) (AssetAccount, error) {
@@ -44,4 +50,37 @@ func (repos *accountRepos) LoadAccount(addr string, zkAccID uint64, asset *et.As
 	}
 	panic("not support")
 
+}
+
+// account 是一个对象代表一个人的一个资产 (go/evm Asset)
+// dexAccount 是一个对象代表一个人的所有资产 (L1 Asset or Asset in zkspot)
+// 统一成一个对象 多种账号
+// L1 资产是同账号管理的
+func sameAccountType(ty1, ty2 et.AssetType) bool {
+	return ty1 == et.AssetType_L1Erc20 && ty2 == et.AssetType_L1Erc20
+}
+
+func (repos *accountRepos) LoadAccounts(addr string, zkAccID uint64, buy, sell *et.Asset) (*AssetAccounts, error) {
+	acc1, err := repos.LoadAccount(addr, zkAccID, buy)
+	if err != nil {
+		return nil, err
+	}
+	accs := AssetAccounts{
+		buyAcc: acc1,
+		buy:    buy,
+		sell:   sell,
+	}
+	if sameAccountType(buy.Ty, sell.Ty) {
+		accs.sell = accs.buy
+		accs.same = true
+		return &accs, nil
+	}
+	acc2, err := repos.LoadAccount(addr, zkAccID, sell)
+	if err != nil {
+		return nil, err
+	}
+	accs.same = false
+	accs.sellAcc = acc2
+
+	return &accs, nil
 }
