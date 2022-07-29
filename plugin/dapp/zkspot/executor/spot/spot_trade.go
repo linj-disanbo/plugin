@@ -14,18 +14,16 @@ type spotTaker struct {
 }
 
 type SpotTrader struct {
-	cfg   *types.Chain33Config
-	accX  *AssetAccounts
-	order *spotOrder
-	fee   *SpotFee
-	//takerFee int32
-	//makerFee int32
-	AccID uint64 // TODO
+	cfg *types.Chain33Config
 
-	//
-	matches *et.ReceiptSpotMatch
-	//accFee  *DexAccount
+	fee     *SpotFee
 	accFeeX AssetAccount
+
+	AccID uint64
+	accX  *AssetAccounts
+
+	order   *spotOrder
+	matches *et.ReceiptSpotMatch
 }
 
 func (s *SpotTrader) GetOrder() *spotOrder {

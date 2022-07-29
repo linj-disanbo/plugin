@@ -269,6 +269,10 @@ func (a *Spot) LoadNewUser(fromaddr string, zkAccID uint64, payload *et.AssetLim
 	if payload.Op == et.OpSell {
 		buyAsset, sellAsset = payload.RightAsset, payload.LeftAsset
 	}
+	return a.LoadTrader(fromaddr, zkAccID, buyAsset, sellAsset)
+}
+
+func (a *Spot) LoadTrader(fromaddr string, zkAccID uint64, buyAsset, sellAsset *et.Asset) (*SpotTrader, error) {
 	accs, err := a.accountdb.LoadAccounts(fromaddr, zkAccID, buyAsset, sellAsset)
 	if err != nil {
 		return nil, err
@@ -278,6 +282,7 @@ func (a *Spot) LoadNewUser(fromaddr string, zkAccID uint64, payload *et.AssetLim
 		cfg:     a.env.GetAPI().GetConfig(),
 		accFeeX: a.feeAccX,
 		accX:    accs,
+		AccID:   zkAccID,
 	}, nil
 }
 
@@ -340,7 +345,7 @@ func createNftOrder(payload *et.SpotNftOrder, ty int32, entrustAddr string, init
 	return or
 }
 
-func (a *Spot) CreateNftOrder(fromaddr string, trader *NftTrader, payload *et.SpotNftOrder, entrustAddr string) (*types.Receipt, error) {
+func (a *Spot) CreateNftOrder(fromaddr string, trader *SpotTrader, payload *et.SpotNftOrder, entrustAddr string) (*types.Receipt, error) {
 	fees, err := a.GetSpotFee(fromaddr, payload.LeftAsset, payload.RightAsset)
 	if err != nil {
 		elog.Error("executor/exchangedb getFees", "err", err)
@@ -362,11 +367,11 @@ func (a *Spot) CreateNftOrder(fromaddr string, trader *NftTrader, payload *et.Sp
 		Index: a.GetIndex(),
 	}
 
-	receipt1, err := a.NftOrderReceipt(trader)
+	receipt1, err := a.NftOrderReceipt(nil) // TODO
 	if err != nil {
 		return nil, err
 	}
-	receipt3, err := trader.FrozenForNftOrder()
+	receipt3, err := trader.FrozenForLimitOrder(trader.order)
 	if err != nil {
 		return nil, err
 	}
@@ -397,10 +402,8 @@ func createNftTakerOrder(payload *et.SpotNftTakerOrder, entrustAddr string, orde
 	}
 	return or
 }
-func (a *Spot) LoadNftTrader(fromaddr string, accountID uint64) (*NftTrader, error) {
-	return nil, nil
-}
-func (a *Spot) TradeNft(fromaddr string, taker *NftTrader, payload *et.SpotNftTakerOrder, entrustAddr string) (*types.Receipt, error) {
+
+func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustAddr string) (*types.Receipt, error) {
 	order2, err := a.orderdb.findOrderBy(payload.OrderID)
 	if err != nil {
 		elog.Error("CreateNftTakerOrder findOrderBy", "err", err, "orderid", payload.OrderID)
@@ -411,11 +414,18 @@ func (a *Spot) TradeNft(fromaddr string, taker *NftTrader, payload *et.SpotNftTa
 	if spotOrder2.isActiveOrder() {
 		return nil, et.ErrOrderID
 	}
-	maker, err := a.LoadNftTrader(order2.Addr, order2.GetNftOrder().Order.AccountID)
+	left, right := spotOrder2.GetAsset()
+	maker, err := a.LoadTrader(order2.Addr, order2.GetNftOrder().Order.AccountID, right, left)
 	if err != nil {
 		return nil, err
 	}
 	maker.order = spotOrder2
+	makerX := spotMaker{*maker}
+
+	taker, err := a.LoadTrader(a.tx.From, payload.Order.AccountID, left, right)
+	if err != nil {
+		return nil, err
+	}
 
 	order, err := a.CreateNftTakerOrder(fromaddr, taker, payload, entrustAddr)
 	if err != nil {
@@ -423,14 +433,11 @@ func (a *Spot) TradeNft(fromaddr string, taker *NftTrader, payload *et.SpotNftTa
 	}
 	_ = order
 
-	log, kv, err := taker.matchModel(maker, order2, a.orderdb.statedb)
-	if err != nil {
-		return nil, err
-	}
-	return &types.Receipt{KV: kv, Logs: log}, nil
+	logs, kvs, err := taker.Trade(&makerX)
+	return &types.Receipt{KV: kvs, Logs: logs}, err
 }
 
-func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *NftTrader, payload *et.SpotNftTakerOrder, entrustAddr string) (*et.SpotOrder, error) {
+func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et.SpotNftTakerOrder, entrustAddr string) (*et.SpotOrder, error) {
 	order2, err := a.orderdb.findOrderBy(payload.OrderID)
 	if err != nil {
 		elog.Error("CreateNftTakerOrder findOrderBy", "err", err, "orderid", payload.OrderID)

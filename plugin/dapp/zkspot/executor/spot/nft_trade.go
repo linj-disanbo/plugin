@@ -3,7 +3,6 @@ package spot
 import (
 	"math/big"
 
-	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
@@ -241,18 +240,4 @@ func (m *NftTrader) makerOrderTraded(matchDetail *et.MatchInfo, blocktime int64)
 	m.order.order.UpdateTime = blocktime
 	kvs := m.order.repo.GetOrderKvSet(m.order.order)
 	return []*types.ReceiptLog{}, kvs, nil
-}
-
-func (taker *NftTrader) matchModel(maker *NftTrader, matchorder *et.SpotOrder, statedb dbm.KV) ([]*types.ReceiptLog, []*types.KeyValue, error) {
-	var logs []*types.ReceiptLog
-	var kvs []*types.KeyValue
-
-	matched := taker.calcTradeBalance(matchorder)
-	elog.Info("try match", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
-		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
-
-	logs, kvs, err := taker.Trade(maker)
-	elog.Info("try match2", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
-		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
-	return logs, kvs, err
 }

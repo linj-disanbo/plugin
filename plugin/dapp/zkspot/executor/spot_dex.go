@@ -246,7 +246,7 @@ func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, en
 	}
 
 	// 下面流程是否要放到 spot1中
-	taker, err := spot1.LoadNftTrader(a.txinfo.From, payload.Order.AccountID)
+	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, nil, nil) // TODO
 	if err != nil {
 		return nil, err
 	}
@@ -272,12 +272,8 @@ func (a *zkSpotDex) NftTakerOrder(base *dapp.DriverBase, payload *et.SpotNftTake
 	}
 
 	// 下面流程是否要放到 spot1中
-	taker, err := spot1.LoadNftTrader(a.txinfo.From, payload.Order.AccountID)
-	if err != nil {
-		return nil, err
-	}
 
-	return spot1.TradeNft(a.txinfo.From, taker, payload, entrustAddr)
+	return spot1.TradeNft(a.txinfo.From, payload, entrustAddr)
 }
 
 func isSellZkAsset(op int32, left, right *et.Asset) bool {
