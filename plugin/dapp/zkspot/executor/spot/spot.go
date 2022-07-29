@@ -256,33 +256,20 @@ func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) 
 }
 
 func (a *Spot) LoadNewUser(fromaddr string, zkAccID uint64, payload *et.AssetLimitOrder) (*SpotTrader, error) {
-	asset := payload.LeftAsset
-	if payload.Op == et.OpBuy {
-		asset = payload.RightAsset
+	buyAsset, sellAsset := payload.LeftAsset, payload.RightAsset
+	if payload.Op == et.OpSell {
+		buyAsset, sellAsset = payload.RightAsset, payload.LeftAsset
 	}
-	switch asset.Ty {
-	case et.AssetType_L1Erc20:
-		return a.LoadUser(fromaddr, zkAccID)
-	case et.AssetType_Token:
-		repo, err := newTokenAccountRepo(a.env.GetStateDB(), a.env.GetAPI().GetConfig(), a.tx.ExecAddr)
-		if err != nil {
-			return nil, err
-		}
-		acc, err := repo.NewAccount(fromaddr, 1, asset)
-		if err != nil {
-			return nil, err
-		}
+	accs, err := a.accountdb.LoadAccounts(fromaddr, zkAccID, buyAsset, sellAsset)
+	if err != nil {
+		return nil, err
+	}
 
-		return &SpotTrader{
-			//acc:    acc,
-			cfg:      a.env.GetAPI().GetConfig(),
-			accFee:   a.feeAcc2,
-			tokenAcc: acc,
-		}, nil
-	}
-	err := types.ErrNotSupport
-	elog.Error("Asset type", "err", err)
-	return nil, err
+	return &SpotTrader{
+		cfg:    a.env.GetAPI().GetConfig(),
+		accFee: a.feeAcc2,
+		accX:   accs,
+	}, nil
 }
 
 func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
@@ -491,8 +478,8 @@ func (a *Spot) CreateAssetLimitOrder(fromaddr string, acc *SpotTrader, payload *
 		[]orderInit{a.initLimitOrder(), fees.initLimitOrder()})
 	acc.order = newSpotOrder(order, a.orderdb)
 
-	_, amount := acc.order.NeedToken(acc.tokenAcc.GetCoinPrecision())
-	err = acc.tokenAcc.CheckBalance(amount)
+	_, amount := acc.order.NeedToken(acc.accX.sellAcc.GetCoinPrecision())
+	err = acc.accX.sellAcc.CheckBalance(amount)
 	if err != nil {
 		return nil, err
 	}

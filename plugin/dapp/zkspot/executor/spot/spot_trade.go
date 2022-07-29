@@ -15,7 +15,7 @@ type spotTaker struct {
 
 type SpotTrader struct {
 	cfg   *types.Chain33Config
-	accX  AssetAccounts
+	accX  *AssetAccounts
 	acc   AssetAccount
 	order *spotOrder
 	fee   *spotFee
@@ -27,9 +27,6 @@ type SpotTrader struct {
 	matches *et.ReceiptSpotMatch
 	accFee  *DexAccount
 	accFeeX AssetAccount
-
-	// TODO add
-	tokenAcc AssetAccount
 }
 
 func (s *SpotTrader) GetOrder() *spotOrder {
