@@ -132,7 +132,7 @@ func (m *matcher) isEndOrderList(price int64) bool {
 	return price == m.lastOrderPrice && m.endOrderList
 }
 
-func (matcher1 *matcher) MatchOrder(order *spotOrder, taker *SpotTrader, orderdb *orderSRepo) (*types.Receipt, error) {
+func (matcher1 *matcher) MatchOrder(order *spotOrder, taker *SpotTrader, orderdb *orderSRepo, s *Spot) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -175,7 +175,7 @@ func (matcher1 *matcher) MatchOrder(order *spotOrder, taker *SpotTrader, orderdb
 					if err != nil || order.Status != et.Ordered {
 						continue
 					}
-					log, kv, err := taker.matchModel(order, matcher1.statedb)
+					log, kv, err := taker.matchModel(order, matcher1.statedb, s)
 					if err != nil {
 						elog.Error("matchModel", "height", "orderID", order.GetOrderID(), "payloadID", taker.order.order.GetOrderID(), "error", err)
 						return nil, err

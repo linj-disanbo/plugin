@@ -15,11 +15,14 @@ type spotTaker struct {
 
 type SpotTrader struct {
 	cfg   *types.Chain33Config
-	acc   *DexAccount
+	acc   AssetAccount
 	order *spotOrder
 	fee   *spotFee
 	//takerFee int32
 	//makerFee int32
+	AccID      uint64 // TODO
+	receiveAcc AssetAccount
+	sameAcc    bool
 
 	//
 	matches *et.ReceiptSpotMatch
@@ -33,7 +36,7 @@ func (s *SpotTrader) GetOrder() *spotOrder {
 	return s.order
 }
 
-func (s *SpotTrader) GetAccout() *DexAccount {
+func (s *SpotTrader) GetAccout() AssetAccount {
 	return s.acc
 }
 
@@ -42,8 +45,9 @@ type spotMaker struct {
 }
 
 func (s *SpotTrader) CheckTokenAmountForLimitOrder(tid uint64, total int64) error {
-	if s.acc.getBalance(tid) < uint64(total) {
-		elog.Error("limit check right balance", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "b", s.acc.getBalance(tid), "need", total)
+	err := s.acc.CheckBalance(total)
+	if err != nil {
+		elog.Error("check balance", "total", total, "err", err)
 		return et.ErrAssetBalance
 	}
 	return nil
@@ -53,9 +57,9 @@ func (s *SpotTrader) FrozenForLimitOrder(orderx *spotOrder) (*types.Receipt, err
 	precision := s.cfg.GetCoinPrecision()
 	asset, amount := orderx.calcFrozenToken(precision)
 
-	receipt, err := s.acc.Frozen(asset.GetZkAssetid(), uint64(amount))
+	receipt, err := s.acc.Frozen(int64(amount))
 	if err != nil {
-		elog.Error("FrozenForLimitOrder", "addr", s.acc.acc.Addr, "avail", s.acc.acc.Balance, "need", amount)
+		elog.Error("FrozenForLimitOrder", "asset.Ty", asset.Ty, "err", err, "need", amount)
 		return nil, et.ErrAssetBalance
 	}
 	return receipt, nil
@@ -77,7 +81,13 @@ func (s *SpotTrader) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyV
 		return receipt2, kvs2, err
 	}
 
-	receipt, kvs, err := s.settlement(maker, &matchDetail)
+	var receipt []*types.ReceiptLog
+	var kvs []*types.KeyValue
+	if s.AccID == maker.AccID {
+		receipt, kvs, err = s.selfSettlement(maker, &matchDetail)
+	} else {
+		receipt, kvs, err = s.settlement(maker, &matchDetail)
+	}
 	if err != nil {
 		elog.Error("settlement", "err", err)
 		return receipt, kvs, err
@@ -113,23 +123,20 @@ func (s *SpotTrader) calcTradeInfo(maker *spotMaker, balance int64) et.MatchInfo
 // RightToken: buyer -> seller
 // RightToken: buyer, seller -> fee-bank
 func (s *SpotTrader) settlement(maker *spotMaker, tradeBalance *et.MatchInfo) ([]*types.ReceiptLog, []*types.KeyValue, error) {
-	if s.acc.acc.Id == maker.acc.acc.Id {
-		return s.selfSettlement(maker, tradeBalance)
-	}
-
-	copyAcc := dupAccount(s.acc.acc)
-	copyAccMaker := dupAccount(maker.acc.acc)
-	copyFeeAcc := dupAccount(s.accFee.acc)
+	//if s.acc.acc.Id == maker.acc.acc.Id {
+	//	return s.selfSettlement(maker, tradeBalance)
+	//}
 
 	leftToken, rightToken := s.order.order.GetLimitOrder().LeftAsset, s.order.order.GetLimitOrder().RightAsset
 	var err error
-	if s.order.order.GetLimitOrder().Op == et.OpSell {
-		err = s.acc.doTranfer(maker.acc, leftToken, uint64(tradeBalance.LeftBalance))
+	var receipt *types.Receipt
+	if s.order.GetOp() == et.OpSell {
+		receipt, err = s.acc.Transfer("maker.acc" /*leftToken,*/, int64(tradeBalance.LeftBalance))
 		if err != nil {
 			elog.Error("settlement", "sell.doTranfer1", err)
 			return nil, nil, err
 		}
-		err = maker.acc.doFrozenTranfer(s.acc, rightToken, uint64(tradeBalance.RightBalance))
+		receipt, err = maker.acc.FrozenTranfer("s.acc" /* rightToken ,*/, int64(tradeBalance.RightBalance))
 		if err != nil {
 			elog.Error("settlement", "sell.doFrozenTranfer2", err)
 			return nil, nil, err
@@ -300,7 +307,7 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOr
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (taker *SpotTrader) matchModel(matchorder *et.SpotOrder, statedb dbm.KV) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (taker *SpotTrader) matchModel(matchorder *et.SpotOrder, statedb dbm.KV, s *Spot) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
@@ -308,7 +315,7 @@ func (taker *SpotTrader) matchModel(matchorder *et.SpotOrder, statedb dbm.KV) ([
 	elog.Info("try match", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
 		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
 
-	accMatch, err := newAccountRepo(spotDexName, statedb, taker.acc.db.dbprefix).LoadSpotAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID)
+	accMatch, err := s.accountdb.LoadAccount(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, nil)
 	if err != nil {
 		return nil, nil, err
 	}

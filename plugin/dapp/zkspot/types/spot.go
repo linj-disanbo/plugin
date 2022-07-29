@@ -58,6 +58,8 @@ const (
 	TyDexAccountActive
 	TyDexAccountBurn
 	TyDexAccountMint
+	TyDexAccountTransfer
+	TyDexAccountTransferFrozen
 
 	TyNftOrderLog = iota + 1100
 	TyNftTakerOrderLog
