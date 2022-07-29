@@ -208,6 +208,7 @@ func (acc *DexAccount) Burn(token uint64, amount uint64) (*types.Receipt, error)
 }
 
 type updateDexAccount func(token uint64, amount uint64) error
+type updateDexAccount2 func(accTo *DexAccount, token uint64, amount uint64) error
 
 func (acc *DexAccount) updateWithFunc(token uint64, amount uint64, f updateDexAccount, logType int32) (*types.Receipt, error) {
 	copyAcc := dupAccount(acc.acc)
@@ -288,4 +289,51 @@ func (acc *DexAccount) doFrozenTranfer(accTo *DexAccount, token uint64, amount u
 	acc.acc.Balance[idx].Frozen -= amount
 	accTo.acc.Balance[idxTo].Balance += amount
 	return nil
+}
+
+func (acc *DexAccount) FrozenTranfer(accTo *DexAccount, token uint64, amount uint64) (*types.Receipt, error) {
+	return acc.updateWithFunc2(accTo, token, amount, acc.doFrozenTranfer, et.TyDexAccountTransferFrozen)
+}
+
+func (acc *DexAccount) Tranfer(accTo *DexAccount, token uint64, amount uint64) (*types.Receipt, error) {
+	return acc.updateWithFunc2(accTo, token, amount, acc.doTranfer, et.TyDexAccountTransfer)
+}
+
+func (acc *DexAccount) updateWithFunc2(accTo *DexAccount, token uint64, amount uint64, f updateDexAccount2, logType int32) (*types.Receipt, error) {
+	copyAcc := dupAccount(acc.acc)
+	copyAccTo := dupAccount(accTo.acc)
+	err := f(accTo, token, amount)
+	if err != nil {
+		return nil, err
+	}
+	receiptlog := et.ReceiptDexAccount{
+		Prev:    copyAcc,
+		Current: acc.acc,
+	}
+	receiptlog2 := et.ReceiptDexAccount{
+		Prev:    copyAccTo,
+		Current: accTo.acc,
+	}
+
+	return acc.genReceipt2(logType, accTo, &receiptlog, &receiptlog2), nil
+}
+
+func (acc *DexAccount) genReceipt2(ty int32, acc2 *DexAccount, r, r2 *et.ReceiptDexAccount) *types.Receipt {
+	log1 := &types.ReceiptLog{
+		Ty:  ty,
+		Log: types.Encode(r),
+	}
+	log2 := &types.ReceiptLog{
+		Ty:  ty,
+		Log: types.Encode(r2),
+	}
+
+	kv := acc.GetKVSet()
+	kv2 := acc2.GetKVSet()
+	kv = append(kv, kv2...)
+	return &types.Receipt{
+		Ty:   types.ExecOk,
+		KV:   kv,
+		Logs: []*types.ReceiptLog{log1, log2},
+	}
 }
