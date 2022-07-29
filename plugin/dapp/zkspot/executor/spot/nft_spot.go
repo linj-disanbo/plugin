@@ -9,15 +9,16 @@ import (
 )
 
 type IGetSpotFee interface {
-	GetSpotFee(fromaddr string, left, right uint64) (*spotFee, error)
+	GetSpotFee(fromaddr string, left, right uint64) (*SpotFee, error)
 }
 
 type NftSpot struct {
 	env      *drivers.DriverBase
 	tx       *et.TxInfo
 	dbprefix et.DBprefix
-	feeAcc2  *DexAccount
 
+	feeInfo *SpotFee
+	accFeeX AssetAccount
 	//
 	leftAccDb *EvmxgoNftAccountRepo
 	accountdb *accountRepo
@@ -46,11 +47,16 @@ func NewNftSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Nf
 }
 
 func (a *NftSpot) SetFeeAcc(funcGetFeeAccount GetFeeAccount) error {
-	feeAcc, err := funcGetFeeAccount()
+	fee, err := funcGetFeeAccount()
 	if err != nil {
 		return err
 	}
-	a.feeAcc2 = feeAcc
+	acc, err := LoadSpotAccount(fee.Address, fee.AccID, a.env.GetStateDB(), a.dbprefix)
+	if err != nil {
+		elog.Error("LoadSpotAccount load taker account", "err", err)
+		return err
+	}
+	a.accFeeX = &ZkAccount{acc: acc, asset: nil}
 	return nil
 }
 
@@ -64,15 +70,15 @@ func (a *NftSpot) loadOrder(id int64) (*spotOrder, error) {
 	return orderx, nil
 }
 
-func (a *NftSpot) GetSpotFee(fromaddr string, left, right uint64) (*spotFee, error) {
+func (a *NftSpot) GetSpotFee(fromaddr string, left, right uint64) (*SpotFee, error) {
 	var takerFee, makerFee int32
 	takerFee, makerFee = 10000, 10000
 
-	return &spotFee{
-		addr:  a.feeAcc2.acc.Addr,
-		id:    a.feeAcc2.acc.Id,
-		taker: takerFee,
-		maker: makerFee,
+	return &SpotFee{
+		Address: a.feeInfo.Address,
+		AccID:   a.feeInfo.AccID,
+		taker:   takerFee,
+		maker:   makerFee,
 	}, nil
 }
 
@@ -147,9 +153,9 @@ func (a *NftSpot) LoadNftTrader(fromaddr string, accountID uint64) (*NftSpotTrad
 	}
 
 	return &NftSpotTraderHelper{
-		acc:      acc,
-		cfg:      a.env.GetAPI().GetConfig(),
-		accFee:   a.feeAcc2,
+		acc: acc,
+		cfg: a.env.GetAPI().GetConfig(),
+		//accFee:   a.feeAcc2,
 		execAddr: a.ExecAddr,
 	}, nil
 }

@@ -17,14 +17,14 @@ type SpotTrader struct {
 	cfg   *types.Chain33Config
 	accX  *AssetAccounts
 	order *spotOrder
-	fee   *spotFee
+	fee   *SpotFee
 	//takerFee int32
 	//makerFee int32
 	AccID uint64 // TODO
 
 	//
 	matches *et.ReceiptSpotMatch
-	accFee  *DexAccount
+	//accFee  *DexAccount
 	accFeeX AssetAccount
 }
 

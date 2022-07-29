@@ -78,7 +78,7 @@ func (a *zkNftDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, ent
 	if err != nil {
 		return nil, err
 	}
-	err = spot1.SetFeeAcc(a.getFeeAcc)
+	//err = spot1.SetFeeAcc(a.getFeeAcc)
 	if err != nil {
 		return nil, err
 	}
@@ -98,7 +98,7 @@ func (a *zkNftDex) NftTakerOrder(base *dapp.DriverBase, payload *et.SpotNftTaker
 	if err != nil {
 		return nil, err
 	}
-	err = spot1.SetFeeAcc(a.getFeeAcc)
+	//err = spot1.SetFeeAcc(a.getFeeAcc)
 	if err != nil {
 		return nil, err
 	}

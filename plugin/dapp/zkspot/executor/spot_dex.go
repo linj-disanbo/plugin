@@ -84,19 +84,17 @@ func checkL2Auth(statedb dbm.KV, accountID uint64, pub *zt.ZkPubKey) error {
 	return nil
 }
 
-func (a *zkSpotDex) getFeeAcc() (*spot.DexAccount, error) {
+func (a *zkSpotDex) getFeeAcc() (*spot.SpotFee, error) {
 	accountID := uint64(et.SystemFeeAccountId)
 	z1 := &zktree{}
 	leaf, err := z1.getAccount(a.statedb, accountID)
 	if err != nil {
 		return nil, err
 	}
-	acc, err := spot.LoadSpotAccount(leaf.ChainAddr, accountID, a.statedb, &dbprefix{})
-	if err != nil {
-		elog.Error("LoadSpotAccount load taker account", "err", err)
-		return nil, err
-	}
-	return acc, nil
+	return &spot.SpotFee{
+		Address: leaf.ChainAddr,
+		AccID:   accountID,
+	}, nil
 }
 
 //LimitOrder ...
@@ -122,6 +120,7 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 	}
 
 	// 下面流程是否要放到 spot1中
+
 	taker, err := spot1.LoadUser(a.txinfo.From, payload.Order.AccountID)
 	if err != nil {
 		return nil, err

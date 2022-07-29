@@ -17,15 +17,15 @@ type Spot struct {
 	env      *drivers.DriverBase
 	tx       *et.TxInfo
 	dbprefix et.DBprefix
-	feeAcc2  *DexAccount
+	feeInfo  *SpotFee
+	feeAccX  AssetAccount
 
 	accountdb *accountRepos
 	orderdb   *orderSRepo
 	matcher1  *matcher
-	// fee
 }
 
-type GetFeeAccount func() (*DexAccount, error)
+type GetFeeAccount func() (*SpotFee, error)
 
 func NewSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Spot, error) {
 	accRepos, err := newAccountRepo11(spotDexName, e.GetStateDB(), dbprefix, e.GetAPI().GetConfig(), "TODO")
@@ -44,11 +44,16 @@ func NewSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Spot,
 }
 
 func (a *Spot) SetFeeAcc(funcGetFeeAccount GetFeeAccount) error {
-	feeAcc, err := funcGetFeeAccount()
+	fee, err := funcGetFeeAccount()
 	if err != nil {
 		return err
 	}
-	a.feeAcc2 = feeAcc
+	acc, err := LoadSpotAccount(fee.Address, fee.AccID, a.env.GetStateDB(), a.dbprefix)
+	if err != nil {
+		elog.Error("LoadSpotAccount load taker account", "err", err)
+		return err
+	}
+	a.feeAccX = &ZkAccount{acc: acc, asset: nil}
 	return nil
 }
 
@@ -157,40 +162,41 @@ func (a *Spot) getFeeRate(fromaddr string, left, right uint64) (int32, int32, er
 	return tradeFee.Taker, tradeFee.Maker, nil
 }
 
-func (a *Spot) GetSpotFee(fromaddr string, left, right uint64) (*spotFee, error) {
+func (a *Spot) GetSpotFee(fromaddr string, left, right uint64) (*SpotFee, error) {
 	takerFee, makerFee, err := a.getFeeRate(fromaddr, left, right)
 	if err != nil {
 		return nil, err
 	}
-	return &spotFee{
-		addr:  a.feeAcc2.acc.Addr,
-		id:    a.feeAcc2.acc.Id,
-		taker: takerFee,
-		maker: makerFee,
+
+	return &SpotFee{
+		Address: a.feeInfo.Address,
+		AccID:   a.feeInfo.AccID,
+		taker:   takerFee,
+		maker:   makerFee,
 	}, nil
 }
 
-func (a *Spot) GetAssetFee(fromaddr string, left, right *et.Asset) (*spotFee, error) {
+func (a *Spot) GetAssetFee(fromaddr string, left, right *et.Asset) (*SpotFee, error) {
 	takerFee, makerFee, err := a.getFeeRate(fromaddr, 0, 0) // TODO
 	if err != nil {
 		return nil, err
 	}
-	return &spotFee{
-		addr:  a.feeAcc2.acc.Addr,
-		id:    a.feeAcc2.acc.Id,
-		taker: takerFee,
-		maker: makerFee,
+	return &SpotFee{
+		Address: a.feeInfo.Address,
+		AccID:   a.feeInfo.AccID,
+		taker:   takerFee,
+		maker:   makerFee,
 	}, nil
 }
 
-type spotFee struct {
-	addr  string
-	id    uint64
-	taker int32
-	maker int32
+type SpotFee struct {
+	Address string
+	AccID   uint64
+	taker   int32
+	maker   int32
 }
 
-func (f *spotFee) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
+func (f *SpotFee) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
 	return func(order *et.SpotOrder) *et.SpotOrder {
 		order.Rate = f.maker
 		order.TakerRate = f.taker
@@ -253,8 +259,8 @@ func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) 
 
 	return &SpotTrader{
 		//acc:    acc,
-		cfg:    a.env.GetAPI().GetConfig(),
-		accFee: a.feeAcc2,
+		cfg:     a.env.GetAPI().GetConfig(),
+		accFeeX: a.feeAccX,
 	}, nil
 }
 
@@ -269,9 +275,9 @@ func (a *Spot) LoadNewUser(fromaddr string, zkAccID uint64, payload *et.AssetLim
 	}
 
 	return &SpotTrader{
-		cfg:    a.env.GetAPI().GetConfig(),
-		accFee: a.feeAcc2,
-		accX:   accs,
+		cfg:     a.env.GetAPI().GetConfig(),
+		accFeeX: a.feeAccX,
+		accX:    accs,
 	}, nil
 }
 
@@ -316,20 +322,6 @@ func (a *Spot) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
 		order.Addr = a.tx.From
 		return order
 	}
-}
-
-func (a *Spot) LoadNftTrader(fromaddr string, accountID uint64) (*NftTrader, error) {
-	acc, err := a.accountdb.LoadAccount(fromaddr, accountID, nil)
-	if err != nil {
-		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
-		return nil, err
-	}
-	_ = acc
-
-	return &NftTrader{
-		//acc: acc,
-		cfg: a.env.GetAPI().GetConfig(),
-	}, nil
 }
 
 func createNftOrder(payload *et.SpotNftOrder, ty int32, entrustAddr string, inits []orderInit) *et.SpotOrder {
@@ -405,7 +397,9 @@ func createNftTakerOrder(payload *et.SpotNftTakerOrder, entrustAddr string, orde
 	}
 	return or
 }
-
+func (a *Spot) LoadNftTrader(fromaddr string, accountID uint64) (*NftTrader, error) {
+	return nil, nil
+}
 func (a *Spot) TradeNft(fromaddr string, taker *NftTrader, payload *et.SpotNftTakerOrder, entrustAddr string) (*types.Receipt, error) {
 	order2, err := a.orderdb.findOrderBy(payload.OrderID)
 	if err != nil {

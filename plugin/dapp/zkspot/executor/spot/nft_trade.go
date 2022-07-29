@@ -12,7 +12,7 @@ type NftTrader struct {
 	cfg   *types.Chain33Config
 	acc   *DexAccount
 	order *spotOrder
-	fee   *spotFee
+	fee   *SpotFee
 	//takerFee int32
 	//makerFee int32
 

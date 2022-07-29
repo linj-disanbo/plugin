@@ -10,7 +10,7 @@ type NftSpotTraderHelper struct {
 	cfg   *types.Chain33Config
 	acc   *DexAccount
 	order *spotOrder
-	fee   *spotFee
+	fee   *SpotFee
 
 	matches  *et.ReceiptSpotMatch
 	accFee   *DexAccount
