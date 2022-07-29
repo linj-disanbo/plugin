@@ -43,18 +43,10 @@ func createAssetLimitOrder(payload *et.AssetLimitOrder, entrustAddr string, init
 	return or
 }
 
-type spotOrderDB struct {
-	statedb  dbm.KV
-	localdb  dbm.KV
-	dbprefix et.DBprefix
-	repo     *orderSRepo
-}
-
 type spotOrder struct {
 	order *et.SpotOrder
 
 	repo *orderSRepo
-	env  int
 }
 
 func newSpotOrder(order *et.SpotOrder, orderdb *orderSRepo) *spotOrder {
