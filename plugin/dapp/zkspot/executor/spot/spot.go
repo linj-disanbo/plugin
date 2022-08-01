@@ -105,6 +105,23 @@ func (a *Spot) MatchAssetLimitOrder(payload1 *et.AssetLimitOrder, taker *SpotTra
 	return receipt1, nil
 }
 
+func (a *Spot) NftOrderMarked(taker *SpotTrader) (*types.Receipt, error) {
+	receipt1, err := a.NftOrderReceipt(taker)
+	if err != nil {
+		return nil, err
+	}
+
+	if taker.order.isActiveOrder() {
+		receipt3, err := taker.FrozenForLimitOrder(taker.order)
+		if err != nil {
+			return nil, err
+		}
+		receipt1 = et.MergeReceipt(receipt1, receipt3)
+	}
+
+	return receipt1, nil
+}
+
 func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -240,42 +257,7 @@ func (a *Spot) initOrder() func(*et.SpotOrder) *et.SpotOrder {
 	}
 }
 
-func (a *Spot) CreateNftOrder(fromaddr string, trader *SpotTrader, payload *et.SpotNftOrder, entrustAddr string) (*types.Receipt, error) {
-	left, right := NewZkAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
-	fees, err := a.GetSpotFee(fromaddr, left, right)
-	if err != nil {
-		elog.Error("executor/exchangedb getFees", "err", err)
-		return nil, err
-	}
-	trader.fee = fees
-
-	order := createNftOrder(payload, et.TyNftOrderAction) // , entrustAddr, 	[]orderInit{a.initOrder(), fees.initOrder()})
-	trader.order = newSpotOrder(order, a.orderdb)
-
-	tid, amount := trader.order.NeedToken(a.env.GetAPI().GetConfig().GetCoinPrecision())
-	err = trader.CheckTokenAmountForLimitOrder(tid, amount)
-	if err != nil {
-		return nil, err
-	}
-	trader.matches = &et.ReceiptSpotMatch{
-		Order: trader.order.order,
-		Index: a.GetIndex(),
-	}
-
-	receipt1, err := a.NftOrderReceipt(nil) // TODO
-	if err != nil {
-		return nil, err
-	}
-	receipt3, err := trader.FrozenForLimitOrder(trader.order)
-	if err != nil {
-		return nil, err
-	}
-	receipt1 = et.MergeReceipt(receipt1, receipt3)
-
-	return receipt1, nil
-}
-
-func (a *Spot) NftOrderReceipt(taker *NftTrader) (*types.Receipt, error) {
+func (a *Spot) NftOrderReceipt(taker *SpotTrader) (*types.Receipt, error) {
 	kvs := taker.order.repo.GetOrderKvSet(taker.order.order)
 	receiptlog := &types.ReceiptLog{Ty: et.TyNftOrderLog, Log: types.Encode(taker.matches)}
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}
@@ -350,6 +332,12 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 	}
 
 	return order1, nil
+}
+
+func (a *Spot) CreateNftOrder(fromaddr string, trader *SpotTrader, payload *et.SpotNftOrder, entrustAddr string) (*et.SpotOrder, error) {
+	left, right := NewZkAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
+	order := createNftOrder(payload, et.TyNftOrderAction)
+	return a.CreateOrder(fromaddr, trader, order, left, right, entrustAddr)
 }
 
 func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {

@@ -252,7 +252,11 @@ func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, en
 		return nil, err
 	}
 
-	return spot1.CreateNftOrder(a.txinfo.From, taker, payload, entrustAddr)
+	_, err = spot1.CreateNftOrder(a.txinfo.From, taker, payload, entrustAddr)
+	if err != nil {
+		return nil, err
+	}
+	return spot1.NftOrderMarked(taker)
 }
 
 //NftOrder ...
