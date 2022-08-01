@@ -178,11 +178,11 @@ func (o *spotOrder) GetPrice() int64 {
 func (o *spotOrder) GetAsset() (*et.Asset, *et.Asset) {
 	switch o.order.Ty {
 	case et.TyLimitOrderAction:
-		return newAsset1(o.order.GetLimitOrder().LeftAsset), newAsset1(o.order.GetLimitOrder().RightAsset)
+		return NewZkAsset(o.order.GetLimitOrder().LeftAsset), NewZkAsset(o.order.GetLimitOrder().RightAsset)
 	case et.TyAssetLimitOrderAction:
 		return o.order.GetAssetLimitOrder().LeftAsset, o.order.GetAssetLimitOrder().RightAsset
 	case et.TyNftOrderAction:
-		return newNftAsset1(o.order.GetNftOrder().LeftAsset), newAsset1(o.order.GetNftOrder().RightAsset)
+		return NewEvmNftAsset(o.order.GetNftOrder().LeftAsset), NewEvmNftAsset(o.order.GetNftOrder().RightAsset)
 	}
 	panic("Not support GetAsset")
 }

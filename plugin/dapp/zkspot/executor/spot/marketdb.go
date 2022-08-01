@@ -42,24 +42,6 @@ func (pair *assetPair) l1MarketDepthPrefix(op int32, price int64) []byte {
 	return []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
 }
 
-func newAsset1(left uint64) *et.Asset {
-	return &et.Asset{
-		Ty:    et.AssetType_L1Erc20,
-		Value: &et.Asset_ZkAssetid{ZkAssetid: left},
-	}
-}
-
-func newNftAsset1(left uint64) *et.Asset {
-	return &et.Asset{
-		Ty:    et.AssetType_EvmNft,
-		Value: &et.Asset_EvmNftID{EvmNftID: left},
-	}
-}
-
-//type assetWrap struct {
-//	a *et.Asset
-//}
-
 func SymbolStr(a *et.Asset) string {
 	switch a.Ty {
 	case et.AssetType_L1Erc20:
