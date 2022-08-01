@@ -87,7 +87,7 @@ func (a *Spot) MatchAssetLimitOrder(taker *SpotTrader) (*types.Receipt, error) {
 }
 
 func (a *Spot) NftOrderMarked(taker *SpotTrader) (*types.Receipt, error) {
-	receipt1, err := a.NftOrderReceipt(taker)
+	receipt1, err := a.NftOrderReceipt(taker.order, taker.matches)
 	if err != nil {
 		return nil, err
 	}
@@ -103,9 +103,9 @@ func (a *Spot) NftOrderMarked(taker *SpotTrader) (*types.Receipt, error) {
 	return receipt1, nil
 }
 
-func (a *Spot) NftOrderReceipt(taker *SpotTrader) (*types.Receipt, error) {
-	kvs := taker.order.repo.GetOrderKvSet(taker.order.order)
-	receiptlog := &types.ReceiptLog{Ty: et.TyNftOrderLog, Log: types.Encode(taker.matches)}
+func (a *Spot) NftOrderReceipt(order *spotOrder, matches *et.ReceiptSpotMatch) (*types.Receipt, error) {
+	kvs := order.repo.GetOrderKvSet(order.order)
+	receiptlog := &types.ReceiptLog{Ty: et.TyNftOrderLog, Log: types.Encode(matches)}
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}
 	return receipts, nil
 }
