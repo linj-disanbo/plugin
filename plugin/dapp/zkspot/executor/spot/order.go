@@ -11,36 +11,51 @@ import (
 
 type orderInit func(*et.SpotOrder) *et.SpotOrder
 
-func createLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, inits []orderInit) *et.SpotOrder {
-	or := &et.SpotOrder{
-		Value:       &et.SpotOrder_LimitOrder{LimitOrder: payload},
-		Ty:          et.TyLimitOrderAction,
-		EntrustAddr: entrustAddr,
-		Executed:    0,
-		AVGPrice:    0,
-		Balance:     payload.GetAmount(),
-		Status:      et.Ordered,
-	}
+func createOrder(or *et.SpotOrder, entrustAddr string, inits []orderInit) *et.SpotOrder {
+	or.Status = et.Ordered
+	or.EntrustAddr = entrustAddr
+	//	Executed: 0,
+	//	AVGPrice: 0,
 	for _, initFun := range inits {
 		or = initFun(or)
 	}
 	return or
 }
 
+func createLimitOrder(payload *et.SpotLimitOrder, entrustAddr string, inits []orderInit) *et.SpotOrder {
+	or := &et.SpotOrder{
+		Value:   &et.SpotOrder_LimitOrder{LimitOrder: payload},
+		Ty:      et.TyLimitOrderAction,
+		Balance: payload.GetAmount(),
+	}
+	return createOrder(or, entrustAddr, inits)
+}
+
 func createAssetLimitOrder(payload *et.AssetLimitOrder, entrustAddr string, inits []orderInit) *et.SpotOrder {
 	or := &et.SpotOrder{
-		Value:       &et.SpotOrder_AssetLimitOrder{AssetLimitOrder: payload},
-		Ty:          et.TyAssetLimitOrderAction,
-		EntrustAddr: entrustAddr,
-		Executed:    0,
-		AVGPrice:    0,
-		Balance:     payload.GetAmount(),
-		Status:      et.Ordered,
+		Value:   &et.SpotOrder_AssetLimitOrder{AssetLimitOrder: payload},
+		Ty:      et.TyAssetLimitOrderAction,
+		Balance: payload.GetAmount(),
 	}
-	for _, initFun := range inits {
-		or = initFun(or)
+	return createOrder(or, entrustAddr, inits)
+}
+
+func createNftOrder(payload *et.SpotNftOrder, ty int32, entrustAddr string, inits []orderInit) *et.SpotOrder {
+	or := &et.SpotOrder{
+		Value:   &et.SpotOrder_NftOrder{NftOrder: payload},
+		Ty:      ty,
+		Balance: payload.GetAmount(),
 	}
-	return or
+	return createOrder(or, entrustAddr, inits)
+}
+
+func createNftTakerOrder(payload *et.SpotNftTakerOrder, entrustAddr string, order2 *spotOrder, inits []orderInit) *et.SpotOrder {
+	or := &et.SpotOrder{
+		Value:   &et.SpotOrder_NftTakerOrder{NftTakerOrder: payload},
+		Ty:      et.TyLimitOrderAction,
+		Balance: order2.order.Balance,
+	}
+	return createOrder(or, entrustAddr, inits)
 }
 
 type spotOrder struct {

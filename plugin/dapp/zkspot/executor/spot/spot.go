@@ -150,51 +150,6 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 	return receipts, nil
 }
 
-func (a *Spot) getFeeRateFromCfg(fromaddr string, left, right string) (int32, int32, error) {
-	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
-	if err != nil {
-		elog.Error("getFeeRate ParseConfig", "err", err)
-		return 0, 0, err
-	}
-	tradeFee := tCfg.GetTrade(left, right)
-
-	// Taker/Maker fee may relate to user (fromaddr) level in dex
-	return tradeFee.Taker, tradeFee.Maker, nil
-}
-
-func (a *Spot) GetSpotFee(fromaddr string, left, right *et.Asset) (*SpotFee, error) {
-	l, r := SymbolStr(left), SymbolStr(right)
-	takerFee, makerFee, err := a.getFeeRateFromCfg(fromaddr, l, r)
-	if err != nil {
-		return nil, err
-	}
-
-	return &SpotFee{
-		Address: a.feeInfo.Address,
-		AccID:   a.feeInfo.AccID,
-		taker:   takerFee,
-		maker:   makerFee,
-	}, nil
-}
-
-// Spot Fee Account
-// Fee Rate
-// Fee Rate for trader(User)
-type SpotFee struct {
-	Address string
-	AccID   uint64
-	taker   int32
-	maker   int32
-}
-
-func (f *SpotFee) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
-	return func(order *et.SpotOrder) *et.SpotOrder {
-		order.Rate = f.maker
-		order.TakerRate = f.taker
-		return order
-	}
-}
-
 // execLocal ...
 func (a *Spot) ExecLocal(tx *types.Transaction, receiptData *types.ReceiptData, index int) (*types.LocalDBSet, error) {
 	dbSet := &types.LocalDBSet{}
@@ -347,47 +302,11 @@ func (a *Spot) CreateNftOrder(fromaddr string, trader *SpotTrader, payload *et.S
 	return receipt1, nil
 }
 
-func createNftOrder(payload *et.SpotNftOrder, ty int32, entrustAddr string, inits []orderInit) *et.SpotOrder {
-	or := &et.SpotOrder{
-		Value: &et.SpotOrder_NftOrder{NftOrder: payload},
-		Ty:    ty,
-	}
-	return createOrder(or, entrustAddr, payload.GetAmount(), inits)
-}
-
-func createOrder(or *et.SpotOrder, entrustAddr string, balance int64, inits []orderInit) *et.SpotOrder {
-	or.Status = et.Ordered
-	or.Balance = balance
-	or.EntrustAddr = entrustAddr
-	//	Executed: 0,
-	//	AVGPrice: 0,
-	for _, initFun := range inits {
-		or = initFun(or)
-	}
-	return or
-}
-
 func (a *Spot) NftOrderReceipt(taker *NftTrader) (*types.Receipt, error) {
 	kvs := taker.order.repo.GetOrderKvSet(taker.order.order)
 	receiptlog := &types.ReceiptLog{Ty: et.TyNftOrderLog, Log: types.Encode(taker.matches)}
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}
 	return receipts, nil
-}
-
-func createNftTakerOrder(payload *et.SpotNftTakerOrder, entrustAddr string, order2 *spotOrder, inits []orderInit) *et.SpotOrder {
-	or := &et.SpotOrder{
-		Value:       &et.SpotOrder_NftTakerOrder{NftTakerOrder: payload},
-		Ty:          et.TyLimitOrderAction,
-		EntrustAddr: entrustAddr,
-		Executed:    0,
-		AVGPrice:    0,
-		Balance:     order2.order.Balance,
-		Status:      et.Ordered,
-	}
-	for _, initFun := range inits {
-		or = initFun(or)
-	}
-	return or
 }
 
 func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustAddr string) (*types.Receipt, error) {
@@ -484,4 +403,49 @@ func (a *Spot) CreateAssetLimitOrder(fromaddr string, acc *SpotTrader, payload *
 	}
 
 	return order, nil
+}
+
+func (a *Spot) getFeeRateFromCfg(fromaddr string, left, right string) (int32, int32, error) {
+	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
+	if err != nil {
+		elog.Error("getFeeRate ParseConfig", "err", err)
+		return 0, 0, err
+	}
+	tradeFee := tCfg.GetTrade(left, right)
+
+	// Taker/Maker fee may relate to user (fromaddr) level in dex
+	return tradeFee.Taker, tradeFee.Maker, nil
+}
+
+func (a *Spot) GetSpotFee(fromaddr string, left, right *et.Asset) (*SpotFee, error) {
+	l, r := SymbolStr(left), SymbolStr(right)
+	takerFee, makerFee, err := a.getFeeRateFromCfg(fromaddr, l, r)
+	if err != nil {
+		return nil, err
+	}
+
+	return &SpotFee{
+		Address: a.feeInfo.Address,
+		AccID:   a.feeInfo.AccID,
+		taker:   takerFee,
+		maker:   makerFee,
+	}, nil
+}
+
+// Spot Fee Account
+// Fee Rate
+// Fee Rate for trader(User)
+type SpotFee struct {
+	Address string
+	AccID   uint64
+	taker   int32
+	maker   int32
+}
+
+func (f *SpotFee) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
+	return func(order *et.SpotOrder) *et.SpotOrder {
+		order.Rate = f.maker
+		order.TakerRate = f.taker
+		return order
+	}
 }
