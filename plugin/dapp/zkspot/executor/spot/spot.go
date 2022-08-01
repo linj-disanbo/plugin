@@ -103,6 +103,13 @@ func (a *Spot) NftOrderMarked(taker *SpotTrader) (*types.Receipt, error) {
 	return receipt1, nil
 }
 
+func (a *Spot) NftOrderReceipt(taker *SpotTrader) (*types.Receipt, error) {
+	kvs := taker.order.repo.GetOrderKvSet(taker.order.order)
+	receiptlog := &types.ReceiptLog{Ty: et.TyNftOrderLog, Log: types.Encode(taker.matches)}
+	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}
+	return receipts, nil
+}
+
 func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
@@ -236,13 +243,6 @@ func (a *Spot) initOrder() func(*et.SpotOrder) *et.SpotOrder {
 		order.Addr = a.tx.From
 		return order
 	}
-}
-
-func (a *Spot) NftOrderReceipt(taker *SpotTrader) (*types.Receipt, error) {
-	kvs := taker.order.repo.GetOrderKvSet(taker.order.order)
-	receiptlog := &types.ReceiptLog{Ty: et.TyNftOrderLog, Log: types.Encode(taker.matches)}
-	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}
-	return receipts, nil
 }
 
 func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustAddr string) (*types.Receipt, error) {
