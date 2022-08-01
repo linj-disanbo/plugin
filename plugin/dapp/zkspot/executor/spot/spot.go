@@ -67,26 +67,7 @@ func (a *Spot) loadOrder(id int64) (*spotOrder, error) {
 	return orderx, nil
 }
 
-func (a *Spot) MatchLimitOrder(payload *et.SpotLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
-	matcher1 := newMatcher(a.env.GetStateDB(), a.env.GetLocalDB(), a.env.GetAPI(), a.dbprefix)
-	elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", payload.GetPrice(), "op", OpSwap(payload.Op), "index", taker.order.order.GetOrderID())
-	receipt1, err := matcher1.MatchOrder(taker.order, taker, a.orderdb, a)
-	if err != nil {
-		return nil, err
-	}
-
-	if taker.order.isActiveOrder() {
-		receipt3, err := taker.FrozenForLimitOrder(taker.order)
-		if err != nil {
-			return nil, err
-		}
-		receipt1 = et.MergeReceipt(receipt1, receipt3)
-	}
-
-	return receipt1, nil
-}
-
-func (a *Spot) MatchAssetLimitOrder(payload1 *et.AssetLimitOrder, taker *SpotTrader) (*types.Receipt, error) {
+func (a *Spot) MatchAssetLimitOrder(taker *SpotTrader) (*types.Receipt, error) {
 	matcher1 := newMatcher(a.env.GetStateDB(), a.env.GetLocalDB(), a.env.GetAPI(), a.dbprefix)
 	elog.Info("LimitOrder", "height", a.env.GetHeight(), "order-price", taker.order.GetPrice(), "op", OpSwap(taker.order.GetOp()), "index", taker.order.order.GetOrderID())
 	receipt1, err := matcher1.MatchOrder(taker.order, taker, a.orderdb, a)

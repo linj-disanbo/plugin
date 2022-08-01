@@ -133,7 +133,7 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 	}
 	_ = order // set to order trader
 
-	receipt1, err := spot1.MatchLimitOrder(payload, taker)
+	receipt1, err := spot1.MatchAssetLimitOrder(taker)
 	if err != nil {
 		return nil, err
 	}
@@ -326,7 +326,7 @@ func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimi
 	}
 	_ = order // set to order trader
 
-	receipt1, err := spot1.MatchAssetLimitOrder(payload, taker)
+	receipt1, err := spot1.MatchAssetLimitOrder(taker)
 	if err != nil {
 		return nil, err
 	}
