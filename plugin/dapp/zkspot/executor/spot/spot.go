@@ -249,21 +249,6 @@ func (a *Spot) ExecLocal(tx *types.Transaction, receiptData *types.ReceiptData, 
 	return dbSet, nil
 }
 
-func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) {
-	acc, err := a.accountdb.LoadAccount(fromaddr, accountID, nil) // TODO
-	if err != nil {
-		elog.Error("executor/exchangedb LoadSpotAccount load taker account", "err", err)
-		return nil, err
-	}
-	_ = acc
-
-	return &SpotTrader{
-		//acc:    acc,
-		cfg:     a.env.GetAPI().GetConfig(),
-		accFeeX: a.feeAccX,
-	}, nil
-}
-
 func BuySellAsset(op int32, left, right *et.Asset) (*et.Asset, *et.Asset) {
 	buyAsset, sellAsset := left, right
 	if op == et.OpSell {
