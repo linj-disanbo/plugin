@@ -222,33 +222,6 @@ func (a *Spot) LoadTrader(fromaddr string, zkAccID uint64, buyAsset, sellAsset *
 	}, nil
 }
 
-func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
-	left, right := NewZkAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
-	or := createLimitOrder(payload)
-	fees, err := a.GetSpotFee(fromaddr, left, right)
-	if err != nil {
-		elog.Error("executor/exchangedb getFees", "err", err)
-		return nil, err
-	}
-	acc.fee = fees
-
-	order := createOrder(or, entrustAddr,
-		[]orderInit{a.initOrder(), fees.initOrder()})
-	acc.order = newSpotOrder(order, a.orderdb)
-
-	tid, amount := acc.order.NeedToken(a.env.GetAPI().GetConfig().GetCoinPrecision())
-	err = acc.CheckTokenAmountForLimitOrder(tid, amount)
-	if err != nil {
-		return nil, err
-	}
-	acc.matches = &et.ReceiptSpotMatch{
-		Order: acc.order.order,
-		Index: a.GetIndex(),
-	}
-
-	return order, nil
-}
-
 //GetIndex get index
 func (a *Spot) GetIndex() int64 {
 	// Add four zeros to match multiple MatchOrder indexes
@@ -377,6 +350,12 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 	}
 
 	return order1, nil
+}
+
+func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
+	left, right := NewZkAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
+	or := createLimitOrder(payload)
+	return a.CreateOrder(fromaddr, acc, or, left, right, entrustAddr)
 }
 
 func (a *Spot) CreateAssetLimitOrder(fromaddr string, acc *SpotTrader, payload *et.AssetLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
