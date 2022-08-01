@@ -264,11 +264,16 @@ func (a *Spot) LoadUser(fromaddr string, accountID uint64) (*SpotTrader, error) 
 	}, nil
 }
 
-func (a *Spot) LoadNewUser(fromaddr string, zkAccID uint64, payload *et.AssetLimitOrder) (*SpotTrader, error) {
-	buyAsset, sellAsset := payload.LeftAsset, payload.RightAsset
-	if payload.Op == et.OpSell {
-		buyAsset, sellAsset = payload.RightAsset, payload.LeftAsset
+func BuySellAsset(op int32, left, right *et.Asset) (*et.Asset, *et.Asset) {
+	buyAsset, sellAsset := left, right
+	if op == et.OpSell {
+		buyAsset, sellAsset = right, left
 	}
+	return buyAsset, sellAsset
+}
+
+func (a *Spot) LoadNewUser(fromaddr string, zkAccID uint64, payload *et.AssetLimitOrder) (*SpotTrader, error) {
+	buyAsset, sellAsset := BuySellAsset(payload.Op, payload.LeftAsset, payload.RightAsset)
 	return a.LoadTrader(fromaddr, zkAccID, buyAsset, sellAsset)
 }
 

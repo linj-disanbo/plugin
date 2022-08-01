@@ -9,6 +9,20 @@ import (
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
+func NewZkAsset(left uint64) *et.Asset {
+	return &et.Asset{
+		Ty:    et.AssetType_L1Erc20,
+		Value: &et.Asset_ZkAssetid{ZkAssetid: left},
+	}
+}
+
+func NewEvmNftAsset(left uint64) *et.Asset {
+	return &et.Asset{
+		Ty:    et.AssetType_EvmNft,
+		Value: &et.Asset_EvmNftID{EvmNftID: left},
+	}
+}
+
 //  support kinds of asset
 type AssetAccount interface {
 	Transfer(to AssetAccount, amountt int64) (*types.Receipt, error)
