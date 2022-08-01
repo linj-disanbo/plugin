@@ -29,7 +29,7 @@ type NftSpot struct {
 }
 
 func NewNftSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*NftSpot, error) {
-	leftAccDb, err := newNftAccountRepo(e.GetStateDB(), e.GetAPI().GetConfig())
+	leftAccDb, err := newEvmxgoNftAccountRepo(e.GetStateDB(), e.GetAPI().GetConfig())
 	if err != nil {
 		return nil, err
 	}
@@ -166,13 +166,13 @@ func (a *NftSpot) CreateNftOrder(fromaddr string, payload *et.SpotNftOrder, entr
 		elog.Error("CreateNftOrder getFees", "err", err)
 		return nil, err
 	}
+	_ = fees
 
-	order := createNftOrder(payload, et.TyNftOrder2Action, entrustAddr,
-		[]orderInit{a.initOrder(), fees.initLimitOrder()})
+	order := createNftOrder(payload, et.TyNftOrder2Action) // TODO, entrustAddr, 		[]orderInit{a.initOrder(), fees.initOrder()})
 
 	order2 := newSpotOrder(order, a.orderdb)
 
-	trader, err := a.leftAccDb.NewAccount(fromaddr, payload.Order.AccountID, payload.LeftAsset)
+	trader, err := a.leftAccDb.NewAccount(fromaddr, payload.Order.AccountID, nil) // TODO payload.LeftAsset)
 	if err != nil {
 		elog.Error("CreateNftOrder NewAccount", "err", err)
 		return nil, err
@@ -255,7 +255,7 @@ func (a *NftSpot) CreateNftTakerOrder(fromaddr string, acc *NftSpotTraderHelper,
 	acc.fee = fees
 
 	order1 := createNftTakerOrder2(payload, entrustAddr, spotOrder2,
-		[]orderInit{a.initOrder(), fees.initLimitOrder()})
+		[]orderInit{a.initOrder(), fees.initOrder()})
 	acc.order = newSpotOrder(order1, a.orderdb)
 
 	tid, amount := acc.order.nftTakerOrderNeedToken(spotOrder2, a.env.GetAPI().GetConfig().GetCoinPrecision())

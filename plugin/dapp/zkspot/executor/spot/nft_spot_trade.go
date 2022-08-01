@@ -33,12 +33,12 @@ func (s *NftSpotTraderHelper) Trade(spot *NftSpot, makerOrder *spotOrder) ([]*ty
 		return receipt2, kvs2, err
 	}
 
-	makerNftAcc, err := spot.leftAccDb.NewAccount(makerOrder.order.Addr, uint64(makerOrder.order.GetNftOrder().Order.AccountID), makerOrder.order.GetNftOrder().LeftAsset)
+	makerNftAcc, err := spot.leftAccDb.NewAccount(makerOrder.order.Addr, uint64(makerOrder.order.GetNftOrder().Order.AccountID), nil) // TODO makerOrder.order.GetNftOrder().LeftAsset)
 	if err != nil {
 		elog.Error("load maker nft account", "err", err)
 		return receipt2, kvs2, err
 	}
-	takerNftAcc, err := spot.leftAccDb.NewAccount(s.order.order.Addr, uint64(s.order.order.GetNftTakerOrder().Order.AccountID), makerOrder.order.GetNftOrder().LeftAsset)
+	takerNftAcc, err := spot.leftAccDb.NewAccount(s.order.order.Addr, uint64(s.order.order.GetNftTakerOrder().Order.AccountID), nil) // TODO makerOrder.order.GetNftOrder().LeftAsset)
 	if err != nil {
 		elog.Error("load taker nft account", "err", err)
 		return receipt2, kvs2, err
