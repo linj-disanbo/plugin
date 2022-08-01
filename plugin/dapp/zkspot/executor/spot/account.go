@@ -11,6 +11,7 @@ import (
 type accountRepos struct {
 	zkRepo    *accountRepo
 	tokenRepo *TokenAccountRepo
+	evmxgo    *EvmxgoNftAccountRepo
 }
 
 func newAccountRepo11(dexName string, statedb dbm.KV, p et.DBprefix, cfg *types.Chain33Config, execAddr string) (*accountRepos, error) {
@@ -18,6 +19,10 @@ func newAccountRepo11(dexName string, statedb dbm.KV, p et.DBprefix, cfg *types.
 	var err error
 	repos.zkRepo = newAccountRepo(dexName, statedb, p)
 	repos.tokenRepo, err = newTokenAccountRepo(statedb, cfg, execAddr)
+	if err != nil {
+		return nil, err
+	}
+	repos.evmxgo, err = newEvmxgoNftAccountRepo(statedb, cfg)
 	if err != nil {
 		return nil, err
 	}
@@ -47,6 +52,18 @@ func (repos *accountRepos) LoadAccount(addr string, zkAccID uint64, asset *et.As
 			return nil, err
 		}
 		return acc, nil
+	case et.AssetType_ZkNft:
+		acc1, err := repos.zkRepo.LoadAccount(addr, asset.GetZkAssetid())
+		if err != nil {
+			return nil, err
+		}
+		return &ZkAccount{acc: acc1, asset: asset}, nil
+	case et.AssetType_EvmNft:
+		acc1, err := repos.evmxgo.NewAccount(addr, zkAccID, asset)
+		if err != nil {
+			return nil, err
+		}
+		return acc1, nil
 	}
 	panic("not support")
 

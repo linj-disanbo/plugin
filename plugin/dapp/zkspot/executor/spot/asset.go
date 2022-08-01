@@ -50,22 +50,57 @@ type NftAccount struct {
 
 	nftid  uint64
 	symbol string
+	acc    *account.DB
 }
 
 type EvmxgoNftAccountRepo struct {
 	cfg     *types.Chain33Config
 	statedb dbm.KV
 	//symbol  string
-	accdb *account.DB
+	accdb    *account.DB
+	execAddr string // TODO evmxgo contract address
 }
 
-func newNftAccountRepo(db dbm.KV, cfg *types.Chain33Config) (*EvmxgoNftAccountRepo, error) {
+func (acc *NftAccount) GetCoinPrecision() int64 {
+	return 1
+}
+
+func (acc *NftAccount) TransferFrozen(to AssetAccount, amountt int64) (*types.Receipt, error) {
+	toAddr := to.GetAccountInfo().address
+	return acc.acc.ExecTransferFrozen(acc.address, toAddr, acc.accdb.execAddr, amountt)
+}
+func (acc *NftAccount) Frozen(amount int64) (*types.Receipt, error) {
+	return acc.acc.ExecFrozen(acc.address, acc.accdb.execAddr, amount)
+}
+func (acc *NftAccount) Transfer(to AssetAccount, amount int64) (*types.Receipt, error) {
+	toAddr := to.GetAccountInfo().address
+	return acc.acc.ExecTransfer(acc.address, toAddr, acc.accdb.execAddr, amount)
+}
+func (acc *NftAccount) UnFrozen(amount int64) (*types.Receipt, error) {
+	return acc.acc.ExecActive(acc.address, acc.accdb.execAddr, amount)
+}
+
+func (acc *NftAccount) CheckBalance(amount int64) error {
+	balance := acc.acc.LoadExecAccount(acc.address, acc.accdb.execAddr)
+	if balance.Balance < amount {
+		elog.Error("TokenAccount balance", "balance", balance.Balance, "need", amount)
+		return et.ErrAssetBalance
+	}
+	return nil
+}
+
+func (acc *NftAccount) GetAccountInfo() AccountInfo {
+	return acc.AccountInfo
+}
+
+func newEvmxgoNftAccountRepo(db dbm.KV, cfg *types.Chain33Config) (*EvmxgoNftAccountRepo, error) {
 	return &EvmxgoNftAccountRepo{
 		statedb: db,
 		cfg:     cfg}, nil
 }
 
-func (accdb *EvmxgoNftAccountRepo) NewAccount(addr string, accid uint64, nftid uint64) (*NftAccount, error) {
+func (accdb *EvmxgoNftAccountRepo) NewAccount(addr string, accid uint64, asset *et.Asset) (*NftAccount, error) {
+	nftid := asset.GetEvmNftID()
 	var err error
 	symbol := fmt.Sprintf("%d", nftid)
 	if accdb.accdb == nil {

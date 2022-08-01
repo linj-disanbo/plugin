@@ -49,10 +49,10 @@ func createNftOrder(payload *et.SpotNftOrder, ty int32) *et.SpotOrder {
 	return or
 }
 
-func createNftTakerOrder(payload *et.SpotNftTakerOrder, order2 *spotOrder) *et.SpotOrder {
+func createNftTakerOrder(payload *et.SpotNftTakerOrder, ty int32, order2 *spotOrder) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:   &et.SpotOrder_NftTakerOrder{NftTakerOrder: payload},
-		Ty:      et.TyLimitOrderAction,
+		Ty:      ty,
 		Balance: order2.order.Balance,
 	}
 	return or
