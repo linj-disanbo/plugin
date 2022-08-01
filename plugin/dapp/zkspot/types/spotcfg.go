@@ -35,11 +35,11 @@ func (f *Econfig) GetFeeAddrID() uint64 {
 }
 
 // TODO
-func (f *Econfig) GetSymbol(left, right uint64) string {
+func (f *Econfig) GetSymbol(left, right string) string {
 	return fmt.Sprintf("%v_%v", left, right)
 }
 
-func (f *Econfig) GetTrade(left, right uint64) *Trade {
+func (f *Econfig) GetTrade(left, right string) *Trade {
 	symbol := f.GetSymbol(left, right)
 	c, ok := f.Exchanges[symbol]
 	if !ok {

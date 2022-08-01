@@ -150,7 +150,7 @@ func (a *Spot) RevokeOrder(fromaddr string, payload *et.SpotRevokeOrder) (*types
 	return receipts, nil
 }
 
-func (a *Spot) getFeeRate(fromaddr string, left, right uint64) (int32, int32, error) {
+func (a *Spot) getFeeRateFromCfg(fromaddr string, left, right string) (int32, int32, error) {
 	tCfg, err := ParseConfig(a.env.GetAPI().GetConfig(), a.env.GetHeight())
 	if err != nil {
 		elog.Error("getFeeRate ParseConfig", "err", err)
@@ -162,8 +162,9 @@ func (a *Spot) getFeeRate(fromaddr string, left, right uint64) (int32, int32, er
 	return tradeFee.Taker, tradeFee.Maker, nil
 }
 
-func (a *Spot) GetSpotFee(fromaddr string, left, right uint64) (*SpotFee, error) {
-	takerFee, makerFee, err := a.getFeeRate(fromaddr, left, right)
+func (a *Spot) GetSpotFee(fromaddr string, left, right *et.Asset) (*SpotFee, error) {
+	l, r := SymbolStr(left), SymbolStr(right)
+	takerFee, makerFee, err := a.getFeeRateFromCfg(fromaddr, l, r)
 	if err != nil {
 		return nil, err
 	}
@@ -176,19 +177,9 @@ func (a *Spot) GetSpotFee(fromaddr string, left, right uint64) (*SpotFee, error)
 	}, nil
 }
 
-func (a *Spot) GetAssetFee(fromaddr string, left, right *et.Asset) (*SpotFee, error) {
-	takerFee, makerFee, err := a.getFeeRate(fromaddr, 0, 0) // TODO
-	if err != nil {
-		return nil, err
-	}
-	return &SpotFee{
-		Address: a.feeInfo.Address,
-		AccID:   a.feeInfo.AccID,
-		taker:   takerFee,
-		maker:   makerFee,
-	}, nil
-}
-
+// Spot Fee Account
+// Fee Rate
+// Fee Rate for trader(User)
 type SpotFee struct {
 	Address string
 	AccID   uint64
@@ -277,7 +268,8 @@ func (a *Spot) LoadTrader(fromaddr string, zkAccID uint64, buyAsset, sellAsset *
 }
 
 func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
-	fees, err := a.GetSpotFee(fromaddr, payload.LeftAsset, payload.RightAsset)
+	left, right := NewZkAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
+	fees, err := a.GetSpotFee(fromaddr, left, right)
 	if err != nil {
 		elog.Error("executor/exchangedb getFees", "err", err)
 		return nil, err
@@ -319,24 +311,9 @@ func (a *Spot) initLimitOrder() func(*et.SpotOrder) *et.SpotOrder {
 	}
 }
 
-func createNftOrder(payload *et.SpotNftOrder, ty int32, entrustAddr string, inits []orderInit) *et.SpotOrder {
-	or := &et.SpotOrder{
-		Value:       &et.SpotOrder_NftOrder{NftOrder: payload},
-		Ty:          ty,
-		EntrustAddr: entrustAddr,
-		Executed:    0,
-		AVGPrice:    0,
-		Balance:     payload.GetAmount(),
-		Status:      et.Ordered,
-	}
-	for _, initFun := range inits {
-		or = initFun(or)
-	}
-	return or
-}
-
 func (a *Spot) CreateNftOrder(fromaddr string, trader *SpotTrader, payload *et.SpotNftOrder, entrustAddr string) (*types.Receipt, error) {
-	fees, err := a.GetSpotFee(fromaddr, payload.LeftAsset, payload.RightAsset)
+	left, right := NewZkAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
+	fees, err := a.GetSpotFee(fromaddr, left, right)
 	if err != nil {
 		elog.Error("executor/exchangedb getFees", "err", err)
 		return nil, err
@@ -368,6 +345,26 @@ func (a *Spot) CreateNftOrder(fromaddr string, trader *SpotTrader, payload *et.S
 	receipt1 = et.MergeReceipt(receipt1, receipt3)
 
 	return receipt1, nil
+}
+
+func createNftOrder(payload *et.SpotNftOrder, ty int32, entrustAddr string, inits []orderInit) *et.SpotOrder {
+	or := &et.SpotOrder{
+		Value: &et.SpotOrder_NftOrder{NftOrder: payload},
+		Ty:    ty,
+	}
+	return createOrder(or, entrustAddr, payload.GetAmount(), inits)
+}
+
+func createOrder(or *et.SpotOrder, entrustAddr string, balance int64, inits []orderInit) *et.SpotOrder {
+	or.Status = et.Ordered
+	or.Balance = balance
+	or.EntrustAddr = entrustAddr
+	//	Executed: 0,
+	//	AVGPrice: 0,
+	for _, initFun := range inits {
+		or = initFun(or)
+	}
+	return or
 }
 
 func (a *Spot) NftOrderReceipt(taker *NftTrader) (*types.Receipt, error) {
@@ -439,7 +436,8 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 		return nil, et.ErrOrderID
 	}
 
-	fees, err := a.GetSpotFee(fromaddr, order2.GetNftOrder().LeftAsset, order2.GetNftOrder().RightAsset)
+	left, right := NewZkAsset(order2.GetNftOrder().LeftAsset), NewZkAsset(order2.GetNftOrder().RightAsset)
+	fees, err := a.GetSpotFee(fromaddr, left, right)
 	if err != nil {
 		elog.Error("CreateNftTakerOrder getFees", "err", err)
 		return nil, err
@@ -464,7 +462,7 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 }
 
 func (a *Spot) CreateAssetLimitOrder(fromaddr string, acc *SpotTrader, payload *et.AssetLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
-	fees, err := a.GetAssetFee(fromaddr, payload.LeftAsset, payload.RightAsset)
+	fees, err := a.GetSpotFee(fromaddr, payload.LeftAsset, payload.RightAsset)
 	if err != nil {
 		elog.Error("executor/exchangedb getFees", "err", err)
 		return nil, err
