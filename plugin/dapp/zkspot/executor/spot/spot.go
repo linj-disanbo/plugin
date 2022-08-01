@@ -279,6 +279,28 @@ func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustA
 	return &types.Receipt{KV: kvs, Logs: logs}, err
 }
 
+func (a *Spot) CreateEvmxgoNftOrder(fromaddr string, trader *SpotTrader, payload *et.SpotNftOrder, entrustAddr string) (*et.SpotOrder, error) {
+	left, right := NewEvmNftAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
+	order := createNftOrder(payload, et.TyNftOrder2Action)
+	return a.CreateOrder(fromaddr, trader, order, left, right, entrustAddr)
+}
+
+func (a *Spot) CreateEvmxgoNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et.SpotNftTakerOrder, entrustAddr string) (*et.SpotOrder, error) {
+	order2, err := a.orderdb.findOrderBy(payload.OrderID)
+	if err != nil {
+		elog.Error("CreateEvmxgoNftTakerOrder findOrderBy", "err", err, "orderid", payload.OrderID)
+		return nil, err
+	}
+
+	spotOrder2 := newSpotOrder(order2, a.orderdb)
+	if spotOrder2.isActiveOrder() {
+		return nil, et.ErrOrderID
+	}
+	left, right := NewEvmNftAsset(order2.GetNftOrder().LeftAsset), NewZkAsset(order2.GetNftOrder().RightAsset)
+	order1 := createNftTakerOrder(payload, et.TyNftTakerOrder2Action, spotOrder2)
+	return a.CreateOrder(fromaddr, acc, order1, left, right, entrustAddr)
+}
+
 func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et.SpotNftTakerOrder, entrustAddr string) (*et.SpotOrder, error) {
 	order2, err := a.orderdb.findOrderBy(payload.OrderID)
 	if err != nil {
@@ -291,7 +313,7 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 		return nil, et.ErrOrderID
 	}
 	left, right := NewZkAsset(order2.GetNftOrder().LeftAsset), NewZkAsset(order2.GetNftOrder().RightAsset)
-	order1 := createNftTakerOrder(payload, spotOrder2)
+	order1 := createNftTakerOrder(payload, et.TyNftTakerOrderAction, spotOrder2)
 	return a.CreateOrder(fromaddr, acc, order1, left, right, entrustAddr)
 	/*
 		TODO fix

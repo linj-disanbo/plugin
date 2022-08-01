@@ -21,6 +21,7 @@ const (
 	TyEntrustRevokeOrderAction
 	TyNftOrderAction
 	TyNftTakerOrderAction
+	// evmxgo nft order
 	TyNftOrder2Action
 	TyNftTakerOrder2Action
 	TyAssetLimitOrderAction
