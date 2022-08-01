@@ -290,29 +290,17 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 	if spotOrder2.isActiveOrder() {
 		return nil, et.ErrOrderID
 	}
-
 	left, right := NewZkAsset(order2.GetNftOrder().LeftAsset), NewZkAsset(order2.GetNftOrder().RightAsset)
-	fees, err := a.GetSpotFee(fromaddr, left, right)
-	if err != nil {
-		elog.Error("CreateNftTakerOrder getFees", "err", err)
-		return nil, err
-	}
-	acc.fee = fees
-
-	order1 := createNftTakerOrder(payload, spotOrder2) // ,	[]orderInit{a.initOrder(), fees.initOrder()})
-	acc.order = newSpotOrder(order1, a.orderdb)
-
-	tid, amount := acc.order.nftTakerOrderNeedToken(spotOrder2, a.env.GetAPI().GetConfig().GetCoinPrecision())
-	err = acc.CheckTokenAmountForLimitOrder(tid, amount)
-	if err != nil {
-		return nil, err
-	}
-	acc.matches = &et.ReceiptSpotMatch{
-		Order: acc.order.order,
-		Index: a.GetIndex(),
-	}
-
-	return order1, nil
+	order1 := createNftTakerOrder(payload, spotOrder2)
+	return a.CreateOrder(fromaddr, acc, order1, left, right, entrustAddr)
+	/*
+		TODO fix
+		tid, amount := acc.order.nftTakerOrderNeedToken(spotOrder2, a.env.GetAPI().GetConfig().GetCoinPrecision())
+		err = acc.CheckTokenAmountForLimitOrder(tid, amount)
+		if err != nil {
+			return nil, err
+		}
+	*/
 }
 
 func (a *Spot) CreateNftOrder(fromaddr string, trader *SpotTrader, payload *et.SpotNftOrder, entrustAddr string) (*et.SpotOrder, error) {
