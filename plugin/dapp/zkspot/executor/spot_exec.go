@@ -97,12 +97,22 @@ func (e *zkspot) Exec_EntrustRevokeOrder(payload *exchangetypes.SpotEntrustRevok
 
 // 限价交易
 func (e *zkspot) Exec_NftOrder(payload *exchangetypes.SpotNftOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	defer func() {
+		if err := recover(); err != nil {
+			elog.Error("Exec_NftOrder", "err", err, "stack", exchangetypes.GetStack())
+		}
+	}()
 	action := NewZkSpotDex(e, tx, index)
 	return action.NftOrder(&e.DriverBase, payload, "")
 }
 
 // 限价交易
 func (e *zkspot) Exec_NftTakerOrder(payload *exchangetypes.SpotNftTakerOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	defer func() {
+		if err := recover(); err != nil {
+			elog.Error("Exec_NftTakerOrder", "err", err, "stack", exchangetypes.GetStack())
+		}
+	}()
 	// checkTx will check payload and zk Signature
 	start := time.Now()
 	action := NewZkSpotDex(e, tx, index)
