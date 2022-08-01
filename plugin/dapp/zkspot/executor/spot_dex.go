@@ -247,7 +247,9 @@ func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, en
 	}
 
 	// 下面流程是否要放到 spot1中
-	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, nil, nil) // TODO
+	left, right := spot.NewZkAsset(payload.LeftAsset), spot.NewZkAsset(payload.RightAsset)
+	buy, sell := spot.BuySellAsset(payload.Op, left, right)
+	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, buy, sell)
 	if err != nil {
 		return nil, err
 	}
