@@ -103,7 +103,7 @@ func (e *zkspot) Exec_NftOrder(payload *exchangetypes.SpotNftOrder, tx *types.Tr
 		}
 	}()
 	action := NewZkSpotDex(e, tx, index)
-	return action.NftOrder(&e.DriverBase, payload, "")
+	return action.NftOrder(&e.DriverBase, payload, "", int32(et.AssetType_L1Erc20))
 }
 
 // 限价交易

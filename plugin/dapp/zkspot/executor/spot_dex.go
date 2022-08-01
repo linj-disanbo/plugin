@@ -225,7 +225,7 @@ func (a *zkSpotDex) execLocal(tx *types.Transaction, receiptData *types.ReceiptD
 }
 
 //NftOrder ...
-func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, entrustAddr string) (*types.Receipt, error) {
+func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, entrustAddr string, nftType int32) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	err := et.CheckNftOrder(cfg, payload)
 	if err != nil {
@@ -248,6 +248,9 @@ func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, en
 
 	// 下面流程是否要放到 spot1中
 	left, right := spot.NewZkAsset(payload.LeftAsset), spot.NewZkAsset(payload.RightAsset)
+	if nftType == int32(et.AssetType_EvmNft) {
+		left = spot.NewEvmNftAsset(payload.LeftAsset)
+	}
 	buy, sell := spot.BuySellAsset(payload.Op, left, right)
 	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, buy, sell)
 	if err != nil {
