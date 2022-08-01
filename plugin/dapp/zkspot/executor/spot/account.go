@@ -73,8 +73,13 @@ func (repos *accountRepos) LoadAccount(addr string, zkAccID uint64, asset *et.As
 // dexAccount 是一个对象代表一个人的所有资产 (L1 Asset or Asset in zkspot)
 // 统一成一个对象 多种账号
 // L1 资产是同账号管理的
+
+func isZkAsset(ty1 et.AssetType) bool {
+	return ty1 == et.AssetType_L1Erc20 || ty1 == et.AssetType_ZkNft
+}
+
 func sameAccountType(ty1, ty2 et.AssetType) bool {
-	return ty1 == et.AssetType_L1Erc20 && ty2 == et.AssetType_L1Erc20
+	return isZkAsset(ty1) && isZkAsset(ty2)
 }
 
 func (repos *accountRepos) LoadAccounts(addr string, zkAccID uint64, buy, sell *et.Asset) (*AssetAccounts, error) {
