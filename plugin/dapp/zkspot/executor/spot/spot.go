@@ -224,6 +224,7 @@ func (a *Spot) LoadTrader(fromaddr string, zkAccID uint64, buyAsset, sellAsset *
 		accFeeX: a.feeAccX,
 		accX:    accs,
 		AccID:   zkAccID,
+		from:    fromaddr,
 	}, nil
 }
 
@@ -281,7 +282,7 @@ func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustA
 
 func (a *Spot) CreateEvmxgoNftOrder(fromaddr string, trader *SpotTrader, payload *et.SpotNftOrder, entrustAddr string) (*et.SpotOrder, error) {
 	left, right := NewEvmNftAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
-	order := createNftOrder(payload, et.TyNftOrder2Action)
+	order := CreateNftOrder(payload, et.TyNftOrder2Action)
 	return a.CreateOrder(fromaddr, trader, order, left, right, entrustAddr)
 }
 
@@ -297,7 +298,7 @@ func (a *Spot) CreateEvmxgoNftTakerOrder(fromaddr string, acc *SpotTrader, paylo
 		return nil, et.ErrOrderID
 	}
 	left, right := NewEvmNftAsset(order2.GetNftOrder().LeftAsset), NewZkAsset(order2.GetNftOrder().RightAsset)
-	order1 := createNftTakerOrder(payload, et.TyNftTakerOrder2Action, spotOrder2)
+	order1 := CreateNftTakerOrder(payload, et.TyNftTakerOrder2Action, spotOrder2)
 	return a.CreateOrder(fromaddr, acc, order1, left, right, entrustAddr)
 }
 
@@ -313,7 +314,7 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 		return nil, et.ErrOrderID
 	}
 	left, right := NewZkAsset(order2.GetNftOrder().LeftAsset), NewZkAsset(order2.GetNftOrder().RightAsset)
-	order1 := createNftTakerOrder(payload, et.TyNftTakerOrderAction, spotOrder2)
+	order1 := CreateNftTakerOrder(payload, et.TyNftTakerOrderAction, spotOrder2)
 	return a.CreateOrder(fromaddr, acc, order1, left, right, entrustAddr)
 	/*
 		TODO fix
@@ -327,18 +328,16 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 
 func (a *Spot) CreateNftOrder(fromaddr string, trader *SpotTrader, payload *et.SpotNftOrder, entrustAddr string) (*et.SpotOrder, error) {
 	left, right := NewZkAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
-	order := createNftOrder(payload, et.TyNftOrderAction)
+	order := CreateNftOrder(payload, et.TyNftOrderAction)
 	return a.CreateOrder(fromaddr, trader, order, left, right, entrustAddr)
 }
 
-func (a *Spot) CreateLimitOrder(fromaddr string, acc *SpotTrader, payload *et.SpotLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
-	left, right := NewZkAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
-	or := createLimitOrder(payload)
-	return a.CreateOrder(fromaddr, acc, or, left, right, entrustAddr)
+func (a *Spot) CreateLimitOrder(acc *SpotTrader, order *et.SpotOrder, entrustAddr string, left, right *et.Asset) (*et.SpotOrder, error) {
+	return a.CreateOrder(acc.from, acc, order, left, right, entrustAddr)
 }
 
 func (a *Spot) CreateAssetLimitOrder(fromaddr string, acc *SpotTrader, payload *et.AssetLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
-	or := createAssetLimitOrder(payload)
+	or := CreateAssetLimitOrder(payload)
 	return a.CreateOrder(fromaddr, acc, or, payload.LeftAsset, payload.RightAsset, entrustAddr)
 }
 

@@ -22,7 +22,7 @@ func createOrder(or *et.SpotOrder, entrustAddr string, inits []orderInit) *et.Sp
 	return or
 }
 
-func createLimitOrder(payload *et.SpotLimitOrder) *et.SpotOrder {
+func CreateLimitOrder(payload *et.SpotLimitOrder) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:   &et.SpotOrder_LimitOrder{LimitOrder: payload},
 		Ty:      et.TyLimitOrderAction,
@@ -31,7 +31,7 @@ func createLimitOrder(payload *et.SpotLimitOrder) *et.SpotOrder {
 	return or
 }
 
-func createAssetLimitOrder(payload *et.AssetLimitOrder) *et.SpotOrder {
+func CreateAssetLimitOrder(payload *et.AssetLimitOrder) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:   &et.SpotOrder_AssetLimitOrder{AssetLimitOrder: payload},
 		Ty:      et.TyAssetLimitOrderAction,
@@ -40,7 +40,7 @@ func createAssetLimitOrder(payload *et.AssetLimitOrder) *et.SpotOrder {
 	return or
 }
 
-func createNftOrder(payload *et.SpotNftOrder, ty int32) *et.SpotOrder {
+func CreateNftOrder(payload *et.SpotNftOrder, ty int32) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:   &et.SpotOrder_NftOrder{NftOrder: payload},
 		Ty:      ty,
@@ -49,7 +49,7 @@ func createNftOrder(payload *et.SpotNftOrder, ty int32) *et.SpotOrder {
 	return or
 }
 
-func createNftTakerOrder(payload *et.SpotNftTakerOrder, ty int32, order2 *spotOrder) *et.SpotOrder {
+func CreateNftTakerOrder(payload *et.SpotNftTakerOrder, ty int32, order2 *spotOrder) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:   &et.SpotOrder_NftTakerOrder{NftTakerOrder: payload},
 		Ty:      ty,

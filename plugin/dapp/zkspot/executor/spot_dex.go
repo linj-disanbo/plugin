@@ -120,14 +120,16 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 	}
 
 	// 下面流程是否要放到 spot1中
+	order11 := spot.CreateLimitOrder(payload)
 	left, right := spot.NewZkAsset(payload.LeftAsset), spot.NewZkAsset(payload.RightAsset)
 	buy, sell := spot.BuySellAsset(payload.Op, left, right)
 	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, buy, sell)
 	if err != nil {
 		return nil, err
 	}
+	_ = order11
 
-	order, err := spot1.CreateLimitOrder(a.txinfo.From, taker, payload, entrustAddr)
+	order, err := spot1.CreateLimitOrder(taker, order11, entrustAddr, left, right)
 	if err != nil {
 		return nil, err
 	}

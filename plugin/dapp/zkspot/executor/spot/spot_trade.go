@@ -20,6 +20,7 @@ type SpotTrader struct {
 	accFeeX AssetAccount
 
 	AccID uint64
+	from  string
 	accX  *AssetAccounts
 
 	order   *spotOrder

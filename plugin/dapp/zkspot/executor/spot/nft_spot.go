@@ -168,7 +168,7 @@ func (a *NftSpot) CreateNftOrder(fromaddr string, payload *et.SpotNftOrder, entr
 	}
 	_ = fees
 
-	order := createNftOrder(payload, et.TyNftOrder2Action) // TODO, entrustAddr, 		[]orderInit{a.initOrder(), fees.initOrder()})
+	order := CreateNftOrder(payload, et.TyNftOrder2Action) // TODO, entrustAddr, 		[]orderInit{a.initOrder(), fees.initOrder()})
 
 	order2 := newSpotOrder(order, a.orderdb)
 
