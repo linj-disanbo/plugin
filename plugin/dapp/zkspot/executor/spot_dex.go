@@ -99,6 +99,9 @@ func (a *zkSpotDex) getFeeAcc() (*spot.SpotFee, error) {
 
 //LimitOrder ...
 func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder, entrustAddr string) (*types.Receipt, error) {
+	order := spot.CreateLimitOrder(payload)
+	left, right := spot.NewZkAsset(payload.LeftAsset), spot.NewZkAsset(payload.RightAsset)
+
 	cfg := a.api.GetConfig()
 	err := et.CheckLimitOrder(cfg, payload)
 	if err != nil {
@@ -120,16 +123,58 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 	}
 
 	// 下面流程是否要放到 spot1中
-	order11 := spot.CreateLimitOrder(payload)
-	left, right := spot.NewZkAsset(payload.LeftAsset), spot.NewZkAsset(payload.RightAsset)
 	buy, sell := spot.BuySellAsset(payload.Op, left, right)
 	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, buy, sell)
 	if err != nil {
 		return nil, err
 	}
-	_ = order11
 
-	order, err := spot1.CreateLimitOrder(taker, order11, entrustAddr, left, right)
+	order, err = spot1.CreateLimitOrder(taker, order, entrustAddr, left, right)
+	if err != nil {
+		return nil, err
+	}
+	_ = order // set to order trader
+
+	receipt1, err := spot1.MatchAssetLimitOrder(taker)
+	if err != nil {
+		return nil, err
+	}
+	return receipt1, nil
+}
+
+//AssetLimitOrder ...
+// TODO create new account for L1
+func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimitOrder, entrustAddr string) (*types.Receipt, error) {
+	cfg := a.api.GetConfig()
+	err := et.CheckAssetLimitOrder(cfg, payload)
+	if err != nil {
+		return nil, err
+	}
+
+	if isSellZkAsset(payload.Op, payload.LeftAsset, payload.RightAsset) {
+		err = checkL2Auth(a.statedb, payload.Order.AccountID, payload.Order.Signature.PubKey)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
+	if err != nil {
+		return nil, err
+	}
+	err = spot1.SetFeeAcc(a.getFeeAcc)
+	if err != nil {
+		return nil, err
+	}
+
+	// 下面流程是否要放到 spot1中
+	buy, sell := spot.BuySellAsset(payload.Op, payload.LeftAsset, payload.RightAsset)
+	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, buy, sell)
+	if err != nil {
+		return nil, err
+	}
+
+	order, err := spot1.CreateAssetLimitOrder(a.txinfo.From, taker, payload, entrustAddr)
 	if err != nil {
 		return nil, err
 	}
@@ -294,48 +339,4 @@ func isSellZkAsset(op int32, left, right *et.Asset) bool {
 		asset = right
 	}
 	return asset.Ty == et.AssetType_L1Erc20 || asset.Ty == et.AssetType_ZkNft
-}
-
-//AssetLimitOrder ...
-// TODO create new account for L1
-func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimitOrder, entrustAddr string) (*types.Receipt, error) {
-	cfg := a.api.GetConfig()
-	err := et.CheckAssetLimitOrder(cfg, payload)
-	if err != nil {
-		return nil, err
-	}
-
-	if isSellZkAsset(payload.Op, payload.LeftAsset, payload.RightAsset) {
-		err = checkL2Auth(a.statedb, payload.Order.AccountID, payload.Order.Signature.PubKey)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
-	if err != nil {
-		return nil, err
-	}
-	err = spot1.SetFeeAcc(a.getFeeAcc)
-	if err != nil {
-		return nil, err
-	}
-
-	// 下面流程是否要放到 spot1中
-	taker, err := spot1.LoadNewUser(a.txinfo.From, payload.Order.AccountID, payload)
-	if err != nil {
-		return nil, err
-	}
-
-	order, err := spot1.CreateAssetLimitOrder(a.txinfo.From, taker, payload, entrustAddr)
-	if err != nil {
-		return nil, err
-	}
-	_ = order // set to order trader
-
-	receipt1, err := spot1.MatchAssetLimitOrder(taker)
-	if err != nil {
-		return nil, err
-	}
-	return receipt1, nil
 }
