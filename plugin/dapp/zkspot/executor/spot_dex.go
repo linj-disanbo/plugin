@@ -132,6 +132,7 @@ func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimi
 	order := spot.PreCreateAssetLimitOrder(payload)
 	return a.limitOrder(base, order, entrustAddr, payload.Order.AccountID)
 }
+
 func (a *zkSpotDex) limitOrder(base *dapp.DriverBase, order *spot.Order, entrustAddr string, accountID uint64) (*types.Receipt, error) {
 	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
 	if err != nil {
@@ -259,6 +260,7 @@ func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, en
 	if err != nil {
 		return nil, err
 	}
+	order := spot.PreCreateNftOrder(payload, nftType)
 
 	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
 	if err != nil {
@@ -270,17 +272,14 @@ func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, en
 	}
 
 	// 下面流程是否要放到 spot1中
-	left, right := spot.NewZkAsset(payload.LeftAsset), spot.NewZkAsset(payload.RightAsset)
-	if nftType == int32(et.AssetType_EvmNft) {
-		left = spot.NewEvmNftAsset(payload.LeftAsset)
-	}
+	left, right := order.GetAsset()
 	buy, sell := spot.BuySellAsset(payload.Op, left, right)
 	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, buy, sell)
 	if err != nil {
 		return nil, err
 	}
 
-	_, err = spot1.CreateNftOrder(a.txinfo.From, taker, payload, entrustAddr)
+	_, err = spot1.CreateOrder2(taker, order, entrustAddr)
 	if err != nil {
 		return nil, err
 	}
