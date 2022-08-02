@@ -38,6 +38,31 @@ func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.SpotLimitOrder, tx *type
 	return mergeReceipt(r, r2), nil
 }
 
+// 限价交易
+func (e *zkspot) Exec_AssetLimitOrder(payload *exchangetypes.AssetLimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	// checkTx will check payload and zk Signature
+	start := time.Now()
+	action := NewZkSpotDex(e, tx, index)
+	r, err := action.AssetLimitOrder(&e.DriverBase, payload, "")
+	if err != nil {
+		return r, err
+	}
+	// 构造 LimitOrder 的结算清单
+	list := GetSpotMatch(r)
+	end := time.Now()
+	elog.Error("zkspot Exec_AssetLimitOrder.LimitOrder", "cost", end.Sub(start))
+
+	action2 := NewAction(e, tx, index)
+	r2, err := action2.AssetMatch(payload, list)
+	if err != nil {
+		return r, err
+	}
+	end2 := time.Now()
+	elog.Error("zkspot Exec_AssetLimitOrder.SpotMatch", "cost", end2.Sub(start))
+
+	return mergeReceipt(r, r2), nil
+}
+
 //市价交易
 func (e *zkspot) Exec_MarketOrder(payload *exchangetypes.SpotMarketOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	//TODO marketOrder
@@ -60,6 +85,9 @@ func (e *zkspot) Exec_ExchangeBind(payload *exchangetypes.SpotExchangeBind, tx *
 func (e *zkspot) Exec_EntrustOrder(payload *exchangetypes.SpotEntrustOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewZkSpotDex(e, tx, index)
 	r, err := action.EntrustOrder(&e.DriverBase, payload)
+	if err != nil {
+		return r, err
+	}
 	// 构造 LimitOrder 的结算清单
 	list := GetSpotMatch(r)
 
@@ -103,7 +131,7 @@ func (e *zkspot) Exec_NftOrder(payload *exchangetypes.SpotNftOrder, tx *types.Tr
 		}
 	}()
 	action := NewZkSpotDex(e, tx, index)
-	return action.NftOrder(&e.DriverBase, payload, "", int32(et.AssetType_L1Erc20))
+	return action.NftOrder(&e.DriverBase, payload, "", int32(et.AssetType_ZkNft))
 }
 
 // 限价交易
@@ -143,8 +171,8 @@ func (e *zkspot) Exec_NftOrder2(payload *exchangetypes.SpotNftOrder, tx *types.T
 			elog.Error("Exec_NftOrder2", "err", err, "stack", exchangetypes.GetStack())
 		}
 	}()
-	action := NewZkNftDex(e, tx, index)
-	return action.NftOrder(&e.DriverBase, payload, "")
+	action := NewZkSpotDex(e, tx, index)
+	return action.NftOrder(&e.DriverBase, payload, "", int32(et.AssetType_EvmNft))
 }
 
 // 限价交易
@@ -174,31 +202,6 @@ func (e *zkspot) Exec_NftTakerOrder2(payload *exchangetypes.SpotNftTakerOrder, t
 	}
 	end2 := time.Now()
 	elog.Error("zkspot Exec_LimitOrder.SpotMatch", "cost", end2.Sub(start))
-
-	return mergeReceipt(r, r2), nil
-}
-
-// 限价交易
-func (e *zkspot) Exec_AssetLimitOrder(payload *exchangetypes.AssetLimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	// checkTx will check payload and zk Signature
-	start := time.Now()
-	action := NewZkSpotDex(e, tx, index)
-	r, err := action.AssetLimitOrder(&e.DriverBase, payload, "")
-	if err != nil {
-		return r, err
-	}
-	// 构造 LimitOrder 的结算清单
-	list := GetSpotMatch(r)
-	end := time.Now()
-	elog.Error("zkspot Exec_AssetLimitOrder.LimitOrder", "cost", end.Sub(start))
-
-	action2 := NewAction(e, tx, index)
-	r2, err := action2.AssetMatch(payload, list)
-	if err != nil {
-		return r, err
-	}
-	end2 := time.Now()
-	elog.Error("zkspot Exec_AssetLimitOrder.SpotMatch", "cost", end2.Sub(start))
 
 	return mergeReceipt(r, r2), nil
 }
