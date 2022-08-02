@@ -112,38 +112,10 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 		return nil, err
 	}
 
-	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
-	if err != nil {
-		return nil, err
-	}
-	err = spot1.SetFeeAcc(a.getFeeAcc)
-	if err != nil {
-		return nil, err
-	}
-
-	// 下面流程是否要放到 spot1中
-	left, right := order.GetAsset()
-	buy, sell := spot.BuySellAsset(order.GetOp(), left, right)
-	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, buy, sell)
-	if err != nil {
-		return nil, err
-	}
-
-	order1, err := spot1.CreateOrder2(taker, order, entrustAddr)
-	if err != nil {
-		return nil, err
-	}
-	_ = order1 // set to order trader
-
-	receipt1, err := spot1.MatchAssetLimitOrder(taker)
-	if err != nil {
-		return nil, err
-	}
-	return receipt1, nil
+	return a.limitOrder(base, order, entrustAddr, payload.Order.AccountID)
 }
 
 //AssetLimitOrder ...
-// TODO create new account for L1
 func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimitOrder, entrustAddr string) (*types.Receipt, error) {
 	cfg := a.api.GetConfig()
 	err := et.CheckAssetLimitOrder(cfg, payload)
@@ -158,7 +130,9 @@ func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimi
 		}
 	}
 	order := spot.PreCreateAssetLimitOrder(payload)
-
+	return a.limitOrder(base, order, entrustAddr, payload.Order.AccountID)
+}
+func (a *zkSpotDex) limitOrder(base *dapp.DriverBase, order *spot.Order, entrustAddr string, accountID uint64) (*types.Receipt, error) {
 	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
 	if err != nil {
 		return nil, err
@@ -169,8 +143,9 @@ func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimi
 	}
 
 	// 下面流程是否要放到 spot1中
-	buy, sell := spot.BuySellAsset(payload.Op, payload.LeftAsset, payload.RightAsset)
-	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, buy, sell)
+	left, right := order.GetAsset()
+	buy, sell := spot.BuySellAsset(order.GetOp(), left, right)
+	taker, err := spot1.LoadTrader(a.txinfo.From, 1, buy, sell)
 	if err != nil {
 		return nil, err
 	}
