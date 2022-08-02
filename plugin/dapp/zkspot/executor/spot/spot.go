@@ -17,15 +17,14 @@ type Spot struct {
 	env      *drivers.DriverBase
 	tx       *et.TxInfo
 	dbprefix et.DBprefix
-	feeInfo  *SpotFee
-	feeAccX  AssetAccount
+
+	feeInfo *SpotFee
+	feeAccX AssetAccount
 
 	accountdb *accountRepos
 	orderdb   *orderSRepo
 	matcher1  *matcher
 }
-
-type GetFeeAccount func() (*SpotFee, error)
 
 func NewSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Spot, error) {
 	accRepos, err := newAccountRepo11(spotDexName, e.GetStateDB(), dbprefix, e.GetAPI().GetConfig(), "TODO")
@@ -41,20 +40,6 @@ func NewSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Spot,
 		matcher1:  newMatcher(e.GetStateDB(), e.GetLocalDB(), e.GetAPI(), dbprefix),
 	}
 	return spot, nil
-}
-
-func (a *Spot) SetFeeAcc(funcGetFeeAccount GetFeeAccount) error {
-	fee, err := funcGetFeeAccount()
-	if err != nil {
-		return err
-	}
-	acc, err := LoadSpotAccount(fee.Address, fee.AccID, a.env.GetStateDB(), a.dbprefix)
-	if err != nil {
-		elog.Error("LoadSpotAccount load taker account", "err", err)
-		return err
-	}
-	a.feeAccX = &ZkAccount{acc: acc, asset: nil}
-	return nil
 }
 
 func (a *Spot) loadOrder(id int64) (*spotOrder, error) {
@@ -366,6 +351,23 @@ func (a *Spot) CreateOrder(fromaddr string, acc *SpotTrader,
 	}
 
 	return order, nil
+}
+
+type GetFeeAccount func() (*SpotFee, error)
+
+func (a *Spot) SetFeeAcc(funcGetFeeAccount GetFeeAccount) error {
+	fee, err := funcGetFeeAccount()
+	if err != nil {
+		return err
+	}
+	acc, err := LoadSpotAccount(fee.Address, fee.AccID, a.env.GetStateDB(), a.dbprefix)
+	if err != nil {
+		elog.Error("LoadSpotAccount load taker account", "err", err)
+		return err
+	}
+	a.feeInfo = fee
+	a.feeAccX = &ZkAccount{acc: acc, asset: nil}
+	return nil
 }
 
 func (a *Spot) getFeeRateFromCfg(fromaddr string, left, right string) (int32, int32, error) {
