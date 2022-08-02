@@ -157,6 +157,7 @@ func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimi
 			return nil, err
 		}
 	}
+	order := spot.PreCreateAssetLimitOrder(payload)
 
 	spot1, err := spot.NewSpot(base, a.txinfo, &dbprefix{})
 	if err != nil {
@@ -174,11 +175,11 @@ func (a *zkSpotDex) AssetLimitOrder(base *dapp.DriverBase, payload *et.AssetLimi
 		return nil, err
 	}
 
-	order, err := spot1.CreateAssetLimitOrder(a.txinfo.From, taker, payload, entrustAddr)
+	order1, err := spot1.CreateOrder2(taker, order, entrustAddr)
 	if err != nil {
 		return nil, err
 	}
-	_ = order // set to order trader
+	_ = order1 // set to order trader
 
 	receipt1, err := spot1.MatchAssetLimitOrder(taker)
 	if err != nil {
