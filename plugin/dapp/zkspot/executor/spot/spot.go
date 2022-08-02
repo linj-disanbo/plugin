@@ -268,7 +268,7 @@ func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustA
 func (a *Spot) CreateEvmxgoNftOrder(fromaddr string, trader *SpotTrader, payload *et.SpotNftOrder, entrustAddr string) (*et.SpotOrder, error) {
 	left, right := NewEvmNftAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
 	order := CreateNftOrder(payload, et.TyNftOrder2Action)
-	return a.CreateOrder(fromaddr, trader, order, left, right, entrustAddr)
+	return a.CreateOrder(trader, order, left, right, entrustAddr)
 }
 
 func (a *Spot) CreateEvmxgoNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et.SpotNftTakerOrder, entrustAddr string) (*et.SpotOrder, error) {
@@ -284,7 +284,7 @@ func (a *Spot) CreateEvmxgoNftTakerOrder(fromaddr string, acc *SpotTrader, paylo
 	}
 	left, right := NewEvmNftAsset(order2.GetNftOrder().LeftAsset), NewZkAsset(order2.GetNftOrder().RightAsset)
 	order1 := CreateNftTakerOrder(payload, et.TyNftTakerOrder2Action, spotOrder2)
-	return a.CreateOrder(fromaddr, acc, order1, left, right, entrustAddr)
+	return a.CreateOrder(acc, order1, left, right, entrustAddr)
 }
 
 func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et.SpotNftTakerOrder, entrustAddr string) (*et.SpotOrder, error) {
@@ -300,7 +300,7 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 	}
 	left, right := NewZkAsset(order2.GetNftOrder().LeftAsset), NewZkAsset(order2.GetNftOrder().RightAsset)
 	order1 := CreateNftTakerOrder(payload, et.TyNftTakerOrderAction, spotOrder2)
-	return a.CreateOrder(fromaddr, acc, order1, left, right, entrustAddr)
+	return a.CreateOrder(acc, order1, left, right, entrustAddr)
 	/*
 		TODO fix
 		tid, amount := acc.order.nftTakerOrderNeedToken(spotOrder2, a.env.GetAPI().GetConfig().GetCoinPrecision())
@@ -314,22 +314,22 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 func (a *Spot) CreateNftOrder(fromaddr string, trader *SpotTrader, payload *et.SpotNftOrder, entrustAddr string) (*et.SpotOrder, error) {
 	left, right := NewZkAsset(payload.LeftAsset), NewZkAsset(payload.RightAsset)
 	order := CreateNftOrder(payload, et.TyNftOrderAction)
-	return a.CreateOrder(fromaddr, trader, order, left, right, entrustAddr)
+	return a.CreateOrder(trader, order, left, right, entrustAddr)
 }
 
 func (a *Spot) CreateLimitOrder(acc *SpotTrader, order *et.SpotOrder, entrustAddr string, left, right *et.Asset) (*et.SpotOrder, error) {
-	return a.CreateOrder(acc.from, acc, order, left, right, entrustAddr)
+	return a.CreateOrder(acc, order, left, right, entrustAddr)
 }
 
 func (a *Spot) CreateAssetLimitOrder(fromaddr string, acc *SpotTrader, payload *et.AssetLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
 	or := CreateAssetLimitOrder(payload)
-	return a.CreateOrder(fromaddr, acc, or, payload.LeftAsset, payload.RightAsset, entrustAddr)
+	return a.CreateOrder(acc, or, payload.LeftAsset, payload.RightAsset, entrustAddr)
 }
 
-func (a *Spot) CreateOrder(fromaddr string, acc *SpotTrader,
+func (a *Spot) CreateOrder(acc *SpotTrader,
 	or *et.SpotOrder, left, right *et.Asset, entrustAddr string) (*et.SpotOrder, error) {
 
-	fees, err := a.GetSpotFee(fromaddr, left, right)
+	fees, err := a.GetSpotFee(acc.from, left, right)
 	if err != nil {
 		elog.Error("executor/exchangedb getFees", "err", err)
 		return nil, err
