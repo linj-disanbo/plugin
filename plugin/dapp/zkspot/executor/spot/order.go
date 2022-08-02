@@ -40,6 +40,15 @@ func PreCreateAssetLimitOrder(payload *et.AssetLimitOrder) *Order {
 	return NewOrder(or, nil)
 }
 
+func PreCreateNftOrder(payload *et.SpotNftOrder, ty int32) *Order {
+	or := &et.SpotOrder{
+		Value:   &et.SpotOrder_NftOrder{NftOrder: payload},
+		Ty:      ty,
+		Balance: payload.GetAmount(),
+	}
+	return NewOrder(or, nil)
+}
+
 func CreateNftOrder(payload *et.SpotNftOrder, ty int32) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:   &et.SpotOrder_NftOrder{NftOrder: payload},
@@ -197,7 +206,9 @@ func (o *Order) GetAsset() (*et.Asset, *et.Asset) {
 	case et.TyAssetLimitOrderAction:
 		return o.order.GetAssetLimitOrder().LeftAsset, o.order.GetAssetLimitOrder().RightAsset
 	case et.TyNftOrderAction:
-		return NewEvmNftAsset(o.order.GetNftOrder().LeftAsset), NewEvmNftAsset(o.order.GetNftOrder().RightAsset)
+		return NewZkNftAsset(o.order.GetNftOrder().LeftAsset), NewZkAsset(o.order.GetNftOrder().RightAsset)
+	case et.TyNftOrder2Action:
+		return NewEvmNftAsset(o.order.GetNftOrder().LeftAsset), NewZkAsset(o.order.GetNftOrder().RightAsset)
 	}
 	panic("Not support GetAsset")
 }

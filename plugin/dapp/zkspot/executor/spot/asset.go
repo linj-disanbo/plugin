@@ -16,6 +16,13 @@ func NewZkAsset(left uint64) *et.Asset {
 	}
 }
 
+func NewZkNftAsset(left uint64) *et.Asset {
+	return &et.Asset{
+		Ty:    et.AssetType_ZkNft,
+		Value: &et.Asset_ZkAssetid{ZkAssetid: left},
+	}
+}
+
 func NewEvmNftAsset(left uint64) *et.Asset {
 	return &et.Asset{
 		Ty:    et.AssetType_EvmNft,
