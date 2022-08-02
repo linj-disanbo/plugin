@@ -32,7 +32,7 @@ message TokenAsset {
 message Asset {
   AssetType ty = 1;
   oneof value {
-    // L1Erc20
+    // L1Erc20, zkNft
     uint64 zkAssetid = 2;
     // Token
     TokenAsset tokenAsset = 3;

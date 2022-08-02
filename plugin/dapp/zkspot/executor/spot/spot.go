@@ -317,10 +317,6 @@ func (a *Spot) CreateNftOrder(fromaddr string, trader *SpotTrader, payload *et.S
 	return a.CreateOrder(trader, order, left, right, entrustAddr)
 }
 
-func (a *Spot) CreateLimitOrder(acc *SpotTrader, order *et.SpotOrder, entrustAddr string, left, right *et.Asset) (*et.SpotOrder, error) {
-	return a.CreateOrder(acc, order, left, right, entrustAddr)
-}
-
 func (a *Spot) CreateOrder(acc *SpotTrader,
 	or *et.SpotOrder, left, right *et.Asset, entrustAddr string) (*et.SpotOrder, error) {
 
