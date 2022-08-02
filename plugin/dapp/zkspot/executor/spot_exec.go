@@ -5,7 +5,6 @@ import (
 
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
-	exchangetypes "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 /*
@@ -14,7 +13,7 @@ import (
  */
 
 // 限价交易
-func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.SpotLimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_LimitOrder(payload *et.SpotLimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	// checkTx will check payload and zk Signature
 	start := time.Now()
 	action := NewZkSpotDex(e, tx, index)
@@ -39,7 +38,7 @@ func (e *zkspot) Exec_LimitOrder(payload *exchangetypes.SpotLimitOrder, tx *type
 }
 
 // 限价交易
-func (e *zkspot) Exec_AssetLimitOrder(payload *exchangetypes.AssetLimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_AssetLimitOrder(payload *et.AssetLimitOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	// checkTx will check payload and zk Signature
 	start := time.Now()
 	action := NewZkSpotDex(e, tx, index)
@@ -64,25 +63,25 @@ func (e *zkspot) Exec_AssetLimitOrder(payload *exchangetypes.AssetLimitOrder, tx
 }
 
 //市价交易
-func (e *zkspot) Exec_MarketOrder(payload *exchangetypes.SpotMarketOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_MarketOrder(payload *et.SpotMarketOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	//TODO marketOrder
 	return nil, types.ErrActionNotSupport
 }
 
 // 撤单
-func (e *zkspot) Exec_RevokeOrder(payload *exchangetypes.SpotRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_RevokeOrder(payload *et.SpotRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewZkSpotDex(e, tx, index)
 	return action.RevokeOrder(payload, "")
 }
 
 // 绑定委托交易地址
-func (e *zkspot) Exec_ExchangeBind(payload *exchangetypes.SpotExchangeBind, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_ExchangeBind(payload *et.SpotExchangeBind, tx *types.Transaction, index int) (*types.Receipt, error) {
 	actiondb := NewZkSpotDex(e, tx, index)
 	return actiondb.ExchangeBind(payload)
 }
 
 // 委托交易
-func (e *zkspot) Exec_EntrustOrder(payload *exchangetypes.SpotEntrustOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_EntrustOrder(payload *et.SpotEntrustOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	action := NewZkSpotDex(e, tx, index)
 	r, err := action.EntrustOrder(&e.DriverBase, payload)
 	if err != nil {
@@ -109,7 +108,7 @@ func (e *zkspot) Exec_EntrustOrder(payload *exchangetypes.SpotEntrustOrder, tx *
 }
 
 // 委托撤单
-func (e *zkspot) Exec_EntrustRevokeOrder(payload *exchangetypes.SpotEntrustRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_EntrustRevokeOrder(payload *et.SpotEntrustRevokeOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	a := NewZkSpotDex(e, tx, index)
 	ee := a.newEntrust()
 	err := ee.CheckBind(payload.Addr)
@@ -124,10 +123,10 @@ func (e *zkspot) Exec_EntrustRevokeOrder(payload *exchangetypes.SpotEntrustRevok
 }
 
 // 限价交易
-func (e *zkspot) Exec_NftOrder(payload *exchangetypes.SpotNftOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_NftOrder(payload *et.SpotNftOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	defer func() {
 		if err := recover(); err != nil {
-			elog.Error("Exec_NftOrder", "err", err, "stack", exchangetypes.GetStack())
+			elog.Error("Exec_NftOrder", "err", err, "stack", et.GetStack())
 		}
 	}()
 	action := NewZkSpotDex(e, tx, index)
@@ -135,10 +134,10 @@ func (e *zkspot) Exec_NftOrder(payload *exchangetypes.SpotNftOrder, tx *types.Tr
 }
 
 // 限价交易
-func (e *zkspot) Exec_NftOrder2(payload *exchangetypes.SpotNftOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_NftOrder2(payload *et.SpotNftOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	defer func() {
 		if err := recover(); err != nil {
-			elog.Error("Exec_NftOrder2", "err", err, "stack", exchangetypes.GetStack())
+			elog.Error("Exec_NftOrder2", "err", err, "stack", et.GetStack())
 		}
 	}()
 	action := NewZkSpotDex(e, tx, index)
@@ -146,19 +145,19 @@ func (e *zkspot) Exec_NftOrder2(payload *exchangetypes.SpotNftOrder, tx *types.T
 }
 
 // 限价交易
-func (e *zkspot) Exec_NftTakerOrder(payload *exchangetypes.SpotNftTakerOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_NftTakerOrder(payload *et.SpotNftTakerOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	return e.nftTakerOrder(payload, tx, index, et.TyNftOrderAction)
 }
 
 // 限价交易
-func (e *zkspot) Exec_NftTakerOrder2(payload *exchangetypes.SpotNftTakerOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+func (e *zkspot) Exec_NftTakerOrder2(payload *et.SpotNftTakerOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	return e.nftTakerOrder(payload, tx, index, et.TyNftTakerOrder2Action)
 }
 
-func (e *zkspot) nftTakerOrder(payload *exchangetypes.SpotNftTakerOrder, tx *types.Transaction, index int, nftType int) (*types.Receipt, error) {
+func (e *zkspot) nftTakerOrder(payload *et.SpotNftTakerOrder, tx *types.Transaction, index int, nftType int) (*types.Receipt, error) {
 	defer func() {
 		if err := recover(); err != nil {
-			elog.Error("Exec_NftTakerOrder", "err", err, "stack", exchangetypes.GetStack())
+			elog.Error("Exec_NftTakerOrder", "err", err, "stack", et.GetStack())
 		}
 	}()
 	// checkTx will check payload and zk Signature
