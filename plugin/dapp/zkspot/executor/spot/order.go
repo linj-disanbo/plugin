@@ -40,15 +40,6 @@ func PreCreateAssetLimitOrder(payload *et.AssetLimitOrder) *Order {
 	return NewOrder(or, nil)
 }
 
-func CreateAssetLimitOrder(payload *et.AssetLimitOrder) *et.SpotOrder {
-	or := &et.SpotOrder{
-		Value:   &et.SpotOrder_AssetLimitOrder{AssetLimitOrder: payload},
-		Ty:      et.TyAssetLimitOrderAction,
-		Balance: payload.GetAmount(),
-	}
-	return or
-}
-
 func CreateNftOrder(payload *et.SpotNftOrder, ty int32) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:   &et.SpotOrder_NftOrder{NftOrder: payload},

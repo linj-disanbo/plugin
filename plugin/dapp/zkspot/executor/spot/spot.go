@@ -321,11 +321,6 @@ func (a *Spot) CreateLimitOrder(acc *SpotTrader, order *et.SpotOrder, entrustAdd
 	return a.CreateOrder(acc, order, left, right, entrustAddr)
 }
 
-func (a *Spot) CreateAssetLimitOrder(fromaddr string, acc *SpotTrader, payload *et.AssetLimitOrder, entrustAddr string) (*et.SpotOrder, error) {
-	or := CreateAssetLimitOrder(payload)
-	return a.CreateOrder(acc, or, payload.LeftAsset, payload.RightAsset, entrustAddr)
-}
-
 func (a *Spot) CreateOrder(acc *SpotTrader,
 	or *et.SpotOrder, left, right *et.Asset, entrustAddr string) (*et.SpotOrder, error) {
 
