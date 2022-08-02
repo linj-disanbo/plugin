@@ -286,7 +286,7 @@ func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, en
 	return spot1.NftOrderMarked(taker)
 }
 
-//NftOrder ...
+//NftTakerOrder ...
 func (a *zkSpotDex) NftTakerOrder(base *dapp.DriverBase, payload *et.SpotNftTakerOrder, entrustAddr string) (*types.Receipt, error) {
 	//cfg := a.api.GetConfig()
 	err := checkL2Auth(a.statedb, payload.Order.AccountID, payload.Order.Signature.PubKey)
@@ -302,8 +302,6 @@ func (a *zkSpotDex) NftTakerOrder(base *dapp.DriverBase, payload *et.SpotNftTake
 	if err != nil {
 		return nil, err
 	}
-
-	// 下面流程是否要放到 spot1中
 
 	return spot1.TradeNft(a.txinfo.From, payload, entrustAddr)
 }
