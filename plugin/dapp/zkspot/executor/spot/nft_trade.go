@@ -10,7 +10,7 @@ import (
 type NftTrader struct {
 	cfg   *types.Chain33Config
 	acc   *DexAccount
-	order *spotOrder
+	order *Order
 	fee   *SpotFee
 	//takerFee int32
 	//makerFee int32
@@ -20,7 +20,7 @@ type NftTrader struct {
 	accFee  *DexAccount
 }
 
-func (s *NftTrader) GetOrder() *spotOrder {
+func (s *NftTrader) GetOrder() *Order {
 	return s.order
 }
 

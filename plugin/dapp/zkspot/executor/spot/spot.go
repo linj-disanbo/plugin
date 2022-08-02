@@ -42,13 +42,13 @@ func NewSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Spot,
 	return spot, nil
 }
 
-func (a *Spot) loadOrder(id int64) (*spotOrder, error) {
+func (a *Spot) loadOrder(id int64) (*Order, error) {
 	order, err := a.orderdb.findOrderBy(id)
 	if err != nil {
 		return nil, err
 	}
 
-	orderx := newSpotOrder(order, a.orderdb)
+	orderx := NewOrder(order, a.orderdb)
 	return orderx, nil
 }
 
@@ -88,7 +88,7 @@ func (a *Spot) NftOrderMarked(taker *SpotTrader) (*types.Receipt, error) {
 	return receipt1, nil
 }
 
-func (a *Spot) NftOrderReceipt(order *spotOrder, matches *et.ReceiptSpotMatch) (*types.Receipt, error) {
+func (a *Spot) NftOrderReceipt(order *Order, matches *et.ReceiptSpotMatch) (*types.Receipt, error) {
 	kvs := order.repo.GetOrderKvSet(order.order)
 	receiptlog := &types.ReceiptLog{Ty: et.TyNftOrderLog, Log: types.Encode(matches)}
 	receipts := &types.Receipt{Ty: types.ExecOk, KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}
@@ -238,7 +238,7 @@ func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustA
 		return nil, err
 	}
 
-	spotOrder2 := newSpotOrder(order2, a.orderdb)
+	spotOrder2 := NewOrder(order2, a.orderdb)
 	if spotOrder2.isActiveOrder() {
 		return nil, et.ErrOrderID
 	}
@@ -278,7 +278,7 @@ func (a *Spot) CreateEvmxgoNftTakerOrder(fromaddr string, acc *SpotTrader, paylo
 		return nil, err
 	}
 
-	spotOrder2 := newSpotOrder(order2, a.orderdb)
+	spotOrder2 := NewOrder(order2, a.orderdb)
 	if spotOrder2.isActiveOrder() {
 		return nil, et.ErrOrderID
 	}
@@ -294,7 +294,7 @@ func (a *Spot) CreateNftTakerOrder(fromaddr string, acc *SpotTrader, payload *et
 		return nil, err
 	}
 
-	spotOrder2 := newSpotOrder(order2, a.orderdb)
+	spotOrder2 := NewOrder(order2, a.orderdb)
 	if spotOrder2.isActiveOrder() {
 		return nil, et.ErrOrderID
 	}
@@ -338,7 +338,7 @@ func (a *Spot) CreateOrder(fromaddr string, acc *SpotTrader,
 
 	order := createOrder(or, entrustAddr,
 		[]orderInit{a.initOrder(), fees.initOrder()})
-	acc.order = newSpotOrder(order, a.orderdb)
+	acc.order = NewOrder(order, a.orderdb)
 
 	_, amount := acc.order.NeedToken(acc.accX.sellAcc.GetCoinPrecision())
 	err = acc.accX.sellAcc.CheckBalance(amount)

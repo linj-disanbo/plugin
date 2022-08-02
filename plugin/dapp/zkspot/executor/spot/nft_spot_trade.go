@@ -9,7 +9,7 @@ import (
 type NftSpotTraderHelper struct {
 	cfg   *types.Chain33Config
 	acc   *DexAccount
-	order *spotOrder
+	order *Order
 	fee   *SpotFee
 
 	matches  *et.ReceiptSpotMatch
@@ -17,7 +17,7 @@ type NftSpotTraderHelper struct {
 	execAddr string
 }
 
-func (s *NftSpotTraderHelper) Trade(spot *NftSpot, makerOrder *spotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (s *NftSpotTraderHelper) Trade(spot *NftSpot, makerOrder *Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	balance := s.calcTradeBalance(makerOrder.order)
 	matchDetail := s.calcTradeInfo(makerOrder, balance)
 
@@ -68,7 +68,7 @@ func (s *NftSpotTraderHelper) calcTradeBalance(order *et.SpotOrder) int64 {
 	return order.GetBalance()
 }
 
-func (s *NftSpotTraderHelper) calcTradeInfo(makerOrder *spotOrder, balance int64) *et.MatchInfo {
+func (s *NftSpotTraderHelper) calcTradeInfo(makerOrder *Order, balance int64) *et.MatchInfo {
 	price := makerOrder.order.GetNftOrder().Price
 	var info et.MatchInfo
 	info.Matched = balance
@@ -84,7 +84,7 @@ func (s *NftSpotTraderHelper) calcTradeInfo(makerOrder *spotOrder, balance int64
 // LeftToken: seller -> buyer
 // RightToken: buyer -> seller
 // RightToken: buyer, seller -> fee-bank
-func (s *NftSpotTraderHelper) settlement(takerNft, makerNft *NftAccount, makerAcc *DexAccount, tradeBalance *et.MatchInfo, makerOrder *spotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (s *NftSpotTraderHelper) settlement(takerNft, makerNft *NftAccount, makerAcc *DexAccount, tradeBalance *et.MatchInfo, makerOrder *Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	// not support taker/maker the same user
 	if s.acc.acc.Id == makerNft.accid {
 		return nil, nil, types.ErrNotSupport

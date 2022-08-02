@@ -132,7 +132,7 @@ func (m *matcher) isEndOrderList(price int64) bool {
 	return price == m.lastOrderPrice && m.endOrderList
 }
 
-func (matcher1 *matcher) MatchOrder(order *spotOrder, taker *SpotTrader, orderdb *orderSRepo, s *Spot) (*types.Receipt, error) {
+func (matcher1 *matcher) MatchOrder(order *Order, taker *SpotTrader, orderdb *orderSRepo, s *Spot) (*types.Receipt, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 

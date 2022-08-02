@@ -49,7 +49,7 @@ func CreateNftOrder(payload *et.SpotNftOrder, ty int32) *et.SpotOrder {
 	return or
 }
 
-func CreateNftTakerOrder(payload *et.SpotNftTakerOrder, ty int32, order2 *spotOrder) *et.SpotOrder {
+func CreateNftTakerOrder(payload *et.SpotNftTakerOrder, ty int32, order2 *Order) *et.SpotOrder {
 	or := &et.SpotOrder{
 		Value:   &et.SpotOrder_NftTakerOrder{NftTakerOrder: payload},
 		Ty:      ty,
@@ -58,20 +58,20 @@ func CreateNftTakerOrder(payload *et.SpotNftTakerOrder, ty int32, order2 *spotOr
 	return or
 }
 
-type spotOrder struct {
+type Order struct {
 	order *et.SpotOrder
 
 	repo *orderSRepo
 }
 
-func newSpotOrder(order *et.SpotOrder, orderdb *orderSRepo) *spotOrder {
-	return &spotOrder{
+func NewOrder(order *et.SpotOrder, orderdb *orderSRepo) *Order {
+	return &Order{
 		repo:  orderdb,
 		order: order,
 	}
 }
 
-func (o *spotOrder) checkRevoke(fromaddr string) error {
+func (o *Order) checkRevoke(fromaddr string) error {
 	if o.order.Addr != fromaddr {
 		elog.Error("RevokeOrder.OrderCheck", "addr", fromaddr, "order.addr", o.order.Addr, "order.status", o.order.Status)
 		return et.ErrAddr
@@ -83,7 +83,7 @@ func (o *spotOrder) checkRevoke(fromaddr string) error {
 	return nil
 }
 
-func (o *spotOrder) calcFrozenToken(rightPrecision int64) (*et.Asset, uint64) {
+func (o *Order) calcFrozenToken(rightPrecision int64) (*et.Asset, uint64) {
 	order := o.order
 	price := o.GetPrice()
 	balance := order.GetBalance()
@@ -100,7 +100,7 @@ func (o *spotOrder) calcFrozenToken(rightPrecision int64) (*et.Asset, uint64) {
 // buy 按最大量判断余额是否够
 // 因为在吃单时, 价格是变动的, 所以实际锁定的量是会浮动的
 // 实现上, 按最大量判断余额是否够, 在成交时, 按实际需要量扣除. 最后变成挂单时, 进行锁定
-func (o *spotOrder) NeedToken(precision int64) (uint64, int64) {
+func (o *Order) NeedToken(precision int64) (uint64, int64) {
 	or := o.order.GetLimitOrder()
 	if or.GetOp() == et.OpBuy {
 		amount := SafeMul(or.GetAmount(), or.GetPrice(), precision)
@@ -113,7 +113,7 @@ func (o *spotOrder) NeedToken(precision int64) (uint64, int64) {
 	return or.LeftAsset, or.GetAmount()
 }
 
-func (o *spotOrder) nftTakerOrderNeedToken(o2 *spotOrder, precision int64) (uint64, int64) {
+func (o *Order) nftTakerOrderNeedToken(o2 *Order, precision int64) (uint64, int64) {
 	or := o2.order
 	amount := SafeMul(or.GetBalance(), or.GetNftOrder().Price, precision)
 	fee := calcMtfFee(amount, int32(o.order.TakerRate), precision)
@@ -121,7 +121,7 @@ func (o *spotOrder) nftTakerOrderNeedToken(o2 *spotOrder, precision int64) (uint
 	return or.GetNftOrder().RightAsset, total
 }
 
-func (o *spotOrder) Revoke(blockTime int64, txhash []byte, txindex int) (*types.Receipt, error) {
+func (o *Order) Revoke(blockTime int64, txhash []byte, txindex int) (*types.Receipt, error) {
 	order := o.order
 	order.Status = et.Revoked
 	order.UpdateTime = blockTime
@@ -136,11 +136,11 @@ func (o *spotOrder) Revoke(blockTime int64, txhash []byte, txindex int) (*types.
 	return &types.Receipt{KV: kvs, Logs: []*types.ReceiptLog{receiptlog}}, nil
 }
 
-func (o *spotOrder) isActiveOrder() bool {
+func (o *Order) isActiveOrder() bool {
 	return o.order.Status == et.Ordered
 }
 
-func (o *spotOrder) orderUpdate(matchDetail *et.MatchInfo) {
+func (o *Order) orderUpdate(matchDetail *et.MatchInfo) {
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
@@ -159,14 +159,14 @@ func (o *spotOrder) orderUpdate(matchDetail *et.MatchInfo) {
 	o.order.Balance -= matched
 }
 
-func (o *spotOrder) Traded(matchDetail *et.MatchInfo, blocktime int64) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (o *Order) Traded(matchDetail *et.MatchInfo, blocktime int64) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	o.orderUpdate(matchDetail)
 	o.order.UpdateTime = blocktime
 	kvs := o.repo.GetOrderKvSet(o.order)
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (o *spotOrder) GetOp() int32 {
+func (o *Order) GetOp() int32 {
 	switch o.order.Ty {
 	case et.TyLimitOrderAction:
 		return o.order.GetLimitOrder().GetOp()
@@ -178,7 +178,7 @@ func (o *spotOrder) GetOp() int32 {
 	panic("Not support op")
 }
 
-func (o *spotOrder) GetPrice() int64 {
+func (o *Order) GetPrice() int64 {
 	switch o.order.Ty {
 	case et.TyLimitOrderAction:
 		return o.order.GetLimitOrder().GetPrice()
@@ -190,7 +190,7 @@ func (o *spotOrder) GetPrice() int64 {
 	panic("Not support price")
 }
 
-func (o *spotOrder) GetAsset() (*et.Asset, *et.Asset) {
+func (o *Order) GetAsset() (*et.Asset, *et.Asset) {
 	switch o.order.Ty {
 	case et.TyLimitOrderAction:
 		return NewZkAsset(o.order.GetLimitOrder().LeftAsset), NewZkAsset(o.order.GetLimitOrder().RightAsset)

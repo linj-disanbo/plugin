@@ -23,11 +23,11 @@ type SpotTrader struct {
 	from  string
 	accX  *AssetAccounts
 
-	order   *spotOrder
+	order   *Order
 	matches *et.ReceiptSpotMatch
 }
 
-func (s *SpotTrader) GetOrder() *spotOrder {
+func (s *SpotTrader) GetOrder() *Order {
 	return s.order
 }
 
@@ -48,7 +48,7 @@ func (s *SpotTrader) CheckTokenAmountForLimitOrder(tid uint64, total int64) erro
 	return nil
 }
 
-func (s *SpotTrader) FrozenForLimitOrder(orderx *spotOrder) (*types.Receipt, error) {
+func (s *SpotTrader) FrozenForLimitOrder(orderx *Order) (*types.Receipt, error) {
 	precision := s.cfg.GetCoinPrecision()
 	asset, amount := orderx.calcFrozenToken(precision)
 
@@ -278,7 +278,7 @@ func (s *SpotTrader) orderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder)
 }
 
 // 2 -> 1 update, 2 kv
-func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOrder, orderx *spotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOrder, orderx *Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
@@ -316,7 +316,7 @@ func (taker *SpotTrader) matchModel(matchorder *et.SpotOrder, statedb dbm.KV, s 
 	maker := spotMaker{
 		SpotTrader: SpotTrader{
 			accX:  accMatch,
-			order: newSpotOrder(matchorder, taker.order.repo),
+			order: NewOrder(matchorder, taker.order.repo),
 			cfg:   taker.cfg,
 		},
 	}
