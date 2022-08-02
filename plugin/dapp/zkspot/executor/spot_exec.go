@@ -135,36 +135,6 @@ func (e *zkspot) Exec_NftOrder(payload *exchangetypes.SpotNftOrder, tx *types.Tr
 }
 
 // 限价交易
-func (e *zkspot) Exec_NftTakerOrder(payload *exchangetypes.SpotNftTakerOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
-	defer func() {
-		if err := recover(); err != nil {
-			elog.Error("Exec_NftTakerOrder", "err", err, "stack", exchangetypes.GetStack())
-		}
-	}()
-	// checkTx will check payload and zk Signature
-	start := time.Now()
-	action := NewZkSpotDex(e, tx, index)
-	r, err := action.NftTakerOrder(&e.DriverBase, payload, "", et.TyNftTakerOrderAction)
-	if err != nil {
-		return r, err
-	}
-	// 构造 LimitOrder 的结算清单
-	list := GetSpotMatch(r)
-	end := time.Now()
-	elog.Error("zkspot Exec_NftTakerOrder.NftTakerOrder", "cost", end.Sub(start))
-
-	action2 := NewAction(e, tx, index)
-	r2, err := action2.SpotNftMatch(payload, list)
-	if err != nil {
-		return r, err
-	}
-	end2 := time.Now()
-	elog.Error("zkspot Exec_LimitOrder.SpotMatch", "cost", end2.Sub(start))
-
-	return mergeReceipt(r, r2), nil
-}
-
-// 限价交易
 func (e *zkspot) Exec_NftOrder2(payload *exchangetypes.SpotNftOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
 	defer func() {
 		if err := recover(); err != nil {
@@ -176,16 +146,25 @@ func (e *zkspot) Exec_NftOrder2(payload *exchangetypes.SpotNftOrder, tx *types.T
 }
 
 // 限价交易
+func (e *zkspot) Exec_NftTakerOrder(payload *exchangetypes.SpotNftTakerOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	return e.nftTakerOrder(payload, tx, index, et.TyNftOrderAction)
+}
+
+// 限价交易
 func (e *zkspot) Exec_NftTakerOrder2(payload *exchangetypes.SpotNftTakerOrder, tx *types.Transaction, index int) (*types.Receipt, error) {
+	return e.nftTakerOrder(payload, tx, index, et.TyNftTakerOrder2Action)
+}
+
+func (e *zkspot) nftTakerOrder(payload *exchangetypes.SpotNftTakerOrder, tx *types.Transaction, index int, nftType int) (*types.Receipt, error) {
 	defer func() {
 		if err := recover(); err != nil {
-			elog.Error("Exec_NftTakerOrder2", "err", err, "stack", exchangetypes.GetStack())
+			elog.Error("Exec_NftTakerOrder", "err", err, "stack", exchangetypes.GetStack())
 		}
 	}()
 	// checkTx will check payload and zk Signature
 	start := time.Now()
-	action := NewZkNftDex(e, tx, index)
-	r, err := action.NftTakerOrder(&e.DriverBase, payload, "")
+	action := NewZkSpotDex(e, tx, index)
+	r, err := action.NftTakerOrder(&e.DriverBase, payload, "", nftType)
 	if err != nil {
 		return r, err
 	}
@@ -197,7 +176,6 @@ func (e *zkspot) Exec_NftTakerOrder2(payload *exchangetypes.SpotNftTakerOrder, t
 	action2 := NewAction(e, tx, index)
 	r2, err := action2.SpotNftMatch(payload, list)
 	if err != nil {
-		elog.Error("zkspot Exec_NftTakerOrder.SpotNftMatch", "err", err)
 		return r, err
 	}
 	end2 := time.Now()
