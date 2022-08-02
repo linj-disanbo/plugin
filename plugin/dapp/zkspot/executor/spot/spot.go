@@ -353,6 +353,35 @@ func (a *Spot) CreateOrder(acc *SpotTrader,
 	return order, nil
 }
 
+func (a *Spot) CreateOrder2(acc *SpotTrader,
+	or *Order, entrustAddr string) (*Order, error) {
+
+	left, right := or.GetAsset()
+	fees, err := a.GetSpotFee(acc.from, left, right)
+	if err != nil {
+		elog.Error("executor/exchangedb getFees", "err", err)
+		return nil, err
+	}
+	acc.fee = fees
+
+	or.order = createOrder(or.order, entrustAddr,
+		[]orderInit{a.initOrder(), fees.initOrder()})
+	or.repo = a.orderdb
+	acc.order = or
+
+	_, amount := acc.order.NeedToken(acc.accX.sellAcc.GetCoinPrecision())
+	err = acc.accX.sellAcc.CheckBalance(amount)
+	if err != nil {
+		return nil, err
+	}
+	acc.matches = &et.ReceiptSpotMatch{
+		Order: acc.order.order,
+		Index: a.GetIndex(),
+	}
+
+	return or, nil
+}
+
 type GetFeeAccount func() (*SpotFee, error)
 
 func (a *Spot) SetFeeAcc(funcGetFeeAccount GetFeeAccount) error {

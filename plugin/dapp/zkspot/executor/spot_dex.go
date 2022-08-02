@@ -99,8 +99,7 @@ func (a *zkSpotDex) getFeeAcc() (*spot.SpotFee, error) {
 
 //LimitOrder ...
 func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder, entrustAddr string) (*types.Receipt, error) {
-	order := spot.CreateLimitOrder(payload)
-	left, right := spot.NewZkAsset(payload.LeftAsset), spot.NewZkAsset(payload.RightAsset)
+	order := spot.PreCreateLimitOrder(payload)
 
 	cfg := a.api.GetConfig()
 	err := et.CheckLimitOrder(cfg, payload)
@@ -123,17 +122,18 @@ func (a *zkSpotDex) LimitOrder(base *dapp.DriverBase, payload *et.SpotLimitOrder
 	}
 
 	// 下面流程是否要放到 spot1中
-	buy, sell := spot.BuySellAsset(payload.Op, left, right)
+	left, right := order.GetAsset()
+	buy, sell := spot.BuySellAsset(order.GetOp(), left, right)
 	taker, err := spot1.LoadTrader(a.txinfo.From, payload.Order.AccountID, buy, sell)
 	if err != nil {
 		return nil, err
 	}
 
-	order, err = spot1.CreateLimitOrder(taker, order, entrustAddr, left, right)
+	order1, err := spot1.CreateOrder2(taker, order, entrustAddr)
 	if err != nil {
 		return nil, err
 	}
-	_ = order // set to order trader
+	_ = order1 // set to order trader
 
 	receipt1, err := spot1.MatchAssetLimitOrder(taker)
 	if err != nil {

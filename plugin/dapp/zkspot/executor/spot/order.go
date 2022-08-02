@@ -22,13 +22,13 @@ func createOrder(or *et.SpotOrder, entrustAddr string, inits []orderInit) *et.Sp
 	return or
 }
 
-func CreateLimitOrder(payload *et.SpotLimitOrder) *et.SpotOrder {
+func PreCreateLimitOrder(payload *et.SpotLimitOrder) *Order {
 	or := &et.SpotOrder{
 		Value:   &et.SpotOrder_LimitOrder{LimitOrder: payload},
 		Ty:      et.TyLimitOrderAction,
 		Balance: payload.GetAmount(),
 	}
-	return or
+	return NewOrder(or, nil)
 }
 
 func CreateAssetLimitOrder(payload *et.AssetLimitOrder) *et.SpotOrder {
