@@ -144,7 +144,7 @@ func (e *zkspot) Exec_NftTakerOrder(payload *exchangetypes.SpotNftTakerOrder, tx
 	// checkTx will check payload and zk Signature
 	start := time.Now()
 	action := NewZkSpotDex(e, tx, index)
-	r, err := action.NftTakerOrder(&e.DriverBase, payload, "")
+	r, err := action.NftTakerOrder(&e.DriverBase, payload, "", et.TyNftTakerOrderAction)
 	if err != nil {
 		return r, err
 	}

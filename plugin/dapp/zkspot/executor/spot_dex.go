@@ -287,7 +287,7 @@ func (a *zkSpotDex) NftOrder(base *dapp.DriverBase, payload *et.SpotNftOrder, en
 }
 
 //NftTakerOrder ...
-func (a *zkSpotDex) NftTakerOrder(base *dapp.DriverBase, payload *et.SpotNftTakerOrder, entrustAddr string) (*types.Receipt, error) {
+func (a *zkSpotDex) NftTakerOrder(base *dapp.DriverBase, payload *et.SpotNftTakerOrder, entrustAddr string, nftType int) (*types.Receipt, error) {
 	//cfg := a.api.GetConfig()
 	err := checkL2Auth(a.statedb, payload.Order.AccountID, payload.Order.Signature.PubKey)
 	if err != nil {
@@ -303,7 +303,7 @@ func (a *zkSpotDex) NftTakerOrder(base *dapp.DriverBase, payload *et.SpotNftTake
 		return nil, err
 	}
 
-	return spot1.TradeNft(a.txinfo.From, payload, entrustAddr)
+	return spot1.TradeNft(a.txinfo.From, payload, entrustAddr, nftType)
 }
 
 func isSellZkAsset(op int32, left, right *et.Asset) bool {
