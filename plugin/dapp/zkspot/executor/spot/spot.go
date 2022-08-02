@@ -231,7 +231,7 @@ func (a *Spot) initOrder() func(*et.SpotOrder) *et.SpotOrder {
 	}
 }
 
-func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustAddr string) (*types.Receipt, error) {
+func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustAddr string, nftType int) (*types.Receipt, error) {
 	order2, err := a.orderdb.findOrderBy(payload.OrderID)
 	if err != nil {
 		elog.Error("CreateNftTakerOrder findOrderBy", "err", err, "orderid", payload.OrderID)
@@ -250,12 +250,13 @@ func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustA
 	maker.order = spotOrder2
 	makerX := spotMaker{*maker}
 
+	order1 := PreCreateNftTakerOrder(payload, nftType, maker.order)
 	taker, err := a.LoadTrader(a.tx.From, payload.Order.AccountID, left, right)
 	if err != nil {
 		return nil, err
 	}
 
-	order, err := a.CreateNftTakerOrder(fromaddr, taker, payload, entrustAddr)
+	order, err := a.CreateOrder2(taker, order1, entrustAddr)
 	if err != nil {
 		return nil, err
 	}

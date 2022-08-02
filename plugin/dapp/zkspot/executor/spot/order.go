@@ -49,10 +49,10 @@ func PreCreateNftOrder(payload *et.SpotNftOrder, ty int32) *Order {
 	return NewOrder(or, nil)
 }
 
-func PreCreateNftTakerOrder(payload *et.SpotNftTakerOrder, ty int32, order2 *Order) *Order {
+func PreCreateNftTakerOrder(payload *et.SpotNftTakerOrder, ty int, order2 *Order) *Order {
 	or := &et.SpotOrder{
 		Value:   &et.SpotOrder_NftTakerOrder{NftTakerOrder: payload},
-		Ty:      ty,
+		Ty:      int32(ty),
 		Balance: order2.order.Balance,
 	}
 	return NewOrder(or, nil)
