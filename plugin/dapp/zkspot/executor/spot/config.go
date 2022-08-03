@@ -10,7 +10,7 @@ import (
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
-func loadSpotFeeAccountConfig(db dbm.KV) (*et.DexAccount, error) {
+func LoadSpotFeeAccountConfig(db dbm.KV) (*et.DexAccount, error) {
 	key := string(spotFeeAccountKey)
 	value, err := getManageKey(key, db)
 	if err != nil {
