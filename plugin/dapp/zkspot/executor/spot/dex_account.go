@@ -60,7 +60,6 @@ func (repo *accountRepo) LoadAccount(addr string, accID uint64) (*DexAccount, er
 }
 
 type DexAccount struct {
-	ty  string // spot, future, asset ...
 	acc *et.DexAccount
 	db  *accountRepo
 }
