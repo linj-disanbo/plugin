@@ -175,7 +175,8 @@ func (matcher1 *matcher) MatchOrder(order *Order, taker *SpotTrader, orderdb *or
 					if err != nil || order.Status != et.Ordered {
 						continue
 					}
-					log, kv, err := taker.matchModel(order, matcher1.statedb, s)
+					orderx := NewOrder(order, orderdb)
+					log, kv, err := taker.matchModel(orderx, matcher1.statedb, s)
 					if err != nil {
 						elog.Error("matchModel", "height", "orderID", order.GetOrderID(), "payloadID", taker.order.order.GetOrderID(), "error", err)
 						return nil, err

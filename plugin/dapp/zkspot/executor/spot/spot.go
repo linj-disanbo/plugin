@@ -248,7 +248,7 @@ func (a *Spot) TradeNft(fromaddr string, payload *et.SpotNftTakerOrder, entrustA
 		return nil, err
 	}
 	maker.order = spotOrder2
-	makerX := spotMaker{*maker}
+	makerX := spotMaker{maker}
 
 	order1 := PreCreateNftTakerOrder(payload, nftType, maker.order)
 	taker, err := a.LoadTrader(a.tx.From, payload.Order.AccountID, left, right)

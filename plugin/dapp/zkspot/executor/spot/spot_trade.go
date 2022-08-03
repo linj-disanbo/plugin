@@ -9,9 +9,6 @@ import (
 // LeftToken: seller -> buyer
 // RightToken: buyer -> seller
 // RightToken: buyer, seller -> fee-bank
-type spotTaker struct {
-	SpotTrader
-}
 
 type SpotTrader struct {
 	cfg *types.Chain33Config
@@ -33,10 +30,6 @@ func (s *SpotTrader) GetOrder() *Order {
 
 func (s *SpotTrader) GetAccout() *AssetAccounts {
 	return s.accX
-}
-
-type spotMaker struct {
-	SpotTrader
 }
 
 func (s *SpotTrader) CheckTokenAmountForLimitOrder(tid uint64, total int64) error {
@@ -64,13 +57,14 @@ func (s *SpotTrader) Trade(maker *spotMaker) ([]*types.ReceiptLog, []*types.KeyV
 	balance := s.calcTradeBalance(maker.order.order)
 	matchDetail := s.calcTradeInfo(maker, balance)
 
-	receipt3, kvs3, err := maker.orderTraded(matchDetail, s.order.order, nil) // TODO
+	receipt3, kvs3, err := maker.orderTraded(matchDetail, s.order.order)
 	if err != nil {
 		elog.Error("maker.orderTraded", "err", err)
 		return receipt3, kvs3, err
 	}
 
-	receipt2, kvs2, err := s.orderTraded(matchDetail, maker.order.order)
+	taker := spotTaker{SpotTrader: s}
+	receipt2, kvs2, err := taker.orderTraded(matchDetail, maker.order.order)
 	if err != nil {
 		elog.Error("taker.orderTraded", "err", err)
 		return receipt2, kvs2, err
@@ -251,7 +245,16 @@ func (s *SpotTrader) selfSettlement(maker *spotMaker, tradeBalance *et.MatchInfo
 	return receipt.Logs, receipt.KV, nil
 }
 
-func (s *SpotTrader) orderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+type spotTaker struct {
+	*SpotTrader
+}
+
+type spotMaker struct {
+	*SpotTrader
+}
+
+// s.order is taker, order is maker
+func (s *spotTaker) orderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
@@ -278,7 +281,7 @@ func (s *SpotTrader) orderTraded(matchDetail *et.MatchInfo, order *et.SpotOrder)
 }
 
 // 2 -> 1 update, 2 kv
-func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOrder, orderx *Order) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOrder) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	matched := matchDetail.Matched
 
 	// fee and AVGPrice
@@ -301,28 +304,24 @@ func (m *spotMaker) orderTraded(matchDetail *et.MatchInfo, takerOrder *et.SpotOr
 	return []*types.ReceiptLog{}, kvs, nil
 }
 
-func (taker *SpotTrader) matchModel(matchorder *et.SpotOrder, statedb dbm.KV, s *Spot) ([]*types.ReceiptLog, []*types.KeyValue, error) {
+func (taker *SpotTrader) matchModel(matchorder *Order, statedb dbm.KV, s *Spot) ([]*types.ReceiptLog, []*types.KeyValue, error) {
 	var logs []*types.ReceiptLog
 	var kvs []*types.KeyValue
 
-	matched := taker.calcTradeBalance(matchorder)
-	elog.Info("try match", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
-		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
+	matched := taker.calcTradeBalance(matchorder.order)
+	elog.Info("try match", "activeId", taker.order.order.OrderID, "passiveId", matchorder.order.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
+		matchorder.order.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
 
-	accMatch, err := s.accountdb.LoadAccounts(matchorder.Addr, matchorder.GetLimitOrder().Order.AccountID, taker.accX.sell, taker.accX.buy)
+	accMatch, err := s.LoadTrader(matchorder.order.Addr, matchorder.GetZkOrder().GetAccountID(), taker.accX.sell, taker.accX.buy)
 	if err != nil {
 		return nil, nil, err
 	}
 	maker := spotMaker{
-		SpotTrader: SpotTrader{
-			accX:  accMatch,
-			order: NewOrder(matchorder, taker.order.repo),
-			cfg:   taker.cfg,
-		},
+		SpotTrader: accMatch,
 	}
 
 	logs, kvs, err = taker.Trade(&maker)
-	elog.Info("try match2", "activeId", taker.order.order.OrderID, "passiveId", matchorder.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
-		matchorder.Addr, "amount", matched, "price", taker.order.order.GetLimitOrder().Price)
+	elog.Info("try match2", "activeId", taker.order.order.OrderID, "passiveId", matchorder.order.OrderID, "activeAddr", taker.order.order.Addr, "passiveAddr",
+		matchorder.order.Addr, "amount", matched, "price", taker.order.GetPrice())
 	return logs, kvs, err
 }
