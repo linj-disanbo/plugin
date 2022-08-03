@@ -4,7 +4,6 @@ import (
 	"fmt"
 
 	dbm "github.com/33cn/chain33/common/db"
-	"github.com/33cn/chain33/common/db/table"
 	tab "github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
@@ -151,7 +150,7 @@ func getMarketDepth(marketTable *tab.Table, left, right uint64, op int32, price 
 	return row.Data.(*et.SpotMarketDepth), nil
 }
 
-func updateIndex(marketTable, orderTable, historyTable *table.Table, receipt *et.ReceiptSpotMatch) (kvs []*types.KeyValue) {
+func updateIndex(marketTable, orderTable, historyTable *tab.Table, receipt *et.ReceiptSpotMatch) (kvs []*types.KeyValue) {
 	elog.Info("updateIndex", "order.status", receipt.Order.Status)
 	switch receipt.Order.Status {
 	case et.Ordered:
@@ -182,7 +181,7 @@ func updateIndex(marketTable, orderTable, historyTable *table.Table, receipt *et
 	return
 }
 
-func updateOrder(marketTable, orderTable, historyTable *table.Table, order *et.SpotOrder, index int64) error {
+func updateOrder(marketTable, orderTable, historyTable *tab.Table, order *et.SpotOrder, index int64) error {
 	left := order.GetLimitOrder().GetLeftAsset()
 	right := order.GetLimitOrder().GetRightAsset()
 	op := order.GetLimitOrder().GetOp()
@@ -257,7 +256,7 @@ func updateOrder(marketTable, orderTable, historyTable *table.Table, order *et.S
 	return nil
 }
 
-func updateMatchedOrders(marketTable, orderTable, historyTable *table.Table, order *et.SpotOrder, matchOrders []*et.SpotOrder, index int64) error {
+func updateMatchedOrders(marketTable, orderTable, historyTable *tab.Table, order *et.SpotOrder, matchOrders []*et.SpotOrder, index int64) error {
 	left := order.GetLimitOrder().GetLeftAsset()
 	right := order.GetLimitOrder().GetRightAsset()
 	op := order.GetLimitOrder().GetOp()
@@ -328,7 +327,7 @@ func updateMatchedOrders(marketTable, orderTable, historyTable *table.Table, ord
 }
 
 type orderLRepo struct {
-	table *table.Table
+	table *tab.Table
 }
 
 func newOrderLRepo(localdb dbm.KV, p et.DBprefix) *orderLRepo {
@@ -338,18 +337,14 @@ func newOrderLRepo(localdb dbm.KV, p et.DBprefix) *orderLRepo {
 	}
 }
 
-func (db *orderLRepo) pricePrefix(left, right uint64, price int64, op int32) []byte {
-	return []byte(fmt.Sprintf("%08d:%08d:%d:%016d", left, right, op, price))
-}
-
-func (db *orderLRepo) pricePrefix2(left, right string, price int64, op int32) []byte {
+func (db *orderLRepo) pricePrefix(left, right string, price int64, op int32) []byte {
 	return []byte(fmt.Sprintf("%s:%s:%d:%016d", left, right, op, price))
 }
 
 // asset to string as part of key
 func (db *orderLRepo) findOrderIDListByPrice(leftStr, rightSrt string, price int64, op, direction int32, primaryKey string) (*et.SpotOrderList, error) {
 	table := db.table
-	prefix := db.pricePrefix2(leftStr, rightSrt, price, op)
+	prefix := db.pricePrefix(leftStr, rightSrt, price, op)
 
 	var rows []*tab.Row
 	var err error
