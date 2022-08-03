@@ -10,11 +10,11 @@ import (
 )
 
 type spot struct {
-	fromaddr string
-	height   int64
-	statedb  dbm.KV
-	localdb  dbm.KV
-	prefix   et.DBprefix
+	//fromaddr string
+	//height   int64
+	//statedb  dbm.KV
+	//localdb  dbm.KV
+	prefix et.DBprefix
 }
 
 /*
@@ -22,12 +22,6 @@ type spot struct {
  * 即key = keyPrefix + userKey
  * 需要字段前缀查询时，使用’-‘作为分割符号
  */
-
-//状态数据库中存储具体挂单信息
-func (s *spot) calcOrderKey(orderID int64) []byte {
-	key := fmt.Sprintf("%s"+"orderID:%022d", s.prefix.GetStatedbPrefix(), orderID)
-	return []byte(key)
-}
 
 func (s *spot) getDepthOpt() *table.Option {
 	return &table.Option{
