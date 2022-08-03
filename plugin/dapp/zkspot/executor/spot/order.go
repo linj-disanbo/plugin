@@ -131,14 +131,6 @@ func (o *Order) NeedToken(precision int64) (uint64, int64) {
 	return or.LeftAsset, or.GetAmount()
 }
 
-func (o *Order) nftTakerOrderNeedToken(o2 *Order, precision int64) (uint64, int64) {
-	or := o2.order
-	amount := SafeMul(or.GetBalance(), or.GetNftOrder().Price, precision)
-	fee := calcMtfFee(amount, int32(o.order.TakerRate), precision)
-	total := SafeAdd(amount, int64(fee))
-	return or.GetNftOrder().RightAsset, total
-}
-
 func (o *Order) Revoke(blockTime int64, txhash []byte, txindex int) (*types.Receipt, error) {
 	order := o.order
 	order.Status = et.Revoked
@@ -218,6 +210,20 @@ func (o *Order) GetAsset() (*et.Asset, *et.Asset) {
 		return NewZkNftAsset(o.order.GetNftOrder().LeftAsset), NewZkAsset(o.order.GetNftOrder().RightAsset)
 	case et.TyNftOrder2Action:
 		return NewEvmNftAsset(o.order.GetNftOrder().LeftAsset), NewZkAsset(o.order.GetNftOrder().RightAsset)
+	}
+	panic("Not support GetAsset")
+}
+
+func (o *Order) GetZkOrder() *et.ZkOrder {
+	switch o.order.Ty {
+	case et.TyLimitOrderAction:
+		return o.order.GetLimitOrder().Order
+	case et.TyAssetLimitOrderAction:
+		return o.order.GetAssetLimitOrder().Order
+	case et.TyNftOrderAction:
+		return o.order.GetNftOrder().Order
+	case et.TyNftOrder2Action:
+		return o.order.GetNftOrder().Order
 	}
 	panic("Not support GetAsset")
 }
