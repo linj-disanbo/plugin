@@ -167,10 +167,18 @@ func (acc *DexAccount) doActive(token uint64, amount uint64) error {
 }
 
 func dupAccount(acc *et.DexAccount) *et.DexAccount {
-	copyAcc := *acc
+	copyAcc := et.DexAccount{
+		Id:      acc.Id,
+		Addr:    acc.Addr,
+		DexName: acc.DexName,
+	}
 	var bs []*et.DexAccountBalance
 	for _, b := range acc.Balance {
-		copyB := *b
+		copyB := et.DexAccountBalance{
+			Id:      b.Id,
+			Balance: b.Balance,
+			Frozen:  b.Frozen,
+		}
 		bs = append(bs, &copyB)
 	}
 	copyAcc.Balance = bs
