@@ -25,52 +25,6 @@ const (
 	ListSpotMatch = 1001
 )
 
-type TodoItem struct {
-	ty         int
-	oneofvalue interface{}
-}
-
-type TodoList struct {
-	items []TodoItem
-}
-
-// A (accountid = 1) 存入 1000 usdt (id = 1)
-func SampleDeposit() TodoList {
-	b := et.DexAccountBalance{
-		Id:      1,    // USDT
-		Balance: 1000, // 存入 1000USDT
-		Frozen:  0,
-	}
-
-	acc := et.DexAccount{
-		Id:      666,
-		Addr:    "0x12334567",
-		Balance: []*et.DexAccountBalance{&b},
-	}
-	i := TodoItem{ty: ListZkDeposit, oneofvalue: acc}
-	ll := TodoList{items: []TodoItem{i}}
-	return ll
-}
-
-type TMatch struct {
-	acc  et.DexAccount
-	acc2 et.DexAccount
-	got  et.DexAccountBalance
-	gave et.DexAccountBalance
-}
-
-type TFee struct {
-	acc       et.DexAccount
-	fee       et.DexAccountBalance
-	sysFeeAcc et.DexAccount
-}
-
-type TMatchPkg struct {
-	tx1, tx2 string // tx hash
-	match    TMatch
-	f1, f2   TFee
-}
-
 // 相关的交易为 A签名发送的 tx1(卖bty), B签名发送的tx2(买bty)
 // 撮合 100usdt 交易 1bty, 并且收取 A B 各 1usdt的手续费
 
@@ -96,69 +50,6 @@ type TMatchPkg struct {
 
 // 是否需要将清单合并成帐号变化
 // BTY-id = 2, USDT-id = 1
-func SampleSpotMatch() TodoList {
-	fee1 := et.DexAccountBalance{
-		Id:      1, // USDT
-		Balance: 1, // 1USDT
-		Frozen:  0,
-	}
-
-	fee2 := et.DexAccountBalance{
-		Id:      1, // USDT
-		Balance: 0,
-		Frozen:  1, // 挂单币是锁定的 1USDT, 对零知识证明, 可以直接将值调整到 Balance 中
-	}
-
-	got := et.DexAccountBalance{
-		Id:      1, // USDT
-		Balance: 100,
-		Frozen:  0,
-	}
-
-	gave := et.DexAccountBalance{
-		Id:      2,
-		Balance: 1,
-		Frozen:  0,
-	}
-
-	accA := et.DexAccount{
-		Id:   666, //
-		Addr: "0x12334567",
-	}
-
-	accB := et.DexAccount{
-		Id:   777, //
-		Addr: "0x777",
-	}
-
-	accsys := et.DexAccount{
-		Id:   111, //
-		Addr: "0xSys",
-	}
-
-	f1 := TFee{
-		acc:       accA,
-		sysFeeAcc: accsys,
-		fee:       fee1,
-	}
-	f2 := TFee{
-		acc:       accB,
-		sysFeeAcc: accsys,
-		fee:       fee2,
-	}
-	m := TMatch{
-		acc:  accA,
-		acc2: accB,
-		got:  got,
-		gave: gave,
-	}
-
-	match := TodoItem{ty: ListSpotMatch, oneofvalue: TMatchPkg{
-		match: m, f1: f1, f2: f2,
-	}}
-	ll := TodoList{items: []TodoItem{match}}
-	return ll
-}
 
 // 撮合 包含 1个交换, 和两个手续费
 // 币的源头是是从balance/frozen 中转 看balance 的中值是否为frozen

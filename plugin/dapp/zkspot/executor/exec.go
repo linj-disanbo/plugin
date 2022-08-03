@@ -4,7 +4,6 @@ import (
 	"math/big"
 
 	"github.com/33cn/chain33/types"
-	//"github.com/33cn/plugin/plugin/dapp/zkspot/executor/spot"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
 )
@@ -15,8 +14,7 @@ func (z *zkspot) Exec_Deposit(payload *zt.ZkDeposit, tx *types.Transaction, inde
 	if err != nil {
 		return r, err
 	}
-	list := SampleDeposit( /* r *types.Receipt */ )
-	_ = list
+
 	action2 := NewZkSpotDex(z, tx, index)
 	r2, err := action2.Deposit(payload, accountID, zkInfo) // TODO 增加参数
 	if err != nil {
