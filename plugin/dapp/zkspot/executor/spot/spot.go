@@ -193,11 +193,6 @@ func BuySellAsset(op int32, left, right *et.Asset) (*et.Asset, *et.Asset) {
 	return buyAsset, sellAsset
 }
 
-func (a *Spot) LoadNewUser(fromaddr string, zkAccID uint64, payload *et.AssetLimitOrder) (*SpotTrader, error) {
-	buyAsset, sellAsset := BuySellAsset(payload.Op, payload.LeftAsset, payload.RightAsset)
-	return a.LoadTrader(fromaddr, zkAccID, buyAsset, sellAsset)
-}
-
 func (a *Spot) LoadTrader(fromaddr string, zkAccID uint64, buyAsset, sellAsset *et.Asset) (*SpotTrader, error) {
 	accs, err := a.accountdb.LoadAccounts(fromaddr, zkAccID, buyAsset, sellAsset)
 	if err != nil {
