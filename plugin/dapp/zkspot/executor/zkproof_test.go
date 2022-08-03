@@ -1,10 +1,11 @@
 package executor
 
 import (
-	"github.com/33cn/chain33/util"
-	zt "github.com/33cn/plugin/plugin/dapp/zkspot/types"
-	"github.com/stretchr/testify/assert"
 	"testing"
+
+	"github.com/33cn/chain33/util"
+	zt "github.com/33cn/plugin/plugin/dapp/zksync/types"
+	"github.com/stretchr/testify/assert"
 )
 
 func TestHistoryProof(t *testing.T) {
@@ -13,12 +14,12 @@ func TestHistoryProof(t *testing.T) {
 	defer util.CloseTestDB(dir, statedb)
 
 	zkproof := &zt.ZkCommitProof{
-		BlockEnd: 260,
-		IndexEnd: 1,
+		BlockEnd:    260,
+		IndexEnd:    1,
 		OldTreeRoot: "0",
 		NewTreeRoot: "15275177226630979939067149484578443289216960078842399286363628315212402600089",
 		PublicInput: "0000000200598525ca4193cf4b93bec143791ab18448b4cbb493f9de4b4fe5465df75c43126392d9a7c1cb6159d24d4d7e472e3354db90afaa23d6988aad2fa5bc0dc0dd",
-		Proof: "e719783d3341baa2da6711b3a4b4c74409f9edaca5a680bd331fa00bfb987a0df025281ca167988adb9245ef80bb50a6ca1070a9be5f3ad6884d57f07d21ef7e05b08797100728d48c90b34336cad1a74620ae35fac36332e7424349c98e8767e67f9589d9bbadd16afe5246cd53c2bd033f9144b541a49bb2337e2f6cbad2d1",
+		Proof:       "e719783d3341baa2da6711b3a4b4c74409f9edaca5a680bd331fa00bfb987a0df025281ca167988adb9245ef80bb50a6ca1070a9be5f3ad6884d57f07d21ef7e05b08797100728d48c90b34336cad1a74620ae35fac36332e7424349c98e8767e67f9589d9bbadd16afe5246cd53c2bd033f9144b541a49bb2337e2f6cbad2d1",
 		PubDatas: []string{
 			"36029346774777984",
 			"203486033877090063876096",
@@ -84,6 +85,6 @@ func TestHistoryProof(t *testing.T) {
 	}
 
 	proof, err := getAccountProofInHistory(localdb, 1, "15275177226630979939067149484578443289216960078842399286363628315212402600089")
- 	assert.Equal(t, nil, err)
+	assert.Equal(t, nil, err)
 	t.Log(proof)
 }
