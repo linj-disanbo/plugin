@@ -3,12 +3,10 @@ package spot
 import (
 	"fmt"
 
-	"github.com/33cn/chain33/common/db"
 	dbm "github.com/33cn/chain33/common/db"
 	"github.com/33cn/chain33/common/db/table"
 	"github.com/33cn/chain33/types"
 	et "github.com/33cn/plugin/plugin/dapp/zkspot/types"
-	ety "github.com/33cn/plugin/plugin/dapp/zkspot/types"
 )
 
 type spot struct {
@@ -59,7 +57,7 @@ func (s *spot) getHistoryOpt() *table.Option {
 }
 
 //NewMarketDepthTable 新建表
-func NewMarketDepthTable(kvdb db.KV, p et.DBprefix) *table.Table {
+func NewMarketDepthTable(kvdb dbm.KV, p et.DBprefix) *table.Table {
 	s := spot{prefix: p}
 	rowmeta := NewMarketDepthRow()
 	table, err := table.NewTable(rowmeta, kvdb, s.getDepthOpt())
@@ -70,7 +68,7 @@ func NewMarketDepthTable(kvdb db.KV, p et.DBprefix) *table.Table {
 }
 
 //NewMarketOrderTable ...
-func NewMarketOrderTable(kvdb db.KV, p et.DBprefix) *table.Table {
+func NewMarketOrderTable(kvdb dbm.KV, p et.DBprefix) *table.Table {
 	s := spot{prefix: p}
 	rowmeta := NewOrderRow()
 	table, err := table.NewTable(rowmeta, kvdb, s.getOrderOpt())
@@ -81,7 +79,7 @@ func NewMarketOrderTable(kvdb db.KV, p et.DBprefix) *table.Table {
 }
 
 //NewHistoryOrderTable ...
-func NewHistoryOrderTable(kvdb db.KV, p et.DBprefix) *table.Table {
+func NewHistoryOrderTable(kvdb dbm.KV, p et.DBprefix) *table.Table {
 	s := spot{prefix: p}
 	rowmeta := NewHistoryOrderRow()
 	table, err := table.NewTable(rowmeta, kvdb, s.getHistoryOpt())
@@ -93,22 +91,22 @@ func NewHistoryOrderTable(kvdb db.KV, p et.DBprefix) *table.Table {
 
 //OrderRow table meta 结构
 type OrderRow struct {
-	*ety.SpotOrder
+	*et.SpotOrder
 }
 
 //NewOrderRow 新建一个meta 结构
 func NewOrderRow() *OrderRow {
-	return &OrderRow{SpotOrder: &ety.SpotOrder{}}
+	return &OrderRow{SpotOrder: &et.SpotOrder{}}
 }
 
 //CreateRow ...
 func (r *OrderRow) CreateRow() *table.Row {
-	return &table.Row{Data: &ety.SpotOrder{}}
+	return &table.Row{Data: &et.SpotOrder{}}
 }
 
 //SetPayload 设置数据
 func (r *OrderRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*ety.SpotOrder); ok {
+	if txdata, ok := data.(*et.SpotOrder); ok {
 		r.SpotOrder = txdata
 		return nil
 	}
@@ -129,22 +127,22 @@ func (r *OrderRow) Get(key string) ([]byte, error) {
 
 //HistoryOrderRow table meta 结构
 type HistoryOrderRow struct {
-	*ety.SpotOrder
+	*et.SpotOrder
 }
 
 //NewHistoryOrderRow ...
 func NewHistoryOrderRow() *HistoryOrderRow {
-	return &HistoryOrderRow{SpotOrder: &ety.SpotOrder{Value: &ety.SpotOrder_LimitOrder{LimitOrder: &ety.SpotLimitOrder{}}}}
+	return &HistoryOrderRow{SpotOrder: &et.SpotOrder{Value: &et.SpotOrder_LimitOrder{LimitOrder: &et.SpotLimitOrder{}}}}
 }
 
 //CreateRow ...
 func (m *HistoryOrderRow) CreateRow() *table.Row {
-	return &table.Row{Data: &ety.SpotOrder{Value: &ety.SpotOrder_LimitOrder{LimitOrder: &ety.SpotLimitOrder{}}}}
+	return &table.Row{Data: &et.SpotOrder{Value: &et.SpotOrder_LimitOrder{LimitOrder: &et.SpotLimitOrder{}}}}
 }
 
 //SetPayload 设置数据
 func (m *HistoryOrderRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*ety.SpotOrder); ok {
+	if txdata, ok := data.(*et.SpotOrder); ok {
 		m.SpotOrder = txdata
 		return nil
 	}
@@ -165,22 +163,22 @@ func (m *HistoryOrderRow) Get(key string) ([]byte, error) {
 
 //MarketDepthRow table meta 结构
 type MarketDepthRow struct {
-	*ety.SpotMarketDepth
+	*et.SpotMarketDepth
 }
 
 //NewMarketDepthRow 新建一个meta 结构
 func NewMarketDepthRow() *MarketDepthRow {
-	return &MarketDepthRow{SpotMarketDepth: &ety.SpotMarketDepth{}}
+	return &MarketDepthRow{SpotMarketDepth: &et.SpotMarketDepth{}}
 }
 
 //CreateRow 新建数据行(注意index 数据一定也要保存到数据中,不能就保存eventid)
 func (m *MarketDepthRow) CreateRow() *table.Row {
-	return &table.Row{Data: &ety.SpotMarketDepth{}}
+	return &table.Row{Data: &et.SpotMarketDepth{}}
 }
 
 //SetPayload 设置数据
 func (m *MarketDepthRow) SetPayload(data types.Message) error {
-	if txdata, ok := data.(*ety.SpotMarketDepth); ok {
+	if txdata, ok := data.(*et.SpotMarketDepth); ok {
 		m.SpotMarketDepth = txdata
 		return nil
 	}
