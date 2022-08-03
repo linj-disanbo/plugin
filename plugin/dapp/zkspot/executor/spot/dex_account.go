@@ -12,8 +12,8 @@ var (
 	// mavl-zkspot-dex-   资金帐号
 	// mavl-zkspot-spot-  现货帐号
 	// 先都用现货帐号
-	spotDexName       = "spot"
-	spotFeeAccountKey = []byte("zkspot-spotfeeaccount") // mavl-manager-{here}
+	spotDexName = "spot"
+	//spotFeeAccountKey = []byte("zkspot-spotfeeaccount") // mavl-manager-{here}
 )
 
 func LoadSpotAccount(addr string, id uint64, statedb dbm.KV, p et.DBprefix) (*DexAccount, error) {
@@ -93,6 +93,7 @@ func (acc *DexAccount) newToken(tid uint64, amount uint64) int {
 	})
 	return len(acc.acc.Balance) - 1
 }
+
 func (acc *DexAccount) GetBalance(tid uint64) uint64 {
 	return acc.getBalance(tid)
 }
@@ -103,6 +104,10 @@ func (acc *DexAccount) getBalance(tid uint64) uint64 {
 		return 0
 	}
 	return acc.acc.Balance[idx].Balance
+}
+
+func (acc *DexAccount) GetFrozen(tid uint64) uint64 {
+	return acc.getFrozen(tid)
 }
 
 func (acc *DexAccount) getFrozen(tid uint64) uint64 {
