@@ -176,13 +176,13 @@ func ParseSymbols(cfg *types.Chain33Config, tradeKey string, height int64) (symb
 }
 
 func formatInterface(data interface{}) int64 {
-	switch data.(type) {
+	switch data := data.(type) {
 	case int64:
-		return data.(int64)
+		return data
 	case int32:
-		return int64(data.(int32))
+		return int64(data)
 	case int:
-		return int64(data.(int))
+		return int64(data)
 	default:
 		return 0
 	}

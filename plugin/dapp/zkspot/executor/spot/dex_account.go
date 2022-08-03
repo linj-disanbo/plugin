@@ -12,8 +12,8 @@ var (
 	// mavl-zkspot-dex-   资金帐号
 	// mavl-zkspot-spot-  现货帐号
 	// 先都用现货帐号
-	spotDexName = "spot"
-	//spotFeeAccountKey = []byte("zkspot-spotfeeaccount") // mavl-manager-{here}
+	spotDexName       = "spot"
+	spotFeeAccountKey = []byte("zkspot-spotfeeaccount") // mavl-manager-{here}
 )
 
 func LoadSpotAccount(addr string, id uint64, statedb dbm.KV, p et.DBprefix) (*DexAccount, error) {
