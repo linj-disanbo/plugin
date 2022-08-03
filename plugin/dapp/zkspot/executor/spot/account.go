@@ -45,9 +45,10 @@ func (repos *accountRepos) LoadAccount(addr string, zkAccID uint64, asset *et.As
 		if err != nil {
 			return nil, err
 		}
-		return &ZkAccount{acc: acc1, asset: asset}, nil
+		info := AccountInfo{address: addr, accid: zkAccID, asset: asset}
+		return &ZkAccount{acc: acc1, AccountInfo: info}, nil
 	case et.AssetType_Token:
-		acc, err := repos.tokenRepo.NewAccount(addr, 1, asset)
+		acc, err := repos.tokenRepo.NewAccount(addr, zkAccID, asset)
 		if err != nil {
 			return nil, err
 		}
@@ -57,7 +58,8 @@ func (repos *accountRepos) LoadAccount(addr string, zkAccID uint64, asset *et.As
 		if err != nil {
 			return nil, err
 		}
-		return &ZkAccount{acc: acc1, asset: asset}, nil
+		info := AccountInfo{address: addr, accid: zkAccID, asset: asset}
+		return &ZkAccount{acc: acc1, AccountInfo: info}, nil
 	case et.AssetType_EvmNft:
 		acc1, err := repos.evmxgo.NewAccount(addr, zkAccID, asset)
 		if err != nil {

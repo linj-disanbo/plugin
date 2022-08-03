@@ -382,7 +382,8 @@ func (a *Spot) SetFeeAcc(funcGetFeeAccount GetFeeAccount) error {
 		return err
 	}
 	a.feeInfo = fee
-	a.feeAccX = &ZkAccount{acc: acc, asset: nil}
+	info := AccountInfo{address: fee.Address, accid: fee.AccID, asset: nil}
+	a.feeAccX = &ZkAccount{acc: acc, AccountInfo: info}
 	return nil
 }
 

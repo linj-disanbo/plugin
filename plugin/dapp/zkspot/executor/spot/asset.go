@@ -44,10 +44,9 @@ type AssetAccount interface {
 }
 
 type AccountInfo struct {
-	address   string
-	accid     uint64
-	buyAsset  *et.Asset
-	sellAsset *et.Asset
+	address string
+	accid   uint64
+	asset   *et.Asset
 }
 
 // support nft asset from evm contract
@@ -119,6 +118,7 @@ func (accdb *EvmxgoNftAccountRepo) NewAccount(addr string, accid uint64, asset *
 	accInfo := AccountInfo{
 		address: addr,
 		accid:   accid,
+		asset:   asset,
 	}
 
 	return &NftAccount{accdb: accdb, AccountInfo: accInfo, nftid: nftid, symbol: symbol}, nil
@@ -190,6 +190,7 @@ func (accdb *TokenAccountRepo) NewAccount(addr string, accid uint64, asset *et.A
 	accInfo := AccountInfo{
 		address: addr,
 		accid:   accid,
+		asset:   asset,
 	}
 	acc := &TokenAccount{accdb: accdb, AccountInfo: accInfo, execer: asset.GetTokenAsset().Execer, symbol: asset.GetTokenAsset().Symbol}
 	var err error
@@ -202,8 +203,7 @@ func (accdb *TokenAccountRepo) NewAccount(addr string, accid uint64, asset *et.A
 }
 
 type ZkAccount struct {
-	acc   *DexAccount
-	asset *et.Asset
+	acc *DexAccount
 	AccountInfo
 }
 
