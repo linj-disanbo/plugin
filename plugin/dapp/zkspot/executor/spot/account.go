@@ -14,7 +14,7 @@ type accountRepos struct {
 	evmxgo    *EvmxgoNftAccountRepo
 }
 
-func newAccountRepo11(dexName string, statedb dbm.KV, p et.DBprefix, cfg *types.Chain33Config, execAddr string) (*accountRepos, error) {
+func newAccountRepos(dexName string, statedb dbm.KV, p et.DBprefix, cfg *types.Chain33Config, execAddr string) (*accountRepos, error) {
 	var repos accountRepos
 	var err error
 	repos.zkRepo = newAccountRepo(dexName, statedb, p)

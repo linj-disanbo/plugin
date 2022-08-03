@@ -27,7 +27,7 @@ type Spot struct {
 }
 
 func NewSpot(e *drivers.DriverBase, tx *et.TxInfo, dbprefix et.DBprefix) (*Spot, error) {
-	accRepos, err := newAccountRepo11(spotDexName, e.GetStateDB(), dbprefix, e.GetAPI().GetConfig(), "TODO")
+	accRepos, err := newAccountRepos(spotDexName, e.GetStateDB(), dbprefix, e.GetAPI().GetConfig(), "TODO")
 	if err != nil {
 		return nil, err
 	}
