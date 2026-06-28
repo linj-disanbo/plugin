@@ -562,8 +562,10 @@ func (cs *ConsensusState) checkTxsAvailable() {
 			}
 			cs.txsAvailable <- height
 		case <-cs.client.ctx.Done():
-			qbftlog.Info("checkTxsAvailable quit")
-			return
+			qbftlog.Warn("checkTxsAvailable ctx done, will retry",
+				"height", cs.GetRoundState().Height)
+			time.Sleep(proposalHeartbeatIntervalSeconds * time.Second)
+			qbftlog.Info("checkTxsAvailable retry")
 		}
 	}
 }
