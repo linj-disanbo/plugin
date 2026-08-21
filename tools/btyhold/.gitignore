@@ -1,0 +1,7 @@
+# build artifacts
+btyscan
+*.exe
+gocache/
+
+# local module variant for offline build (checked in intentionally)
+# go.mod.local is kept; do not ignore
